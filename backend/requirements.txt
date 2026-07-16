@@ -1,0 +1,29 @@
+# Web framework
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+
+# Data layer (abstracted — see app/core/database.py for the swap point)
+sqlmodel==0.0.22
+psycopg2-binary==2.9.10  # Postgres driver for SQLModel engine
+alembic==1.13.3
+
+# Config & validation
+pydantic==2.9.2
+pydantic-settings==2.5.2
+email-validator==2.2.0  # required by pydantic EmailStr
+
+# Auth
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+bcrypt==4.0.1  # pin: passlib 1.7.4 is incompatible with bcrypt>=4.1
+python-multipart==0.0.12
+
+# Task queue (AI workflows — wired later in Sprint 1+)
+celery==5.4.0
+redis==5.1.1
+
+# HTTP client (OpenRouter, OAuth token exchange)
+httpx==0.27.2
+
+# Tests
+pytest==8.3.2
