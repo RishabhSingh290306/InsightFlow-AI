@@ -1,8 +1,10 @@
 """Single SQL engine for InsightFlow: generate, validate, execute, insights.
 
-The `proposer` and `insights` modules are added in Task 4; this package is
-extended there so the engine tests (Task 3) can import without them.
+This is the ONLY place SQL is generated or executed. The future AI Chat module
+reuses exactly this package — there is no second SQL system.
 """
 from app.services.sql.engine import execute_query, suggest_chart, validate_sql
+from app.services.sql.insights import generate_insights
+from app.services.sql.proposer import generate_sql
 
-__all__ = ["validate_sql", "execute_query", "suggest_chart"]
+__all__ = ["generate_sql", "validate_sql", "execute_query", "suggest_chart", "generate_insights"]
