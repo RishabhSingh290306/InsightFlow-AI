@@ -7,6 +7,8 @@ Every executed query is persisted as a `SqlQueryRecord` in project history.
 """
 from __future__ import annotations
 
+from datetime import datetime
+
 from pydantic import BaseModel
 
 
@@ -78,4 +80,4 @@ class SqlQueryRecord(BaseModel):
     row_count: int | None = None
     truncated: bool | None = None
     duration_ms: float | None = None
-    executed_at: str
+    executed_at: datetime
