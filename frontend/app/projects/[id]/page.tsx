@@ -6,6 +6,7 @@ import Link from "next/link";
 import {
   AlertTriangle,
   ArrowLeft,
+  BarChart3,
   ChevronDown,
   Database,
   LogOut,
@@ -27,6 +28,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { CleaningPanel } from "@/components/cleaning-panel";
+import { EdaPanel } from "@/components/eda-panel";
 
 const ACCEPTED = ".csv,.xlsx,.xls";
 
@@ -64,6 +66,7 @@ export default function ProjectWorkspacePage() {
   const [history, setHistory] = useState<Set<number>>(new Set());
   const [historyData, setHistoryData] = useState<Record<number, DatasetRead[]>>({});
   const [cleaningId, setCleaningId] = useState<number | null>(null);
+  const [edaId, setEdaId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -309,6 +312,16 @@ export default function ProjectWorkspacePage() {
                           Clean
                         </Button>
                       )}
+                      {d.profile && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setEdaId(d.id)}
+                        >
+                          <BarChart3 className="h-4 w-4" />
+                          EDA
+                        </Button>
+                      )}
                     </div>
                   </CardHeader>
                   {isOpen && (d.profile || d.understanding) && (
@@ -356,6 +369,13 @@ export default function ProjectWorkspacePage() {
           dataset={datasets.find((d) => d.id === cleaningId)!}
           onApplied={onAppliedClean}
           onClose={() => setCleaningId(null)}
+        />
+      )}
+
+      {edaId !== null && (
+        <EdaPanel
+          dataset={datasets.find((d) => d.id === edaId)!}
+          onClose={() => setEdaId(null)}
         />
       )}
     </main>
