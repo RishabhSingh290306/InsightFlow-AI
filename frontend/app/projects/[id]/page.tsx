@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/card";
 import { CleaningPanel } from "@/components/cleaning-panel";
 import { EdaPanel } from "@/components/eda-panel";
+import { SqlPanel } from "@/components/sql-panel";
 
 const ACCEPTED = ".csv,.xlsx,.xls";
 
@@ -67,6 +68,7 @@ export default function ProjectWorkspacePage() {
   const [historyData, setHistoryData] = useState<Record<number, DatasetRead[]>>({});
   const [cleaningId, setCleaningId] = useState<number | null>(null);
   const [edaId, setEdaId] = useState<number | null>(null);
+  const [sqlId, setSqlId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -322,6 +324,16 @@ export default function ProjectWorkspacePage() {
                           EDA
                         </Button>
                       )}
+                      {d.profile && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setSqlId(d.id)}
+                        >
+                          <BarChart3 className="h-4 w-4" />
+                          SQL
+                        </Button>
+                      )}
                     </div>
                   </CardHeader>
                   {isOpen && (d.profile || d.understanding) && (
@@ -376,6 +388,13 @@ export default function ProjectWorkspacePage() {
         <EdaPanel
           dataset={datasets.find((d) => d.id === edaId)!}
           onClose={() => setEdaId(null)}
+        />
+      )}
+
+      {sqlId !== null && (
+        <SqlPanel
+          dataset={datasets.find((d) => d.id === sqlId)!}
+          onClose={() => setSqlId(null)}
         />
       )}
     </main>
