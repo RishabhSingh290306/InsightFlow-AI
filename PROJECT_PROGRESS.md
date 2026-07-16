@@ -11,10 +11,21 @@
 | Frontend scaffold | ✅ Done | Next.js 15 App Router, Tailwind + ShadCN primitives, API client, home page w/ live health check |
 | Local dev infra | ✅ Done | Docker Compose (postgres, redis, backend, frontend) + per-service Dockerfiles |
 | CI pipeline | ✅ Done | GitHub Actions: backend compile+test, frontend lint+build |
+| Auth + Projects UI | ✅ Done | Login/register, auth-guarded projects, workspace, design tokens |
+| Dataset upload & versioning | ✅ Done | Storage adapter, multipart upload, pandas metadata, stem versioning |
+| AI Dataset Understanding | ✅ Done | Two-stage: deterministic profiling + best-effort OpenRouter interpretation |
 
 ## Current Sprint
 
-**Sprint 0 — Foundations**
+**Sprint 1 — Cleaning Workflow & Unified Versioning** *(design approved 2026-07-16)*
+
+Design: `docs/superpowers/specs/2026-07-16-cleaning-workflow-design.md`
+
+- [ ] **M1 — Versioning foundation:** lineage columns (`parent_id`/`root_id`/`origin`/`recipe`) + migration + backfill, `DatasetRead` fields, `GET /lineage`, version history list UI
+- [ ] **M2 — Cleaning engine + registry:** plugin base, registry, v1 operations (missing values, duplicates, type conversion, rename/drop columns), deterministic `preview`
+- [ ] **M3 — AI planner + apply + UI:** best-effort `propose_plan` (+ fallback), `apply` (new immutable version + re-profile), PR-style review UI, end-to-end verification
+
+**Sprint 0 — Foundations** *(complete)*
 
 - [x] Initialize Next.js 15 project with App Router (Tailwind + ShadCN primitives)
 - [x] Set up FastAPI backend with SQLModel
@@ -62,22 +73,27 @@
 
 ## Architecture Decisions Log
 
-See [DEVELOPMENT_LOG.md](./DEVELOPMENT_LOG.md) for detailed rationale on:
+See [ARCHITECTURE.md](./ARCHITECTURE.md) and [DEVELOPMENT_LOG.md](./DEVELOPMENT_LOG.md)
+for detailed rationale on:
 - Modular monolith vs microservices
 - FastAPI vs Node.js/Express
 - Next.js 15 vs alternative frontends
 - OpenRouter vs direct provider APIs
 - Celery task queue design
+- Deterministic facts / AI interpretation / human control principle
+- Two-stage dataset understanding (profiling → AI interpretation)
+- Unified dataset versioning (Git-like lineage; version-as-`Dataset`-row)
+- HITL cleaning with a plugin operation registry
 
 ## Milestone Timeline
 
 | Milestone | Target Date | Status |
 |-----------|-------------|--------|
 | Repository + CI/CD | 2026-07-16 | ✅ Complete |
-| Auth + Project CRUD | 2026-07-23 | In Progress |
-| Dataset Upload | 2026-07-30 | Pending |
-| AI Understanding | 2026-08-06 | Pending |
-| Cleaning Workflow | 2026-08-13 | Pending |
+| Auth + Project CRUD | 2026-07-23 | ✅ Complete |
+| Dataset Upload | 2026-07-30 | ✅ Complete |
+| AI Understanding | 2026-08-06 | ✅ Complete |
+| Cleaning Workflow | 2026-08-13 | In Progress |
 | EDA + Visualizations | 2026-08-20 | Pending |
 | SQL Generation | 2026-08-27 | Pending |
 | Insights + Reports | 2026-09-03 | Pending |
