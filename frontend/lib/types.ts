@@ -134,3 +134,38 @@ export interface CleaningPlan {
   summary: PlanSummary;
   ai_available: boolean;
 }
+
+// --- EDA + Visualizations ------------------------------------------------
+
+export type ChartType =
+  | "bar"
+  | "line"
+  | "scatter"
+  | "histogram"
+  | "pie"
+  | "box"
+  | "heatmap";
+
+export interface ChartSpec {
+  id: string;
+  chart_type: ChartType;
+  title: string;
+  subtitle?: string | null;
+  business_question: string;
+  explanation: string;
+  recommended_reason: string;
+  confidence: number;
+  axis_config: Record<string, unknown>;
+  data: Record<string, unknown>[];
+  metadata: Record<string, unknown>;
+  accepted: boolean;
+}
+
+export interface EdaResult {
+  ai_available: boolean;
+  charts: ChartSpec[];
+}
+
+export interface EdaAcceptRequest {
+  accepted_ids: string[];
+}

@@ -2,9 +2,12 @@
 
 import { getToken } from "@/lib/auth";
 import type {
+  ChartSpec,
   CleaningOperation,
   CleaningPlan,
   DatasetRead,
+  EdaAcceptRequest,
+  EdaResult,
   ProjectCreate,
   ProjectRead,
   Token,
@@ -177,6 +180,24 @@ export const cleaningApi = {
     return request<DatasetRead>(`/api/v1/datasets/${datasetId}/cleaning/apply`, {
       method: "POST",
       body: JSON.stringify({ operations }),
+    });
+  },
+};
+
+export const edaApi = {
+  // Generate (or regenerate) the EDA recommendation for a profiled dataset.
+  generate(datasetId: number): Promise<EdaResult> {
+    return request<EdaResult>(`/api/v1/datasets/${datasetId}/eda`, { method: "POST" });
+  },
+  // Fetch the stored EDA result (404 until generated).
+  get(datasetId: number): Promise<EdaResult> {
+    return request<EdaResult>(`/api/v1/datasets/${datasetId}/eda`);
+  },
+  // Persist the human's accepted chart ids.
+  accept(datasetId: number, acceptedIds: string[]): Promise<EdaResult> {
+    return request<EdaResult>(`/api/v1/datasets/${datasetId}/eda`, {
+      method: "PATCH",
+      body: JSON.stringify({ accepted_ids: acceptedIds }),
     });
   },
 };
