@@ -7,6 +7,7 @@ Public surface:
 - `apply()` — execute approved operations, returning `(new_df, applied_records)`.
 """
 from app.services.cleaning.engine import apply, load_dataframe, run_preview
+from app.services.cleaning.planner import propose_plan
 from app.services.cleaning.registry import (
     all_operations,
     catalog,
@@ -17,6 +18,7 @@ __all__ = [
     "apply",
     "load_dataframe",
     "run_preview",
+    "propose_plan",
     "all_operations",
     "catalog",
     "get_operation",

@@ -26,6 +26,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { CleaningPanel } from "@/components/cleaning-panel";
 
 const ACCEPTED = ".csv,.xlsx,.xls";
 
@@ -62,6 +63,7 @@ export default function ProjectWorkspacePage() {
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
   const [history, setHistory] = useState<Set<number>>(new Set());
   const [historyData, setHistoryData] = useState<Record<number, DatasetRead[]>>({});
+  const [cleaningId, setCleaningId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -171,6 +173,12 @@ export default function ProjectWorkspacePage() {
   function logout() {
     clearToken();
     router.replace("/login");
+  }
+
+  function onAppliedClean(newDataset: DatasetRead) {
+    // Add the new version to the workspace; its lineage is visible via History.
+    setDatasets((prev) => [...prev, newDataset]);
+    setCleaningId(null);
   }
 
   return (
@@ -291,6 +299,16 @@ export default function ProjectWorkspacePage() {
                       >
                         History
                       </Button>
+                      {d.profile && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setCleaningId(d.id)}
+                        >
+                          <Sparkles className="h-4 w-4" />
+                          Clean
+                        </Button>
+                      )}
                     </div>
                   </CardHeader>
                   {isOpen && (d.profile || d.understanding) && (
@@ -332,6 +350,14 @@ export default function ProjectWorkspacePage() {
           )}
         </div>
       </section>
+
+      {cleaningId !== null && (
+        <CleaningPanel
+          dataset={datasets.find((d) => d.id === cleaningId)!}
+          onApplied={onAppliedClean}
+          onClose={() => setCleaningId(null)}
+        />
+      )}
     </main>
   );
 }

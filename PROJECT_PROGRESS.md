@@ -23,7 +23,7 @@ Design: `docs/superpowers/specs/2026-07-16-cleaning-workflow-design.md`
 
 - [x] **M1 — Versioning foundation:** lineage columns (`parent_id`/`root_id`/`origin`/`recipe`) + migration + backfill, `DatasetRead` fields, `GET /lineage`, version history list UI
 - [x] **M2 — Cleaning engine + registry:** plugin base, registry, v1 operations (missing values, duplicates, type conversion, rename/drop columns), deterministic `preview`
-- [ ] **M3 — AI planner + apply + UI:** best-effort `propose_plan` (+ fallback), `apply` (new immutable version + re-profile), PR-style review UI, end-to-end verification
+- [x] **M3 — AI planner + apply + UI:** best-effort `propose_plan` (+ fallback), `apply` (new immutable version + re-profile), PR-style review UI, end-to-end verification
 
 **Sprint 0 — Foundations** *(complete)*
 
@@ -93,7 +93,7 @@ for detailed rationale on:
 | Auth + Project CRUD | 2026-07-23 | ✅ Complete |
 | Dataset Upload | 2026-07-30 | ✅ Complete |
 | AI Understanding | 2026-08-06 | ✅ Complete |
-| Cleaning Workflow | 2026-08-13 | In Progress |
+| Cleaning Workflow | 2026-08-13 | ✅ Complete |
 | EDA + Visualizations | 2026-08-20 | Pending |
 | SQL Generation | 2026-08-27 | Pending |
 | Insights + Reports | 2026-09-03 | Pending |

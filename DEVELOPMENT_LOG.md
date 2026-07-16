@@ -207,6 +207,45 @@ assert stored file **unchanged** by preview → cleanup). `PlanSummary.overall_q
 is `None` for now (true quality score needs the before/after profile, available
 in M3).
 
+## 2026-07-16 — Sprint 1, M3: AI Planner + Apply + PR-Style Review UI (shipped)
+
+Closes Sprint 1. Completes the HITL cleaning loop: *AI proposes → human approves →
+deterministic code executes → new immutable version*.
+
+- **`app/services/cleaning/planner.py`** — `propose_plan(profile, understanding=None)`
+  returns `(operations, ai_available)`. Sends **only the structured profile** (never raw
+  data) + the registry `catalog()` to `complete_json`, asks for
+  `{"operations":[{op,params,explanation,confidence}]}` constrained to catalog names.
+  `_validate_plan` drops any op whose name isn't registered or that references unknown
+  columns. On **any** LLM/validation failure → deterministic `_fallback_plan`:
+  `remove_duplicates` (keep=first) when `duplicate_row_count>0`, and per-column
+  `handle_missing_values` (`median` if numeric else `mode`) for each column with
+  `missing_values>0`. Sets `ai_available=False` so the UI shows a "rule-based plan" banner.
+- **`app/services/cleaning/engine.py`** — added `CleaningApplyError(op_name, message)`
+  so a failed op surfaces its name in the 422 (M2 success-path untouched).
+- **`app/api/routes/cleaning.py`** — `POST /{id}/cleaning/plan` (409 if unprofiled;
+  runs `propose_plan` then `run_preview` to attach impacts) and `POST /{id}/cleaning/apply`:
+  executes approved ops, serializes the new frame (CSV/`to_csv`, xlsx/`to_excel`), saves a
+  new file, writes a **new immutable child `Dataset`** (`parent_id`/`root_id`/`origin=
+  "cleaning"`/`version = parent+1`/`recipe`), and **re-profiles before commit** (no partial
+  version on profiling failure). All-or-nothing: a failed op → `422` naming it, **no version
+  created**. Unapproved ops are recorded under `recipe.skipped` (reason `user_rejected`).
+- **`app/services/cleaning/__init__.py`** — exports `propose_plan`.
+- **Frontend** — `lib/types.ts` (cleaning models), `lib/api.ts` (`cleaningApi`
+  plan/preview/apply/operations), `components/cleaning-panel.tsx` (modal PR-style review:
+  summary header, AI-available banner, per-op editable params + approve/reject toggle,
+  before/after previews, **debounced live preview** ~500ms, Apply → new version added to the
+  workspace), and a **Clean** button per dataset (shown only when a profile exists) in
+  `app/projects/[id]/page.tsx`.
+
+Verified end-to-end (TestClient + Postgres): `plan` 409 on unprofiled dataset; planner
+returns `remove_duplicates` + `handle_missing_values`; `apply` creates a child version with
+correct lineage fields and a fresh profile; original file **unchanged** and the new version
+has **no duplicates / nulls**; a rejected op lands under `recipe.skipped`; an op that raises
+returns `422` and creates **no** version. `py_compile` + `tsc --noEmit` + `next lint` +
+`next build` all pass. Frontend `.next` cache cleared once (stale vendor chunk) — unrelated
+to the change.
+
 ## Future Log Entries
 
 - AI workflow design decisions

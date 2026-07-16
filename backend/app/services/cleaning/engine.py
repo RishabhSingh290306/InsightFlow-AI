@@ -30,6 +30,14 @@ from app.schemas.cleaning import (
 from app.services.cleaning.registry import get_operation
 
 
+class CleaningApplyError(Exception):
+    """Raised when an operation fails during `apply`, carrying the op name."""
+
+    def __init__(self, op_name: str, message: str) -> None:
+        self.op_name = op_name
+        super().__init__(f"Operation '{op_name}' failed: {message}")
+
+
 def load_dataframe(storage: StorageAdapter, storage_path: str, file_format: str) -> pd.DataFrame:
     """Read a stored dataset file into a pandas DataFrame (CSV or Excel)."""
     content = storage.read(storage_path)
@@ -114,7 +122,10 @@ def apply(
 
         op = get_operation(op_req.op)
         t0 = time.perf_counter()
-        new_df, record = op.execute(new_df, op_req.params)
+        try:
+            new_df, record = op.execute(new_df, op_req.params)
+        except Exception as exc:  # invalid params/columns surface as a clear 422
+            raise CleaningApplyError(op_req.op, str(exc)) from exc
         duration_ms = (time.perf_counter() - t0) * 1000
         record.update(
             {

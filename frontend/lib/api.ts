@@ -1,7 +1,15 @@
 "use client";
 
 import { getToken } from "@/lib/auth";
-import type { DatasetRead, ProjectCreate, ProjectRead, Token, UserRead } from "@/lib/types";
+import type {
+  CleaningOperation,
+  CleaningPlan,
+  DatasetRead,
+  ProjectCreate,
+  ProjectRead,
+  Token,
+  UserRead,
+} from "@/lib/types";
 
 /**
  * Thin fetch wrapper for the InsightFlow backend.
@@ -145,5 +153,30 @@ export const datasetsApi = {
   // Version chain (shared root_id) for the dataset's lineage, ordered by version.
   lineage(id: number): Promise<DatasetRead[]> {
     return request<DatasetRead[]>(`/api/v1/datasets/${id}/lineage`);
+  },
+};
+
+export const cleaningApi = {
+  // Catalog of available cleaning operations (owner-guarded).
+  operations(datasetId: number): Promise<Record<string, unknown>[]> {
+    return request<Record<string, unknown>[]>(`/api/v1/datasets/${datasetId}/cleaning/operations`);
+  },
+  // AI-propose a plan from the dataset's profile (falls back to rule-based).
+  plan(datasetId: number): Promise<CleaningPlan> {
+    return request<CleaningPlan>(`/api/v1/datasets/${datasetId}/cleaning/plan`, { method: "POST" });
+  },
+  // Dry-run a (possibly edited) plan; returns fresh impacts for each op.
+  preview(datasetId: number, operations: CleaningOperation[]): Promise<CleaningPlan> {
+    return request<CleaningPlan>(`/api/v1/datasets/${datasetId}/cleaning/preview`, {
+      method: "POST",
+      body: JSON.stringify({ operations }),
+    });
+  },
+  // Execute the approved ops, writing a new immutable child version.
+  apply(datasetId: number, operations: CleaningOperation[]): Promise<DatasetRead> {
+    return request<DatasetRead>(`/api/v1/datasets/${datasetId}/cleaning/apply`, {
+      method: "POST",
+      body: JSON.stringify({ operations }),
+    });
   },
 };

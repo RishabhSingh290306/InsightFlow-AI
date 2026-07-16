@@ -88,3 +88,49 @@ export interface DatasetUnderstanding {
   explanation: Record<string, string>;
   ai_available: boolean;
 }
+
+// --- Cleaning workflow (HITL) ---------------------------------------------
+
+export interface CleaningOperation {
+  op: string;
+  params: Record<string, unknown>;
+  explanation?: string;
+  confidence: number;
+  approved: boolean;
+}
+
+export interface OperationImpact {
+  rows_affected: number;
+  cols_affected: number;
+  estimated_changes: number;
+  warnings: string[];
+  execution_time_ms?: number | null;
+  confidence?: number | null;
+  preview_before: Record<string, unknown>[];
+  preview_after: Record<string, unknown>[];
+  op_name?: string | null;
+  // Execution metadata (M2): every operation gets a UUID + timing/status.
+  operation_id?: string | null;
+  duration_ms?: number | null;
+  status?: string | null;
+  timestamp?: string | null;
+}
+
+export interface ProposedOperation {
+  operation: CleaningOperation;
+  impact: OperationImpact;
+}
+
+export interface PlanSummary {
+  overall_quality?: number | null;
+  estimated_improvement: number;
+  estimated_time_ms: number;
+  operation_count: number;
+  affected_rows: number;
+}
+
+export interface CleaningPlan {
+  operations: ProposedOperation[];
+  summary: PlanSummary;
+  ai_available: boolean;
+}
