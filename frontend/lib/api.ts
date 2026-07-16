@@ -10,6 +10,10 @@ import type {
   EdaResult,
   ProjectCreate,
   ProjectRead,
+  SqlProposal,
+  SqlQueryRecord,
+  SqlResult,
+  SqlRunRequest,
   Token,
   UserRead,
 } from "@/lib/types";
@@ -199,5 +203,29 @@ export const edaApi = {
       method: "PATCH",
       body: JSON.stringify({ accepted_ids: acceptedIds }),
     });
+  },
+};
+
+export const sqlApi = {
+  generate(datasetId: number, question: string): Promise<SqlProposal> {
+    return request<SqlProposal>("/api/v1/sql/generate", {
+      method: "POST",
+      body: JSON.stringify({ dataset_id: datasetId, question }),
+    });
+  },
+  run(req: SqlRunRequest): Promise<SqlResult> {
+    return request<SqlResult>("/api/v1/sql/run", {
+      method: "POST",
+      body: JSON.stringify(req),
+    });
+  },
+  history(params: { projectId: number; datasetId?: number; q?: string }): Promise<SqlQueryRecord[]> {
+    const qs = new URLSearchParams({ project_id: String(params.projectId) });
+    if (params.datasetId) qs.set("dataset_id", String(params.datasetId));
+    if (params.q) qs.set("q", params.q);
+    return request<SqlQueryRecord[]>(`/api/v1/sql/history?${qs.toString()}`);
+  },
+  remove(id: number): Promise<void> {
+    return request<void>(`/api/v1/sql/history/${id}`, { method: "DELETE" });
   },
 };

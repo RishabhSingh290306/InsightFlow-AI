@@ -169,3 +169,59 @@ export interface EdaResult {
 export interface EdaAcceptRequest {
   accepted_ids: string[];
 }
+
+// --- SQL Generation (Question -> SQL) ------------------------------------
+
+export interface SqlVisualization {
+  chart_type: ChartType;
+  rationale: string;
+  x?: string | null;
+  y?: string | null;
+}
+
+export interface SqlProposal {
+  business_question: string;
+  sql: string;
+  explanation: string;
+  confidence: number;
+  suggested_visualization: SqlVisualization | null;
+  ai_available: boolean;
+}
+
+export interface SqlRunRequest {
+  dataset_id: number;
+  sql: string;
+  edited?: boolean;
+  business_question?: string | null;
+  explanation?: string | null;
+  suggested_visualization?: SqlVisualization | null;
+}
+
+export interface SqlResult {
+  columns: string[];
+  rows: Record<string, unknown>[];
+  row_count: number;
+  truncated: boolean;
+  duration_ms: number;
+  insights: string[];
+  insights_ai_available: boolean;
+  persisted_id: number | null;
+}
+
+export interface SqlQueryRecord {
+  id: number;
+  project_id: number;
+  dataset_id: number;
+  owner_id: number;
+  business_question: string;
+  sql: string;
+  edited: boolean;
+  explanation: string;
+  suggested_visualization: SqlVisualization | null;
+  insights: string[];
+  columns: string[];
+  row_count: number | null;
+  truncated: boolean | null;
+  duration_ms: number | null;
+  executed_at: string;
+}
