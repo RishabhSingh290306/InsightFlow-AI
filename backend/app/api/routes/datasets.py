@@ -1,0 +1,140 @@
+"""Dataset routes — upload, list, read, and delete within a project.
+
+Uploads are validated, stored via the storage adapter (`app/core/storage.py`),
+profiled with pandas for row/column counts, and recorded as a `Dataset` row. Each
+upload is versioned within its `(project_id, name_stem)` group.
+"""
+from __future__ import annotations
+
+import io
+
+import pandas as pd
+from fastapi import APIRouter, File, HTTPException, status, UploadFile
+from sqlmodel import select
+
+from app.api.deps import CurrentUser, SessionDep
+from app.core.config import settings
+from app.core.storage import get_storage
+from app.db import Repository
+from app.models.dataset import Dataset
+from app.models.project import Project
+from app.schemas.dataset import DatasetRead
+
+router = APIRouter(prefix="/datasets", tags=["datasets"])
+
+_ALLOWED_EXTENSIONS = {".csv": "csv", ".xlsx": "xlsx", ".xls": "xls"}
+
+
+def _ensure_project_owner(project_id: int, session: SessionDep, user: CurrentUser) -> Project:
+    project = session.get(Project, project_id)
+    if project is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
+    if project.owner_id != user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not your project")
+    return project
+
+
+def _get_owned(dataset_id: int, session: SessionDep, user: CurrentUser) -> Dataset:
+    dataset = session.get(Dataset, dataset_id)
+    if dataset is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dataset not found")
+    if dataset.owner_id != user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not your dataset")
+    return dataset
+
+
+def _shape_from_bytes(content: bytes, file_format: str) -> tuple[int | None, int | None]:
+    """Return (rows, cols) for the supported formats, else (None, None)."""
+    try:
+        if file_format == "csv":
+            df = pd.read_csv(io.BytesIO(content))
+        else:  # xlsx / xls
+            df = pd.read_excel(io.BytesIO(content))
+    except Exception:
+        return None, None
+    return int(df.shape[0]), int(df.shape[1])
+
+
+@router.post(
+    "/projects/{project_id}",
+    response_model=DatasetRead,
+    status_code=status.HTTP_201_CREATED,
+)
+async def upload_dataset(
+    project_id: int,
+    file: UploadFile = File(...),
+    session: SessionDep = None,  # type: ignore[assignment]  (injected by FastAPI)
+    current_user: CurrentUser = None,  # type: ignore[assignment]
+) -> Dataset:
+    _ensure_project_owner(project_id, session, current_user)
+
+    original = file.filename or "dataset"
+    ext = "." + original.rsplit(".", 1)[-1].lower() if "." in original else ""
+    if ext not in _ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail="Unsupported file type. Upload a CSV or Excel (.xlsx/.xls) file.",
+        )
+
+    content = await file.read()
+    max_bytes = settings.MAX_UPLOAD_MB * 1024 * 1024
+    if len(content) > max_bytes:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"File exceeds the {settings.MAX_UPLOAD_MB} MB limit.",
+        )
+
+    storage = get_storage()
+    storage_path, filename = storage.save(project_id, original, content)
+
+    file_format = _ALLOWED_EXTENSIONS[ext]
+    rows, cols = _shape_from_bytes(content, file_format)
+
+    name_stem = original.rsplit(".", 1)[0] or original
+    existing = session.exec(
+        select(Dataset).where(
+            Dataset.project_id == project_id, Dataset.name_stem == name_stem
+        )
+    ).all()
+    version = max((d.version for d in existing), default=0) + 1
+
+    dataset = Dataset(
+        project_id=project_id,
+        owner_id=current_user.id,
+        filename=filename,
+        original_filename=original,
+        name_stem=name_stem,
+        storage_path=storage_path,
+        file_size=len(content),
+        mime_type=file.content_type or "",
+        file_format=file_format,
+        row_count=rows,
+        column_count=cols,
+        version=version,
+    )
+    return Repository(Dataset, session).create(dataset)
+
+
+@router.get("/projects/{project_id}", response_model=list[DatasetRead])
+def list_datasets(
+    project_id: int, session: SessionDep, current_user: CurrentUser
+) -> list[Dataset]:
+    _ensure_project_owner(project_id, session, current_user)
+    stmt = (
+        select(Dataset)
+        .where(Dataset.project_id == project_id)
+        .order_by(Dataset.created_at.desc())
+    )
+    return list(session.exec(stmt).all())
+
+
+@router.get("/{dataset_id}", response_model=DatasetRead)
+def read_dataset(dataset_id: int, session: SessionDep, current_user: CurrentUser) -> Dataset:
+    return _get_owned(dataset_id, session, current_user)
+
+
+@router.delete("/{dataset_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_dataset(dataset_id: int, session: SessionDep, current_user: CurrentUser):
+    dataset = _get_owned(dataset_id, session, current_user)
+    get_storage().delete(dataset.storage_path)
+    Repository(Dataset, session).delete(dataset)

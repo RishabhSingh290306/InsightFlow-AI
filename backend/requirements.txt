@@ -22,6 +22,10 @@ python-multipart==0.0.12
 celery==5.4.0
 redis==5.1.1
 
+# Data parsing — dataset metadata (row/column counts) on upload
+pandas==2.2.3
+openpyxl==3.1.5  # Excel engine for pandas.read_excel
+
 # HTTP client (OpenRouter, OAuth token exchange)
 httpx==0.27.2
 

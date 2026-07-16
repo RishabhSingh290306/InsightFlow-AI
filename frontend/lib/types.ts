@@ -24,3 +24,17 @@ export interface ProjectCreate {
   name: string;
   description?: string;
 }
+
+export interface DatasetRead {
+  id: number;
+  project_id: number;
+  owner_id: number;
+  original_filename: string;
+  file_format: string;
+  file_size: number;
+  row_count: number | null;
+  column_count: number | null;
+  status: string;
+  version: number;
+  created_at: string;
+}

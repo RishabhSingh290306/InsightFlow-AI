@@ -35,6 +35,10 @@ dist/
 build/
 *.tsbuildinfo
 
+# Uploaded dataset files (local storage adapter)
+data/
+backend/data/
+
 # Editor / OS
 .vscode/
 .idea/

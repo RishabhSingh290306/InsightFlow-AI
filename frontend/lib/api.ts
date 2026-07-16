@@ -1,7 +1,7 @@
 "use client";
 
 import { getToken } from "@/lib/auth";
-import type { ProjectCreate, ProjectRead, Token, UserRead } from "@/lib/types";
+import type { DatasetRead, ProjectCreate, ProjectRead, Token, UserRead } from "@/lib/types";
 
 /**
  * Thin fetch wrapper for the InsightFlow backend.
@@ -96,6 +96,9 @@ export const projectsApi = {
   list(): Promise<ProjectRead[]> {
     return request<ProjectRead[]>("/api/v1/projects");
   },
+  get(id: number): Promise<ProjectRead> {
+    return request<ProjectRead>(`/api/v1/projects/${id}`);
+  },
   create(body: ProjectCreate): Promise<ProjectRead> {
     return request<ProjectRead>("/api/v1/projects", {
       method: "POST",
@@ -104,5 +107,36 @@ export const projectsApi = {
   },
   remove(id: number): Promise<void> {
     return request<void>(`/api/v1/projects/${id}`, { method: "DELETE" });
+  },
+};
+
+export const datasetsApi = {
+  list(projectId: number): Promise<DatasetRead[]> {
+    return request<DatasetRead[]>(`/api/v1/datasets/projects/${projectId}`);
+  },
+  // Upload is multipart/form-data, so it can't use the JSON `request` helper.
+  async upload(projectId: number, file: File): Promise<DatasetRead> {
+    const token = getToken();
+    const form = new FormData();
+    form.append("file", file);
+    const res = await fetch(`${BASE}/api/v1/datasets/projects/${projectId}`, {
+      method: "POST",
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      body: form,
+    });
+    if (!res.ok) {
+      let detail = res.statusText;
+      try {
+        const body = await res.json();
+        detail = body.detail ?? detail;
+      } catch {
+        /* non-JSON error body */
+      }
+      throw new ApiError(res.status, detail);
+    }
+    return res.json() as Promise<DatasetRead>;
+  },
+  remove(id: number): Promise<void> {
+    return request<void>(`/api/v1/datasets/${id}`, { method: "DELETE" });
   },
 };

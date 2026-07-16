@@ -31,6 +31,11 @@ class Settings(BaseSettings):
     # in `app/core/database.py` is the single swap point for Supabase later.
     DATABASE_URL: str = "postgresql://postgres:password@localhost:5432/insightflow"
 
+    # File storage — local disk for now. The storage adapter in
+    # `app/core/storage.py` is the single swap point for Supabase Storage / S3.
+    DATA_DIR: str = "./data"
+    MAX_UPLOAD_MB: int = 50
+
     # Redis / Celery (AI workflow orchestration — used from Sprint 1+)
     REDIS_URL: str = "redis://localhost:6379/0"
 
