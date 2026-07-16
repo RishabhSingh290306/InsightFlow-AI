@@ -170,6 +170,43 @@ project → upload → assert `root_id==id`/`parent_id==None`/`origin='upload'` 
 `GET /lineage` → cleanup). `npm run lint` + `npm run build` pass. Frontend `.next`
 cache had to be cleared once (stale vendor chunk) — unrelated to the change.
 
+## 2026-07-16 — Sprint 1, M2: Cleaning Engine + Registry (shipped)
+
+Deterministic, plugin-based cleaning engine consumed by the M3 AI planner and
+apply flow. All computation is pandas; the LLM is never involved in M2.
+
+- **`app/services/cleaning/`** package:
+  - `base.py` — `CleaningOp` ABC (`describe`/`validate`/`preview`/`execute`/`rollback`)
+    + a JSON-safe `_sample_records` helper for before/after previews.
+  - `registry.py` — `name → instance` registry; `get_operation`/`all_operations`/`catalog()`.
+  - `operations/` — v1 ops: `handle_missing_values` (drop_rows|drop_columns|mean|
+    median|mode|constant), `remove_duplicates`, `convert_types` (numeric|datetime|
+    string|category, coerce), `rename_columns`, `drop_columns`. Each validates
+    (raises `ValueError` on bad params/columns) and runs `preview` on a copy.
+  - `engine.py` — `load_dataframe` (storage adapter → pandas, mirrors profiling),
+    `run_preview(df, ops) → CleaningPlan` (dry-run, no persistence), and
+    `apply(df, ops) → (new_df, applied_records)` executing only **approved** ops
+    sequentially through the same registry (preview/apply cannot diverge).
+  - **Execution metadata:** every operation execution is wrapped with
+    `operation_id` (UUID), `duration_ms`, `status`, `timestamp` — recorded on the
+    preview `OperationImpact` and on each applied record. Powers future logging,
+    analytics, workflow history, and debugging without changing the architecture.
+- **Schemas** `app/schemas/cleaning.py`: `CleaningOperation`, `OperationImpact`
+  (incl. metadata fields), `ProposedOperation`, `PlanSummary`, `CleaningPlan`,
+  `PreviewRequest`, `ApplyRequest`. `params` is the single param bag matching the
+  recipe shape.
+- **Routes** `app/api/routes/cleaning.py` (mounted at `/api/v1/datasets`):
+  `GET /{id}/cleaning/operations` (catalog, owner-guarded) and
+  `POST /{id}/cleaning/preview` (deterministic dry-run → `CleaningPlan`; invalid
+  op/params → 422). `plan` + `apply` endpoints are M3.
+
+Verified via py_compile + engine unit checks (nulls + duplicate-row df; apply
+transforms, input unchanged) + a TestClient e2e (register → project → upload →
+catalog=5 ops → preview returns correct impacts + metadata → invalid op 422 →
+assert stored file **unchanged** by preview → cleanup). `PlanSummary.overall_quality`
+is `None` for now (true quality score needs the before/after profile, available
+in M3).
+
 ## Future Log Entries
 
 - AI workflow design decisions

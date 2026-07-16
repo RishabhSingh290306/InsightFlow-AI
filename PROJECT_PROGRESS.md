@@ -22,7 +22,7 @@
 Design: `docs/superpowers/specs/2026-07-16-cleaning-workflow-design.md`
 
 - [x] **M1 — Versioning foundation:** lineage columns (`parent_id`/`root_id`/`origin`/`recipe`) + migration + backfill, `DatasetRead` fields, `GET /lineage`, version history list UI
-- [ ] **M2 — Cleaning engine + registry:** plugin base, registry, v1 operations (missing values, duplicates, type conversion, rename/drop columns), deterministic `preview`
+- [x] **M2 — Cleaning engine + registry:** plugin base, registry, v1 operations (missing values, duplicates, type conversion, rename/drop columns), deterministic `preview`
 - [ ] **M3 — AI planner + apply + UI:** best-effort `propose_plan` (+ fallback), `apply` (new immutable version + re-profile), PR-style review UI, end-to-end verification
 
 **Sprint 0 — Foundations** *(complete)*

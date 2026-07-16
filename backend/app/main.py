@@ -7,7 +7,7 @@ from __future__ import annotations
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import auth, datasets, projects, users
+from app.api.routes import auth, cleaning, datasets, projects, users
 from app.core.config import settings
 from app.core.database import run_migrations
 
@@ -43,3 +43,4 @@ app.include_router(auth.router, prefix=API_PREFIX)
 app.include_router(users.router, prefix=API_PREFIX)
 app.include_router(projects.router, prefix=API_PREFIX)
 app.include_router(datasets.router, prefix=API_PREFIX)
+app.include_router(cleaning.router, prefix=API_PREFIX)
