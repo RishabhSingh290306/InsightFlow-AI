@@ -5,18 +5,22 @@
 | Feature | Status | Notes |
 |---------|--------|-------|
 | Repository initialization | ✅ Done | Git repo, .gitignore, .env.example |
-| Documentation structure | ✅ Done | README.md created |
-| Project skeleton | ✅ Done | Directory structure created |
+| Documentation structure | ✅ Done | README.md, DEVELOPMENT_LOG.md, PROJECT_PROGRESS.md, design spec |
+| Project skeleton | ✅ Done | Monorepo: `backend/` (FastAPI) + `frontend/` (Next.js 15) + `docker-compose.yml` |
+| Backend scaffold | ✅ Done | FastAPI app, config, abstracted DB layer, security, User/Project models, auth + projects routers |
+| Frontend scaffold | ✅ Done | Next.js 15 App Router, Tailwind + ShadCN primitives, API client, home page w/ live health check |
+| Local dev infra | ✅ Done | Docker Compose (postgres, redis, backend, frontend) + per-service Dockerfiles |
+| CI pipeline | ✅ Done | GitHub Actions: backend compile+test, frontend lint+build |
 
 ## Current Sprint
 
 **Sprint 0 — Foundations**
 
-- [ ] Initialize Next.js 15 project with App Router
-- [ ] Set up FastAPI backend with SQLModel
-- [ ] Configure Docker Compose for local development
-- [ ] Implement basic authentication (email + Google OAuth)
-- [ ] Create database schema migrations
+- [x] Initialize Next.js 15 project with App Router (Tailwind + ShadCN primitives)
+- [x] Set up FastAPI backend with SQLModel
+- [x] Configure Docker Compose for local development (postgres + redis + backend + frontend)
+- [x] Implement basic authentication — email/password JWT (Google OAuth scaffolded, pending backend decision)
+- [ ] Create database schema migrations (Alembic — currently using `create_all` bootstrap)
 
 ## Next Tasks
 

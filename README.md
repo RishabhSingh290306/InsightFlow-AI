@@ -46,6 +46,34 @@ Celery Task Queue --> AI Workflow Services
 PostgreSQL + Supabase Storage
 ```
 
+## Monorepo Layout
+
+```
+.
+├── backend/            # FastAPI app (Python 3.12, SQLModel)
+│   ├── app/
+│   │   ├── core/       # config, database (abstracted), security
+│   │   ├── models/     # SQLModel tables (User, Project)
+│   │   ├── schemas/    # Pydantic request/response models
+│   │   ├── db/         # repository base (single DB-access layer)
+│   │   └── api/        # routers (auth, users, projects) + deps
+│   ├── Dockerfile
+│   └── requirements.txt
+├── frontend/           # Next.js 15 App Router (TypeScript, Tailwind, ShadCN)
+│   ├── app/            # routes, layout, global styles
+│   ├── components/     # ui primitives + feature components
+│   ├── lib/            # api client, auth, utils
+│   ├── Dockerfile
+│   └── package.json
+├── docs/               # Design specs & architecture decisions
+├── docker-compose.yml  # postgres + redis + backend + frontend
+└── .env.example        # copy to .env for local/dev
+```
+
+> **Backend note:** the data-access layer is isolated in `backend/app/core/database.py`
+> and `backend/app/db/base.py` so we can switch between local Postgres and Supabase
+> later without touching models or routes. See `DEVELOPMENT_LOG.md` for the decision.
+
 ## Getting Started
 
 ### Prerequisites

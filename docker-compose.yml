@@ -1,0 +1,65 @@
+# InsightFlow AI — full-stack local development.
+#
+#   cp .env.example .env   # then: docker compose up --build
+#
+# Services:
+#   postgres  local PostgreSQL (deferred backend choice; swap to Supabase later)
+#   redis     broker for Celery AI workflows (used from Sprint 1+)
+#   backend   FastAPI app (port 8000)
+#   frontend  Next.js 15 app (port 3000)
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: insightflow
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d insightflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  backend:
+    build: ./backend
+    environment:
+      ENVIRONMENT: development
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/insightflow
+      REDIS_URL: redis://redis:6379/0
+      SECRET_KEY: ${SECRET_KEY:-change-me-in-production}
+      BACKEND_CORS_ORIGINS: http://localhost:3000
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    # Live reload during development: override the image's copied source.
+    volumes:
+      - ./backend/app:/app/app
+
+  frontend:
+    build: ./frontend
+    environment:
+      # Talk to the backend directly (browser -> backend container port).
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
