@@ -275,6 +275,43 @@ Verified: `py_compile`, `pytest` (engine + proposer unit tests), `tsc`/`next lin
 build` all pass; manual TestClient e2e confirms 409-before-profile, chart generation,
 store/get, and accept persistence.
 
+## 2026-07-17 — Sprint 2, M2: SQL Generation (Question → SQL) (shipped)
+
+Read-only analysis workflow completing the "collaborate with an AI Data Analyst"
+vision: ask a business question → AI generates + explains SQL → human reviews/edits
+→ deterministic sandbox validates + executes → results + execution time + suggested
+visualization + AI insights → every executed query persisted to searchable history.
+
+- **`app/services/sql/engine.py`** — `validate_sql` (sqlglot: single statement, SELECT/WITH
+  only, no DDL/DML, only the `dataset` table, column whitelist) and `execute_query`
+  (DuckDB over the in-memory pandas frame registered as `dataset`; threaded timeout +
+  row cap; JSON-safe rows). `suggest_chart` deterministically picks a chart type from the
+  result shape. This is the ONLY place SQL executes.
+- **`app/services/sql/proposer.py`** — `generate_sql(question, profile, understanding)`
+  sends the profile (preview stripped) + question to `complete_json` for SQL +
+  explanation + confidence + suggested viz; validates the SQL and falls back to an empty
+  `sql` with `ai_available=False` if unsafe/unavailable (user writes their own).
+- **`app/services/sql/insights.py`** — `generate_insights(...)` best-effort prose on a
+  compact result summary; deterministic templated fallback.
+- **`app/schemas/sql.py`** — `SqlProposal` / `SqlRunRequest` / `SqlResult` /
+  `SqlQueryRecord` / `SqlVisualization` contracts.
+- **`app/models/sql_query.py`** + migration `e6f7a8b9c0d1` — `sql_queries` history table
+  (project/dataset/owner FKs + indexes; stores question/SQL/edited/explanation/viz/
+  insights/result-metadata, not full rows).
+- **`app/api/routes/sql.py`** — `POST /sql/generate` (409 if unprofiled), `POST /sql/run`
+  (validate → 422 on unsafe; execute; persist; return results), `GET /sql/history`
+  (owner-guarded, per-project, `q` ILIKE search), `DELETE /sql/history/{id}`.
+- **Frontend** — `lib/types.ts` / `lib/api.ts` (`sqlApi`), `components/sql-panel.tsx`
+  (ask→edit→execute→results→history, reuses `ChartRenderer` for the suggested viz), and a
+  **SQL** button per profiled dataset in `app/projects/[id]/page.tsx`.
+
+Resolves the "SQL sandbox security considerations pending" known issue: SQL runs only
+against the in-memory frame, never a live DB. Verified: `py_compile`, `pytest` (engine +
+proposer/insights), `tsc`/`next lint`/`next build` all pass; manual TestClient e2e confirms
+409-before-profile, generation, destructive-SQL 422 (no history row), valid run + persist,
+history list + search, delete. The `app/services/sql/` package is the single SQL engine the
+future AI Chat reuses.
+
 ## Future Log Entries
 
 - AI workflow design decisions

@@ -30,6 +30,7 @@ Design: `docs/superpowers/specs/2026-07-16-cleaning-workflow-design.md`
 Design: `docs/superpowers/specs/2026-07-17-eda-visualizations-design.md`
 
 - [x] **M1 — EDA + Visualizations:** deterministic `build_candidates` + best-effort `propose_charts` (fallback), universal `ChartSpec`, `POST/GET/PATCH /eda` (stored on `dataset.eda`), Recharts `ChartRenderer` + accept/reject `eda-panel`, end-to-end verification
+- [x] **M2 — SQL Generation:** Question→SQL loop; `app/services/sql/` single engine (DuckDB read-only sandbox + sqlglot validation, best-effort `generate_sql`/`generate_insights`), `POST/GET/DELETE /sql/{generate,run,history}`, `sql_queries` history table, `sql-panel` (ask→edit→execute→results→history) reusing `ChartRenderer`
 
 **Sprint 0 — Foundations** *(complete)*
 
@@ -66,7 +67,6 @@ Design: `docs/superpowers/specs/2026-07-17-eda-visualizations-design.md`
 ## Known Issues
 
 - OpenRouter API cost management not yet implemented
-- SQL sandbox security considerations pending
 
 ## Future Improvements
 
@@ -101,7 +101,7 @@ for detailed rationale on:
 | AI Understanding | 2026-08-06 | ✅ Complete |
 | Cleaning Workflow | 2026-08-13 | ✅ Complete |
 | EDA + Visualizations | 2026-08-20 | ✅ Complete |
-| SQL Generation | 2026-08-27 | Pending |
+| SQL Generation | 2026-08-27 | ✅ Complete |
 | Insights + Reports | 2026-09-03 | Pending |
 | Dashboard Recommendations | 2026-09-10 | Pending |
 | AI Chat & Notebook | 2026-09-17 | Pending |
