@@ -53,4 +53,7 @@ class Dataset(SQLModel, table=True):
     # downstream workflows. Stage 2 AI interpretation is stored separately.
     profile: dict | None = Field(default=None, sa_column=Column(JSON))
     understanding: dict | None = Field(default=None, sa_column=Column(JSON))
+    # EDA + Visualizations: recommended chart specs (ChartSpec list) produced by
+    # the deterministic EDA engine + AI proposer. NULL until EDA is generated.
+    eda: dict | None = Field(default=None, sa_column=Column(JSON))
     created_at: datetime = Field(default_factory=_now)
