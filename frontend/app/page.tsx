@@ -1,7 +1,7 @@
 import { BarChart3, Database, Sparkles } from "lucide-react";
 
 import { BackendStatus } from "@/components/backend-status";
-import { Button } from "@/components/ui/button";
+import HeroActions from "@/components/hero-actions";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const FEATURES = [
@@ -20,10 +20,7 @@ export default function HomePage() {
           understanding, cleaning, EDA, SQL, visualization, and reporting — while you stay in
           control.
         </p>
-        <div className="flex gap-3">
-          <Button>Get started</Button>
-          <Button variant="outline">View docs</Button>
-        </div>
+        <HeroActions />
         <BackendStatus />
       </section>
 

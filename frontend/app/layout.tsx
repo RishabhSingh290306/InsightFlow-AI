@@ -1,9 +1,21 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Fira_Code, Fira_Sans } from "next/font/google";
 
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
+const firaSans = Fira_Sans({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-fira-sans",
+  display: "swap",
+});
+
+const firaCode = Fira_Code({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-fira-code",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "InsightFlow AI",
@@ -13,7 +25,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>{children}</body>
+      <body className={`${firaSans.variable} ${firaCode.variable} font-sans`}>
+        {children}
+      </body>
     </html>
   );
 }
