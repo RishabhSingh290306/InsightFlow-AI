@@ -25,6 +25,12 @@ Design: `docs/superpowers/specs/2026-07-16-cleaning-workflow-design.md`
 - [x] **M2 — Cleaning engine + registry:** plugin base, registry, v1 operations (missing values, duplicates, type conversion, rename/drop columns), deterministic `preview`
 - [x] **M3 — AI planner + apply + UI:** best-effort `propose_plan` (+ fallback), `apply` (new immutable version + re-profile), PR-style review UI, end-to-end verification
 
+**Sprint 2 — EDA + Visualizations** *(design approved 2026-07-17)*
+
+Design: `docs/superpowers/specs/2026-07-17-eda-visualizations-design.md`
+
+- [x] **M1 — EDA + Visualizations:** deterministic `build_candidates` + best-effort `propose_charts` (fallback), universal `ChartSpec`, `POST/GET/PATCH /eda` (stored on `dataset.eda`), Recharts `ChartRenderer` + accept/reject `eda-panel`, end-to-end verification
+
 **Sprint 0 — Foundations** *(complete)*
 
 - [x] Initialize Next.js 15 project with App Router (Tailwind + ShadCN primitives)
@@ -94,7 +100,7 @@ for detailed rationale on:
 | Dataset Upload | 2026-07-30 | ✅ Complete |
 | AI Understanding | 2026-08-06 | ✅ Complete |
 | Cleaning Workflow | 2026-08-13 | ✅ Complete |
-| EDA + Visualizations | 2026-08-20 | Pending |
+| EDA + Visualizations | 2026-08-20 | ✅ Complete |
 | SQL Generation | 2026-08-27 | Pending |
 | Insights + Reports | 2026-09-03 | Pending |
 | Dashboard Recommendations | 2026-09-10 | Pending |

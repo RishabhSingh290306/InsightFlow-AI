@@ -246,6 +246,35 @@ returns `422` and creates **no** version. `py_compile` + `tsc --noEmit` + `next 
 `next build` all pass. Frontend `.next` cache cleared once (stale vendor chunk) — unrelated
 to the change.
 
+## 2026-07-17 — Sprint 2, M1: EDA + Visualizations (shipped)
+
+Read-only analysis workflow completing the HITL pattern: deterministic backend
+computes facts, AI proposes, human curates. No new dataset version is created.
+
+- **`app/services/eda/engine.py`** — `build_candidates(df, profile)` deterministically
+  builds a candidate `ChartSpec` list: histogram + box per numeric column; bar (+ pie
+  for low-cardinality) per categorical; correlation heatmap + top-K scatter pairs for
+  numeric sets; missingness bar; target relationship chart. All `data` is chart-ready.
+- **`app/services/eda/proposer.py`** — `propose_charts(profile, understanding, candidates)`
+  sends the profile + candidate ids to `complete_json` for prose (title / business
+  question / explanation / recommended_reason / confidence); validates against candidate
+  ids; on any failure falls back to keeping all candidates with templated prose and
+  `ai_available=False`.
+- **`app/schemas/eda.py`** — universal `ChartSpec` (+ `EdaResult`, `EdaAcceptRequest`);
+  the single visualization contract reused by future dashboards/reports/notebook/chat/export.
+- **`app/api/routes/eda.py`** — `POST/GET/PATCH /datasets/{id}/eda`; generate requires a
+  profile (409 otherwise) and stores `EdaResult` on a new nullable `eda` JSON column
+  (migration `d5e6f7a8b9c0`); `PATCH` persists the human's accepted chart ids.
+- **Frontend** — `lib/types.ts` (`ChartSpec`/`EdaResult`/`EdaAcceptRequest`), `lib/api.ts`
+  (`edaApi`), `components/chart-renderer.tsx` (universal Recharts renderer; box + heatmap
+  are custom SVG since Recharts lacks natives), `components/eda-panel.tsx` (accept/reject
+  review), and an **EDA** button per dataset (shown when a profile exists) in
+  `app/projects/[id]/page.tsx`.
+
+Verified: `py_compile`, `pytest` (engine + proposer unit tests), `tsc`/`next lint`/`next
+build` all pass; manual TestClient e2e confirms 409-before-profile, chart generation,
+store/get, and accept persistence.
+
 ## Future Log Entries
 
 - AI workflow design decisions
