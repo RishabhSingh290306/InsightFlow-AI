@@ -20,7 +20,7 @@
 - [x] Set up FastAPI backend with SQLModel
 - [x] Configure Docker Compose for local development (postgres + redis + backend + frontend)
 - [x] Implement basic authentication — email/password JWT (Google OAuth scaffolded, pending backend decision)
-- [ ] Create database schema migrations (Alembic — currently using `create_all` bootstrap)
+- [x] Create database schema migrations (Alembic — `create_all` replaced by versioned migrations run on startup)
 
 ## Next Tasks
 

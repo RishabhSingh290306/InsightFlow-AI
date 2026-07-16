@@ -18,8 +18,9 @@ code needs to change.
 from __future__ import annotations
 
 from collections.abc import Generator
+from pathlib import Path
 
-from sqlmodel import Session, SQLModel, create_engine
+from sqlmodel import Session, create_engine
 
 from app.core.config import settings
 
@@ -30,17 +31,24 @@ engine = create_engine(
     pool_pre_ping=True,
 )
 
+# Root of the backend package (where alembic.ini lives): backend/ is three
+# levels up from backend/app/core/database.py.
+BACKEND_DIR = Path(__file__).resolve().parent.parent.parent
 
-def init_db() -> None:
-    """Create tables from SQLModel metadata.
 
-    Suitable for local/dev bootstrap. Production migrations live in `alembic/`
-    (added when we finalize the backend).
+def run_migrations() -> None:
+    """Apply all Alembic migrations (idempotent — safe to call on every boot).
+
+    This replaces the old `create_all` bootstrap so the schema is always
+    versioned. `env.py` sources the database URL from app settings, so no
+    credentials live in alembic.ini.
     """
-    # Import models so they register on SQLModel.metadata before create_all.
-    from app import models  # noqa: F401
+    from alembic import command
+    from alembic.config import Config
 
-    SQLModel.metadata.create_all(engine)
+    cfg = Config(str(BACKEND_DIR / "alembic.ini"))
+    cfg.set_main_option("script_location", str(BACKEND_DIR / "alembic"))
+    command.upgrade(cfg, "head")
 
 
 def get_session() -> Generator[Session, None, None]:

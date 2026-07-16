@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import auth, projects, users
 from app.core.config import settings
-from app.core.database import init_db
+from app.core.database import run_migrations
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -28,8 +28,8 @@ app.add_middleware(
 
 @app.on_event("startup")
 def on_startup() -> None:
-    # Dev bootstrap: create tables if they don't exist. Production uses Alembic.
-    init_db()
+    # Apply database migrations on boot (idempotent — see app/core/database.py).
+    run_migrations()
 
 
 @app.get("/health", tags=["status"])

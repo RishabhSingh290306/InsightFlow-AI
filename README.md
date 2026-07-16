@@ -95,6 +95,16 @@ cp .env.example .env  # fill in your values
 uvicorn app.main:app --reload
 ```
 
+Migrations run automatically on startup (`alembic upgrade head`), so a fresh
+database is created and versioned with no extra step. To manage them manually:
+
+```bash
+cd backend
+./.venv/Scripts/python.exe -m alembic upgrade head   # apply migrations
+./.venv/Scripts/python.exe -m alembic revision --autogenerate -m "describe change"  # new migration
+./.venv/Scripts/python.exe -m alembic history         # show applied versions
+```
+
 ### Frontend Setup
 
 ```bash
