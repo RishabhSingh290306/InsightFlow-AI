@@ -131,6 +131,7 @@ class SqlProposal(BaseModel):          # response from POST /sql/generate
 class SqlRunRequest(BaseModel):       # body for POST /sql/run
     dataset_id: int
     sql: str
+    edited: bool = False              # True if the user modified the AI-generated SQL
     business_question: str | None = None
     explanation: str | None = None
     suggested_visualization: SqlVisualization | None = None
@@ -204,7 +205,7 @@ project." Owner-guarded: a user only sees their own queries.
 | Method | Path | Purpose |
 |--------|------|---------|
 | `POST` | `/sql/generate` | Body `{dataset_id, question}`. Owner-guarded; 409 if dataset unprofiled. Returns `SqlProposal` (best-effort; `sql` may be empty + `ai_available=False`). |
-| `POST` | `/sql/run` | Body `SqlRunRequest`. Owner-guarded. `validate_sql` → 422 on unsafe/invalid; `execute_query` under timeout; `generate_insights` (best-effort); persist a `SqlQueryRecord`; return `SqlResult` (incl. `persisted_id`). |
+| `POST` | `/sql/run` | Body `SqlRunRequest`. Owner-guarded. `validate_sql` → 422 on unsafe/invalid; `execute_query` under timeout; `generate_insights` (best-effort); persist a `SqlQueryRecord` (using `edited` to mark manual changes); return `SqlResult` (incl. `persisted_id`). |
 | `GET`  | `/sql/history` | Query params `project_id` (required), `dataset_id?`, `q?`. Owner-guarded list (newest first), optional `q` ILIKE search. |
 | `DELETE` | `/sql/history/{id}` | Owner-guarded delete of a history row (404 if not found / not owned). |
 
