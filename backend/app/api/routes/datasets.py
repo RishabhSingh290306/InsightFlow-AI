@@ -19,6 +19,8 @@ from app.db import Repository
 from app.models.dataset import Dataset
 from app.models.project import Project
 from app.schemas.dataset import DatasetRead
+from app.services.dataset_profiling import profile_dataset
+from app.services.dataset_understanding import understand_dataset
 
 router = APIRouter(prefix="/datasets", tags=["datasets"])
 
@@ -138,3 +140,36 @@ def delete_dataset(dataset_id: int, session: SessionDep, current_user: CurrentUs
     dataset = _get_owned(dataset_id, session, current_user)
     get_storage().delete(dataset.storage_path)
     Repository(Dataset, session).delete(dataset)
+
+
+@router.post("/{dataset_id}/understand", response_model=DatasetRead)
+async def analyze_dataset(
+    dataset_id: int, session: SessionDep, current_user: CurrentUser
+) -> Dataset:
+    """Run the two-stage understanding workflow.
+
+    Stage 1 (profiling) always runs and is persisted. Stage 2 (AI
+    interpretation) is best-effort: on any LLM failure the dataset keeps its
+    profile and a deterministic fallback understanding — never a 5xx.
+    """
+    dataset = _get_owned(dataset_id, session, current_user)
+    storage = get_storage()
+
+    # Stage 1 — deterministic facts (single source of truth).
+    profile = profile_dataset(
+        storage, dataset.storage_path, dataset.original_filename, dataset.file_format
+    )
+    dataset.profile = profile.model_dump(mode="json")
+    dataset.status = "profiled"
+    session.add(dataset)
+    session.commit()
+    session.refresh(dataset)
+
+    # Stage 2 — AI interpretation of the profile (best-effort).
+    understanding = await understand_dataset(profile)
+    dataset.understanding = understanding.model_dump(mode="json")
+    dataset.status = "understood" if understanding.ai_available else "profiled"
+    session.add(dataset)
+    session.commit()
+    session.refresh(dataset)
+    return dataset

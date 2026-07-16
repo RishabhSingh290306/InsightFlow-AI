@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
+from sqlalchemy import Column, JSON
 from sqlmodel import Field, SQLModel
 
 
@@ -34,4 +35,8 @@ class Dataset(SQLModel, table=True):
     column_count: int | None = None
     status: str = "uploaded"
     version: int = 1
+    # Stage 1 facts (deterministic profiling) — single source of truth for
+    # downstream workflows. Stage 2 AI interpretation is stored separately.
+    profile: dict | None = Field(default=None, sa_column=Column(JSON))
+    understanding: dict | None = Field(default=None, sa_column=Column(JSON))
     created_at: datetime = Field(default_factory=_now)

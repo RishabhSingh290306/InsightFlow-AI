@@ -3,7 +3,17 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Database, LogOut, Trash2, Upload } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  ChevronDown,
+  Database,
+  LogOut,
+  Sparkles,
+  Table as TableIcon,
+  Trash2,
+  Upload,
+} from "lucide-react";
 
 import { datasetsApi, projectsApi } from "@/lib/api";
 import { clearToken, getToken } from "@/lib/auth";
@@ -25,6 +35,19 @@ function formatSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+const STATUS_STYLES: Record<string, string> = {
+  uploaded: "bg-secondary text-secondary-foreground",
+  profiled: "bg-accent text-accent-foreground",
+  understood: "bg-primary text-primary-foreground",
+};
+
+function StatusBadge({ status }: { status: string }) {
+  const cls = STATUS_STYLES[status] ?? "bg-secondary text-secondary-foreground";
+  return (
+    <span className={`rounded px-1.5 py-0.5 text-xs font-medium ${cls}`}>{status}</span>
+  );
+}
+
 export default function ProjectWorkspacePage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
@@ -35,6 +58,8 @@ export default function ProjectWorkspacePage() {
   const [loading, setLoading] = useState(true);
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [analyzing, setAnalyzing] = useState<Set<number>>(new Set());
+  const [expanded, setExpanded] = useState<Set<number>>(new Set());
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -70,14 +95,31 @@ export default function ProjectWorkspacePage() {
     try {
       await datasetsApi.upload(projectId, file);
       setFile(null);
-      if (document.getElementById("dataset-file") instanceof HTMLInputElement) {
-        (document.getElementById("dataset-file") as HTMLInputElement).value = "";
-      }
+      const input = document.getElementById("dataset-file") as HTMLInputElement | null;
+      if (input) input.value = "";
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setUploading(false);
+    }
+  }
+
+  async function onAnalyze(id: number) {
+    setError(null);
+    setAnalyzing((prev) => new Set(prev).add(id));
+    try {
+      await datasetsApi.analyze(id);
+      await load();
+      setExpanded((prev) => new Set(prev).add(id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Analysis failed");
+    } finally {
+      setAnalyzing((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
     }
   }
 
@@ -89,6 +131,15 @@ export default function ProjectWorkspacePage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Delete failed");
     }
+  }
+
+  function toggleExpanded(id: number) {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   }
 
   function logout() {
@@ -116,7 +167,7 @@ export default function ProjectWorkspacePage() {
             {project ? project.name : `Project #${params.id}`}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Upload datasets (CSV or Excel) to start analyzing.
+            Upload datasets (CSV or Excel) and let AI profile them.
           </p>
         </div>
       </header>
@@ -156,39 +207,207 @@ export default function ProjectWorkspacePage() {
               </CardContent>
             </Card>
           ) : (
-            datasets.map((d) => (
-              <Card key={d.id}>
-                <CardHeader>
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex flex-col gap-1">
-                      <CardTitle className="text-lg">
-                        {d.original_filename}
-                        <span className="ml-2 rounded bg-secondary px-1.5 py-0.5 text-xs font-medium text-secondary-foreground">
-                          v{d.version}
-                        </span>
-                      </CardTitle>
-                      <CardDescription>
-                        {d.file_format.toUpperCase()} · {formatSize(d.file_size)}
-                        {d.row_count !== null && d.column_count !== null
-                          ? ` · ${d.row_count} rows × ${d.column_count} cols`
-                          : " · metadata pending"}
-                      </CardDescription>
+            datasets.map((d) => {
+              const isOpen = expanded.has(d.id);
+              const isAnalyzing = analyzing.has(d.id);
+              return (
+                <Card key={d.id}>
+                  <CardHeader>
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex flex-col gap-1">
+                        <CardTitle className="flex flex-wrap items-center gap-2 text-lg">
+                          {d.original_filename}
+                          <span className="rounded bg-secondary px-1.5 py-0.5 text-xs font-medium text-secondary-foreground">
+                            v{d.version}
+                          </span>
+                          <StatusBadge status={d.status} />
+                        </CardTitle>
+                        <CardDescription>
+                          {d.file_format.toUpperCase()} · {formatSize(d.file_size)}
+                          {d.row_count !== null && d.column_count !== null
+                            ? ` · ${d.row_count} rows × ${d.column_count} cols`
+                            : " · metadata pending"}
+                        </CardDescription>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label="Delete dataset"
+                          onClick={() => onDelete(d.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label="Delete dataset"
-                      onClick={() => onDelete(d.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardHeader>
-              </Card>
-            ))
+                    <div className="flex gap-2 pt-1">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => onAnalyze(d.id)}
+                        disabled={isAnalyzing}
+                      >
+                        <Sparkles className="h-4 w-4" />
+                        {isAnalyzing ? "Analyzing…" : d.understanding ? "Re-analyze" : "Analyze"}
+                      </Button>
+                      {(d.profile || d.understanding) && (
+                        <Button size="sm" variant="ghost" onClick={() => toggleExpanded(d.id)}>
+                          <ChevronDown
+                            className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
+                          />
+                          {isOpen ? "Hide" : "View analysis"}
+                        </Button>
+                      )}
+                    </div>
+                  </CardHeader>
+                  {isOpen && (d.profile || d.understanding) && (
+                    <CardContent className="flex flex-col gap-4 border-t pt-4">
+                      {d.profile && <ProfileView profile={d.profile} />}
+                      {d.understanding && <UnderstandingView understanding={d.understanding} />}
+                    </CardContent>
+                  )}
+                </Card>
+              );
+            })
           )}
         </div>
       </section>
     </main>
+  );
+}
+
+function ProfileView({ profile }: { profile: import("@/lib/types").DatasetProfile }) {
+  return (
+    <div className="flex flex-col gap-3">
+      <h3 className="text-sm font-semibold">Profile</h3>
+      <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+        <span>{profile.row_count} rows</span>
+        <span>·</span>
+        <span>{profile.column_count} columns</span>
+        <span>·</span>
+        <span>{profile.null_percentage}% null</span>
+        <span>·</span>
+        <span>{profile.duplicate_row_count} duplicates</span>
+        {profile.potential_target_column && (
+          <>
+            <span>·</span>
+            <span>target: {profile.potential_target_column}</span>
+          </>
+        )}
+      </div>
+
+      {profile.data_quality_issues.length > 0 && (
+        <ul className="flex flex-col gap-1">
+          {profile.data_quality_issues.map((issue, i) => (
+            <li key={i} className="flex items-start gap-2 text-sm text-destructive">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>{issue}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <div className="overflow-x-auto rounded-md border">
+        <table className="w-full text-left text-xs">
+          <thead className="bg-muted text-muted-foreground">
+            <tr>
+              {profile.column_names.map((c) => (
+                <th key={c} className="px-2 py-1 font-medium">
+                  {c}
+                  <span className="ml-1 text-[10px] text-muted-foreground">
+                    {profile.inferred_types[c] ?? ""}
+                  </span>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {profile.preview.map((row, i) => (
+              <tr key={i} className="border-t">
+                {profile.column_names.map((c) => (
+                  <td key={c} className="px-2 py-1">
+                    {row[c] === null || row[c] === undefined ? (
+                      <span className="text-muted-foreground">∅</span>
+                    ) : (
+                      String(row[c])
+                    )}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Showing first {profile.preview.length} rows.
+      </p>
+    </div>
+  );
+}
+
+function UnderstandingView({
+  understanding,
+}: {
+  understanding: import("@/lib/types").DatasetUnderstanding;
+}) {
+  if (!understanding.ai_available) {
+    return (
+      <div className="flex items-start gap-2 rounded-md border border-dashed p-3 text-sm text-muted-foreground">
+        <Sparkles className="mt-0.5 h-4 w-4 shrink-0" />
+        <span>{understanding.data_quality_summary}</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      <h3 className="text-sm font-semibold">AI Insights</h3>
+      <p className="text-sm">{understanding.dataset_description}</p>
+      <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+        <span>Domain: {understanding.business_domain_guess}</span>
+        <span>·</span>
+        <span>Use case: {understanding.likely_use_case}</span>
+        {understanding.possible_target_column && (
+          <>
+            <span>·</span>
+            <span>Target: {understanding.possible_target_column}</span>
+          </>
+        )}
+        <span>·</span>
+        <span>Confidence: {(understanding.confidence_score * 100).toFixed(0)}%</span>
+      </div>
+
+      <Section title="Data quality" items={[understanding.data_quality_summary]} />
+      <Section title="Cleaning recommendations" items={understanding.cleaning_recommendations} />
+      <Section title="Suggested visualizations" items={understanding.suggested_visualizations} />
+      <Section
+        title="Suggested business questions"
+        items={understanding.suggested_business_questions}
+      />
+      {understanding.initial_business_observations.length > 0 && (
+        <Section
+          title="Initial observations"
+          items={understanding.initial_business_observations}
+        />
+      )}
+    </div>
+  );
+}
+
+function Section({ title, items }: { title: string; items: string[] }) {
+  if (items.length === 0) return null;
+  return (
+    <div className="flex flex-col gap-1">
+      <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        {title}
+      </h4>
+      <ul className="flex flex-col gap-1">
+        {items.map((item, i) => (
+          <li key={i} className="text-sm">
+            • {item}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }

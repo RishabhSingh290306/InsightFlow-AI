@@ -139,4 +139,7 @@ export const datasetsApi = {
   remove(id: number): Promise<void> {
     return request<void>(`/api/v1/datasets/${id}`, { method: "DELETE" });
   },
+  analyze(id: number): Promise<DatasetRead> {
+    return request<DatasetRead>(`/api/v1/datasets/${id}/understand`, { method: "POST" });
+  },
 };

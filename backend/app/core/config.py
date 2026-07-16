@@ -52,6 +52,7 @@ class Settings(BaseSettings):
     # OpenRouter (provider-agnostic AI access)
     OPENROUTER_API_KEY: str = ""
     OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
+    OPENROUTER_MODEL: str = "openai/gpt-4o-mini"  # default; override via env
 
     # Supabase (only used if we switch to Supabase as the backend)
     SUPABASE_URL: str = ""

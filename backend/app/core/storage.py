@@ -36,6 +36,10 @@ class StorageAdapter(abc.ABC):
     def delete(self, storage_path: str) -> None:
         """Remove the file at `storage_path`, ignoring missing files."""
 
+    @abc.abstractmethod
+    def read(self, storage_path: str) -> bytes:
+        """Return the raw bytes of the file at `storage_path`."""
+
 
 class LocalStorageAdapter(StorageAdapter):
     """Stores files on the local filesystem under ``settings.DATA_DIR``.
@@ -59,6 +63,9 @@ class LocalStorageAdapter(StorageAdapter):
     def delete(self, storage_path: str) -> None:
         path = self.root / storage_path
         path.unlink(missing_ok=True)
+
+    def read(self, storage_path: str) -> bytes:
+        return (self.root / storage_path).read_bytes()
 
 
 _storage: StorageAdapter | None = None

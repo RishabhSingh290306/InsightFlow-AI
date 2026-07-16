@@ -18,4 +18,6 @@ class DatasetRead(BaseModel):
     column_count: int | None
     status: str
     version: int
+    profile: dict | None = None
+    understanding: dict | None = None
     created_at: datetime
