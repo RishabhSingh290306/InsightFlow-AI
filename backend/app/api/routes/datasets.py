@@ -114,7 +114,15 @@ async def upload_dataset(
         column_count=cols,
         version=version,
     )
-    return Repository(Dataset, session).create(dataset)
+    created = Repository(Dataset, session).create(dataset)
+    # The upload is the root of its own lineage: root_id points at itself,
+    # parent_id stays NULL. Derived versions (cleaning/SQL/etc.) set these to
+    # link back along the chain instead.
+    created.root_id = created.id
+    session.add(created)
+    session.commit()
+    session.refresh(created)
+    return created
 
 
 @router.get("/projects/{project_id}", response_model=list[DatasetRead])
@@ -133,6 +141,25 @@ def list_datasets(
 @router.get("/{dataset_id}", response_model=DatasetRead)
 def read_dataset(dataset_id: int, session: SessionDep, current_user: CurrentUser) -> Dataset:
     return _get_owned(dataset_id, session, current_user)
+
+
+@router.get("/{dataset_id}/lineage", response_model=list[DatasetRead])
+def dataset_lineage(
+    dataset_id: int, session: SessionDep, current_user: CurrentUser
+) -> list[Dataset]:
+    """Return the full version chain for this dataset's lineage, ordered by version.
+
+    The chain is the set of `Dataset` rows sharing the same `root_id` (the original
+    upload). Owner-guarded: only the dataset owner can read its lineage.
+    """
+    dataset = _get_owned(dataset_id, session, current_user)
+    root = dataset.root_id or dataset.id
+    stmt = (
+        select(Dataset)
+        .where(Dataset.root_id == root)
+        .order_by(Dataset.version)
+    )
+    return list(session.exec(stmt).all())
 
 
 @router.delete("/{dataset_id}", status_code=status.HTTP_204_NO_CONTENT)

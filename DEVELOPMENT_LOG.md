@@ -148,6 +148,28 @@ infra/          # Terraform / deployment
 tests/          # Test suite
 ```
 
+## 2026-07-16 — Sprint 1, M1: Versioning Foundation (shipped)
+
+Implemented the immutable, Git-like lineage graph that every future data-producing
+workflow (cleaning, feature engineering, SQL, manual edits) reuses.
+
+- **Migration** (`c4d5e6f7a8b9`, on `b2c3d4e5f60`): added `parent_id`, `root_id`
+  (indexed, self-FK), `origin` (default `'upload'`), `recipe` (JSON) to `datasets`,
+  plus a data backfill setting `root_id = id` for all existing uploads.
+- **Model/Schema**: `Dataset` and `DatasetRead` carry the four lineage fields.
+- **Upload**: now stamps `root_id = id` (own lineage root), `parent_id = NULL`,
+  `origin = 'upload'`. Derived versions (cleaning/SQL) set these to link the chain.
+- **`GET /api/v1/datasets/{id}/lineage`**: owner-guarded, returns the shared-root
+  version chain ordered by `version`.
+- **Frontend**: `DatasetRead` typed with lineage fields; `datasetsApi.lineage(id)`;
+  project workspace gets a **History** toggle rendering the version chain
+  (`v{n} · Original/Cleaned · status`), with the currently viewed dataset highlighted.
+
+Verified end-to-end via Alembic upgrade + a TestClient round-trip (register →
+project → upload → assert `root_id==id`/`parent_id==None`/`origin='upload'` →
+`GET /lineage` → cleanup). `npm run lint` + `npm run build` pass. Frontend `.next`
+cache had to be cleared once (stale vendor chunk) — unrelated to the change.
+
 ## Future Log Entries
 
 - AI workflow design decisions

@@ -142,4 +142,8 @@ export const datasetsApi = {
   analyze(id: number): Promise<DatasetRead> {
     return request<DatasetRead>(`/api/v1/datasets/${id}/understand`, { method: "POST" });
   },
+  // Version chain (shared root_id) for the dataset's lineage, ordered by version.
+  lineage(id: number): Promise<DatasetRead[]> {
+    return request<DatasetRead[]>(`/api/v1/datasets/${id}/lineage`);
+  },
 };

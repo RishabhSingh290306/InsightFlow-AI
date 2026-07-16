@@ -36,6 +36,10 @@ export interface DatasetRead {
   column_count: number | null;
   status: string;
   version: number;
+  parent_id: number | null;
+  root_id: number | null;
+  origin: string;
+  recipe: Record<string, unknown> | null;
   profile: DatasetProfile | null;
   understanding: DatasetUnderstanding | null;
   created_at: string;

@@ -18,6 +18,10 @@ class DatasetRead(BaseModel):
     column_count: int | None
     status: str
     version: int
+    parent_id: int | None = None
+    root_id: int | None = None
+    origin: str = "upload"
+    recipe: dict | None = None
     profile: dict | None = None
     understanding: dict | None = None
     created_at: datetime

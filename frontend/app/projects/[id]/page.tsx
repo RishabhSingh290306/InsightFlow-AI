@@ -60,6 +60,8 @@ export default function ProjectWorkspacePage() {
   const [uploading, setUploading] = useState(false);
   const [analyzing, setAnalyzing] = useState<Set<number>>(new Set());
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
+  const [history, setHistory] = useState<Set<number>>(new Set());
+  const [historyData, setHistoryData] = useState<Record<number, DatasetRead[]>>({});
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -131,6 +133,30 @@ export default function ProjectWorkspacePage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Delete failed");
     }
+  }
+
+  async function onShowHistory(id: number) {
+    if (history.has(id)) {
+      toggleHistory(id);
+      return;
+    }
+    setError(null);
+    try {
+      const chain = await datasetsApi.lineage(id);
+      setHistoryData((prev) => ({ ...prev, [id]: chain }));
+      toggleHistory(id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load version history");
+    }
+  }
+
+  function toggleHistory(id: number) {
+    setHistory((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   }
 
   function toggleExpanded(id: number) {
@@ -258,12 +284,46 @@ export default function ProjectWorkspacePage() {
                           {isOpen ? "Hide" : "View analysis"}
                         </Button>
                       )}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => onShowHistory(d.id)}
+                      >
+                        History
+                      </Button>
                     </div>
                   </CardHeader>
                   {isOpen && (d.profile || d.understanding) && (
                     <CardContent className="flex flex-col gap-4 border-t pt-4">
                       {d.profile && <ProfileView profile={d.profile} />}
                       {d.understanding && <UnderstandingView understanding={d.understanding} />}
+                    </CardContent>
+                  )}
+                  {history.has(d.id) && (
+                    <CardContent className="flex flex-col gap-2 border-t pt-4">
+                      <h3 className="text-sm font-semibold">Version history</h3>
+                      <ol className="flex flex-col gap-1">
+                        {(historyData[d.id] ?? []).map((v) => (
+                          <li
+                            key={v.id}
+                            className={`flex flex-wrap items-center gap-2 rounded-md border px-3 py-2 text-sm ${
+                              v.id === d.id ? "border-primary bg-primary/5" : ""
+                            }`}
+                          >
+                            <span className="rounded bg-secondary px-1.5 py-0.5 text-xs font-medium text-secondary-foreground">
+                              v{v.version}
+                            </span>
+                            <span className="font-medium">
+                              {v.origin === "upload" ? "Original" : "Cleaned"}
+                            </span>
+                            <span className="text-muted-foreground">{v.original_filename}</span>
+                            <StatusBadge status={v.status} />
+                            {v.id === d.id && (
+                              <span className="text-xs text-muted-foreground">· viewing</span>
+                            )}
+                          </li>
+                        ))}
+                      </ol>
                     </CardContent>
                   )}
                 </Card>
