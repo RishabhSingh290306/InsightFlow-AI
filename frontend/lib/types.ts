@@ -405,7 +405,7 @@ export interface ChatTurn {
   content: string;
   actions: ChatArtifact[];
   parent_id?: string | null;
-  created_at: string;
+  created_at?: string;
   _streaming?: boolean; // transient UI flag (stripped before persistence; backend builds its own turns)
 }
 
