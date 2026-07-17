@@ -243,7 +243,7 @@ All owner-guarded (require auth + ownership) **except** the share endpoint.
 | `GET`  | `/reports/{id}` | Fetch one report (owner-guarded). |
 | `PATCH`| `/reports/{id}` | Edit: replace `sections` (reorder/remove/rename/edit text/add custom). Owner-guarded. Updates `updated_at`. |
 | `DELETE`| `/reports/{id}` | Delete (owner-guarded). |
-| `GET`  | `/reports/{id}/export?format=pdf|markdown` | Returns the rendered document (owner-guarded). |
+| `GET`  | `/reports/{id}/export?format=pdf\|markdown` | Owner-guarded. `format=markdown` returns the `.md` file; `format=pdf` returns the print-ready HTML (the browser prints it client-side via the print stylesheet — no server-side PDF dependency). |
 | `GET`  | `/api/v1/reports/share/{token}` | **Public, unauthenticated, read-only.** Returns *only* the report's own fields (`sections`, `title`, `scope`, `generated_at`, `ai_available`). No owner PII, no linked mutation. |
 
 Security note: the share route is the only publicly reachable report route. It performs no
