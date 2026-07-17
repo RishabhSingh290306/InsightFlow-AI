@@ -32,6 +32,7 @@ import {
 import { CleaningPanel } from "@/components/cleaning-panel";
 import { EdaPanel } from "@/components/eda-panel";
 import { SqlPanel } from "@/components/sql-panel";
+import { ChatPanel } from "@/components/chat-panel";
 
 const ACCEPTED = ".csv,.xlsx,.xls";
 
@@ -73,6 +74,8 @@ export default function ProjectWorkspacePage() {
   const [sqlId, setSqlId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [reporting, setReporting] = useState<number | null>(null);
+  const [chatId, setChatId] = useState<number | null>(null);
+  const [chatDataset, setChatDataset] = useState<DatasetRead | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -235,6 +238,10 @@ export default function ProjectWorkspacePage() {
             <LayoutDashboard className="h-4 w-4" />
             Dashboard
           </Button>
+          <Button size="sm" variant="outline" onClick={() => { setChatDataset(null); setChatId(null); }}>
+            <Sparkles className="h-4 w-4" />
+            Chat
+          </Button>
           <Button variant="outline" size="sm" onClick={logout}>
             <LogOut className="h-4 w-4" />
             Sign out
@@ -393,6 +400,16 @@ export default function ProjectWorkspacePage() {
                           Dashboard
                         </Button>
                       )}
+                      {d.profile && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => { setChatDataset(d); setChatId(null); }}
+                        >
+                          <Sparkles className="h-4 w-4" />
+                          Chat
+                        </Button>
+                      )}
                     </div>
                   </CardHeader>
                   {isOpen && (d.profile || d.understanding) && (
@@ -456,6 +473,16 @@ export default function ProjectWorkspacePage() {
           onClose={() => setSqlId(null)}
         />
       )}
+
+      {chatId !== null || chatDataset !== null ? (
+        <ChatPanel
+          projectId={projectId}
+          dataset={chatDataset}
+          notebookId={chatId}
+          onNotebookCreated={(id) => setChatId(id)}
+          onClose={() => { setChatId(null); setChatDataset(null); }}
+        />
+      ) : null}
     </main>
   );
 }
