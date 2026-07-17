@@ -241,3 +241,67 @@ export interface SqlQueryRecord {
   executed_at: string;
   parent_query_id: number | null;
 }
+
+// --- Insights + Reports ---------------------------------------------------
+
+export type SectionType =
+  | "cover"
+  | "executive_summary"
+  | "dataset_overview"
+  | "data_quality"
+  | "cleaning_summary"
+  | "eda"
+  | "sql_analysis"
+  | "business_insights"
+  | "recommendations"
+  | "appendix"
+  | "custom";
+
+export interface SectionBlock {
+  kind: "prose" | "chart" | "sql" | "table" | "lineage" | "custom_note";
+  text?: string | null;
+  ref_id?: string | null;
+  payload: Record<string, unknown>;
+}
+
+export interface ReportSection {
+  id: string;
+  type: SectionType;
+  title: string;
+  blocks: SectionBlock[];
+}
+
+export interface ReportRead {
+  id: number;
+  project_id: number;
+  owner_id: number;
+  scope: string;
+  dataset_id: number | null;
+  title: string;
+  sections: ReportSection[];
+  share_token: string;
+  ai_available: boolean;
+  created_at: string;
+  updated_at: string;
+  generated_at: string;
+}
+
+export interface ReportShareRead {
+  title: string;
+  scope: string;
+  sections: ReportSection[];
+  ai_available: boolean;
+  generated_at: string;
+}
+
+export interface ReportGenerateRequest {
+  scope: "dataset" | "project";
+  project_id?: number | null;
+  dataset_id?: number | null;
+  title?: string | null;
+}
+
+export interface ReportUpdateRequest {
+  title?: string | null;
+  sections: ReportSection[];
+}

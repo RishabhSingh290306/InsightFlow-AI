@@ -9,6 +9,10 @@ import type {
   EdaAcceptRequest,
   EdaResult,
   ProjectCreate,
+  ReportGenerateRequest,
+  ReportRead,
+  ReportShareRead,
+  ReportUpdateRequest,
   ProjectRead,
   SqlGenerateRequest,
   SqlProposal,
@@ -228,5 +232,45 @@ export const sqlApi = {
   },
   remove(id: number): Promise<void> {
     return request<void>(`/api/v1/sql/history/${id}`, { method: "DELETE" });
+  },
+};
+
+export const reportsApi = {
+  generate(req: ReportGenerateRequest): Promise<ReportRead> {
+    return request<ReportRead>("/api/v1/reports/generate", {
+      method: "POST",
+      body: JSON.stringify(req),
+    });
+  },
+  list(projectId: number): Promise<ReportRead[]> {
+    return request<ReportRead[]>(`/api/v1/reports?project_id=${projectId}`);
+  },
+  get(id: number): Promise<ReportRead> {
+    return request<ReportRead>(`/api/v1/reports/${id}`);
+  },
+  update(id: number, body: ReportUpdateRequest): Promise<ReportRead> {
+    return request<ReportRead>(`/api/v1/reports/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    });
+  },
+  remove(id: number): Promise<void> {
+    return request<void>(`/api/v1/reports/${id}`, { method: "DELETE" });
+  },
+  async exportMarkdown(id: number): Promise<void> {
+    const res = await fetch(`${BASE}/api/v1/reports/${id}/export?format=markdown`, {
+      headers: { Authorization: `Bearer ${getToken() ?? ""}` },
+    });
+    if (!res.ok) throw new ApiError(res.status, "Export failed");
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "report.md";
+    a.click();
+    URL.revokeObjectURL(url);
+  },
+  share(token: string): Promise<ReportShareRead> {
+    return request<ReportShareRead>(`/api/v1/reports/share/${token}`);
   },
 };
