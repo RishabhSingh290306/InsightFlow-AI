@@ -5,6 +5,8 @@ import { ArrowDown, ArrowUp, Eye, EyeOff, RefreshCw, Save, Trash2 } from "lucide
 import type { CatalogEntry, DashboardDetailRead, DashboardPatchRequest, DashboardView } from "@/lib/types";
 import { dashboardsApi } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { DashboardRenderer } from "@/components/dashboard-renderer";
 
 /**
@@ -44,6 +46,8 @@ export function DashboardEditor({
   const [notes, setNotes] = useState<Record<string, string>>(dashboard.spec.user_notes ?? {});
   const [saving, setSaving] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
   // Display order: the human's order, restricted to widgets that exist, with
@@ -126,21 +130,24 @@ export function DashboardEditor({
     }
   }
 
-  async function del() {
-    if (!confirm("Delete this dashboard? This cannot be undone.")) return;
+  async function confirmRemove() {
+    setDeleting(true);
+    setMsg(null);
     try {
       await dashboardsApi.remove(dashboard.id);
       onDeleted?.();
     } catch {
       setMsg("Delete failed.");
+      setDeleting(false);
+      setConfirmDelete(false);
     }
   }
 
   return (
     <div className="flex flex-col gap-6">
       <div className="no-print flex flex-wrap items-center gap-2">
-        <input
-          className="rounded border px-2 py-1 text-sm"
+        <Input
+          className="h-8 w-64 text-sm"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           aria-label="Dashboard title"
@@ -151,7 +158,7 @@ export function DashboardEditor({
         <Button size="sm" variant="outline" onClick={regenerate} disabled={regenerating}>
           <RefreshCw className="h-4 w-4" /> {regenerating ? "Regenerating…" : "Regenerate"}
         </Button>
-        <Button size="sm" variant="ghost" onClick={del}>
+        <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(true)} disabled={deleting}>
           <Trash2 className="h-4 w-4" /> Delete
         </Button>
         {msg && <span className="text-xs text-muted-foreground">{msg}</span>}
@@ -215,6 +222,16 @@ export function DashboardEditor({
       <div className="rounded-md border p-4">
         <DashboardRenderer view={previewView} />
       </div>
+
+      <ConfirmDialog
+        open={confirmDelete}
+        title="Delete this dashboard?"
+        description="This permanently removes the dashboard and its configuration. This cannot be undone."
+        confirmLabel={deleting ? "Deleting…" : "Delete dashboard"}
+        destructive
+        onConfirm={confirmRemove}
+        onCancel={() => !deleting && setConfirmDelete(false)}
+      />
     </div>
   );
 }

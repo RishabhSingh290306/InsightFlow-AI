@@ -27,6 +27,10 @@ import type {
   SqlRunRequest,
   Token,
   UserRead,
+  ChatMessageRequest,
+  NotebookRead,
+  NotebookDetailRead,
+  NotebookShareRead,
 } from "@/lib/types";
 
 /**
@@ -315,5 +319,85 @@ export const dashboardsApi = {
   },
   remove(id: number): Promise<void> {
     return request<void>(`/api/v1/dashboards/${id}`, { method: "DELETE" });
+  },
+};
+
+export interface SSEEvent {
+  event: string; // token | artifact | done | error
+  data: Record<string, unknown>;
+}
+
+export const chatApi = {
+  /** POST /chat/message as SSE. Calls onEvent for each server event, resolves on stream end. */
+  async message(
+    req: ChatMessageRequest,
+    onEvent: (e: SSEEvent) => void,
+    signal?: AbortSignal,
+  ): Promise<void> {
+    const token = getToken();
+    const res = await fetch(`${BASE}/api/v1/chat/message`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(req),
+      signal,
+    });
+    if (!res.ok || !res.body) {
+      throw new ApiError(res.status, `Chat failed (${res.status})`);
+    }
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      // SSE frames are separated by a blank line.
+      let sep: number;
+      while ((sep = buffer.indexOf("\n\n")) !== -1) {
+        const frame = buffer.slice(0, sep);
+        buffer = buffer.slice(sep + 2);
+        let event = "message";
+        const dataLines: string[] = [];
+        for (const line of frame.split("\n")) {
+          if (line.startsWith("event:")) event = line.slice(6).trim();
+          else if (line.startsWith("data:")) dataLines.push(line.slice(5).trim());
+        }
+        try {
+          onEvent({ event, data: JSON.parse(dataLines.join("")) });
+        } catch {
+          /* ignore malformed frame */
+        }
+      }
+    }
+  },
+};
+
+export const notebooksApi = {
+  list(projectId: number): Promise<NotebookRead[]> {
+    return request<NotebookRead[]>(`/api/v1/chat/notebooks?project_id=${projectId}`);
+  },
+  create(req: { scope: string; project_id: number; dataset_id?: number | null; title?: string | null }): Promise<NotebookRead> {
+    return request<NotebookRead>("/api/v1/chat/notebooks", {
+      method: "POST",
+      body: JSON.stringify(req),
+    });
+  },
+  get(id: number): Promise<NotebookDetailRead> {
+    return request<NotebookDetailRead>(`/api/v1/chat/notebooks/${id}`);
+  },
+  update(id: number, body: { title?: string | null }): Promise<NotebookRead> {
+    return request<NotebookRead>(`/api/v1/chat/notebooks/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    });
+  },
+  remove(id: number): Promise<void> {
+    return request<void>(`/api/v1/chat/notebooks/${id}`, { method: "DELETE" });
+  },
+  share(token: string): Promise<NotebookShareRead> {
+    return request<NotebookShareRead>(`/api/v1/chat/notebooks/share/${token}`);
   },
 };

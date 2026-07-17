@@ -7,7 +7,7 @@ from __future__ import annotations
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import auth, cleaning, dashboards, datasets, eda, projects, reports, sql, users
+from app.api.routes import auth, chat, cleaning, dashboards, datasets, eda, projects, reports, sql, users
 from app.core.config import settings
 from app.core.database import run_migrations
 
@@ -48,3 +48,4 @@ app.include_router(eda.router, prefix=API_PREFIX)
 app.include_router(sql.router, prefix=API_PREFIX)
 app.include_router(reports.router, prefix=API_PREFIX)
 app.include_router(dashboards.router, prefix=API_PREFIX)
+app.include_router(chat.router, prefix=API_PREFIX)

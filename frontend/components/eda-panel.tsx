@@ -73,8 +73,16 @@ export function EdaPanel({ dataset, onClose }: { dataset: DatasetRead; onClose: 
   const acceptedCount = result ? result.charts.filter((c) => c.accepted).length : 0;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 py-10">
-      <Card className="w-full max-w-3xl">
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 py-10"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Escape") onClose();
+      }}
+    >
+      <Card role="dialog" aria-modal="true" aria-label={`EDA · ${dataset.original_filename}`} tabIndex={-1} className="w-full max-w-3xl">
         <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
           <div className="flex flex-col gap-1">
             <CardTitle className="flex items-center gap-2 text-lg">

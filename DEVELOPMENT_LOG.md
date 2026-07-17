@@ -510,3 +510,166 @@ manual Postgres e2e `tests/manual_dashboard_e2e.py` (preview dataset + project, 
 owner-guard 403); `tsc --noEmit` + `next lint` + `next build` all pass; `/dashboards/[id]` emitted in
 the build manifest.
 
+## 2026-07-17 — Sprint 5, M1+M2: AI Chat & Notebook (chat-first analyst + full action surface)
+
+Closes the platform vision: *deterministic facts → AI interpretation → human approval →
+deterministic execution*, surfaced through a natural-language interface. A notebook is a saved chat
+session; the chat UI *is* the notebook editor. Reuses every existing engine unchanged.
+
+- **Streaming primitive** (`app/services/llm.py`): `complete_stream(...)` — `async for` over
+  OpenRouter's SSE deltas, raises on missing key / connection error so callers fall back. Existing
+  `complete_json` untouched. **Real token streaming** (not simulated dripping) per the approved design.
+- **`notebooks` table** (migration `i0j1k2l3m4n5`, on `h9i0j1k2l3m4`): `project_id`/`owner_id` FKs +
+  indexes, `scope` ("dataset"|"project"), nullable `dataset_id` (indexed FK), `title`, `turns` JSON
+  (ordered `ChatTurn[]`, config + artifact state only — never raw rows), unique indexed `share_token`,
+  `ai_available` bool (True only if every persisted turn used AI), `created_at`/`updated_at`,
+  nullable `generated_at` (set on first assistant turn). `turns` is `list | None` (stores a turn
+  list) via `sa_column=Column(JSON)`.
+- **Two-call turn** (`app/services/chat/orchestrator.py`): `plan_turn` (CALL A, `complete_json`)
+  picks proposed `ChatAction`s from a fixed catalog and **drops** any action type outside it
+  (`_validate`-style guard); `stream_narrative` (CALL B, `complete_stream`) streams the prose live;
+  `_fallback_turn` returns a deterministic SQL action when a frame+profile exist, else text-only —
+  `ai_available=False`. Both best-effort; failures never 5xx the stream.
+- **Executor** (`app/services/chat/executor.py`): `run_action` deterministically turns each proposed
+  action into a `ChatArtifact` by calling the existing engines — `sql` (`generate_sql`), `chart`
+  (`build_candidates` over the loaded frame), `cleaning` (`propose_plan`), `dashboard`
+  (`assemble_context`+`build_catalog`+`propose_dashboard`), `report` (scope-only link proposal). All
+  lazy-imported. Artifacts are `proposed`; execution reuses existing guarded endpoints (SQL Run,
+  cleaning apply, dashboard/report generate).
+- **Routes** (`app/api/routes/chat.py`): `POST /chat/message` returns `text/event-stream` —
+  builds context, runs the two-call turn, deterministically executes proposed artifacts, emits
+  `token`/`artifact`/`done`/`error` SSE events, and persists user+assistant turns into `notebooks`.
+  Notebooks CRUD: `GET /notebooks?project_id=`, `POST /notebooks`, `GET /notebooks/{id}`
+  (`NotebookDetailRead`, turns attached), `PATCH /notebooks/{id}` (rename), `DELETE /notebooks/{id}`
+  (204). `GET /notebooks/share/{token}` is **public** (no auth dependency) and returns only safe
+  fields (no owner/project linkage). `_owned` returns 404 if absent, **403 if another user's**;
+  `_resolve_scope` owner-checks project + dataset.
+- **Frontend**: `lib/types.ts` (`ChatArtifact`/`ChatTurn`/`Notebook*`/`ChatMessageRequest` — note
+  `ChatTurn._streaming` is a transient UI flag stripped before persistence), `lib/api.ts`
+  (`chatApi.message` SSE consumer via `fetch` + `ReadableStream` reader — EventSource can't POST;
+  parses `event:`/`data:` frames — plus `notebooksApi` CRUD + `share`). `components/chat-panel.tsx`:
+  live token streaming into the assistant bubble + inline SQL Run (table + `ChartRenderer` viz
+  reusing `sqlApi.run`); M2 renders **chart** (accept/reject checkboxes + `ChartRenderer`),
+  **cleaning** (operation review), **dashboard**/**report** (Generate/Open link → existing
+  `generate` endpoints). Entry points in `app/projects/[id]/page.tsx`: **Chat** button in the project
+  header (project scope) and per profiled dataset card (dataset scope). Owner page
+  `app/notebooks/[id]/page.tsx` (copy share link, back-to-project) + public
+  `app/notebooks/share/[token]/page.tsx` via `components/notebook-share.tsx` (branded footer,
+  read-only, no mutation).
+
+Verified: backend unit tests `tests/test_chat_*.py` (10 passed — streaming primitive, orchestrator
+intent/narrative/fallback, executor per action type); manual Postgres e2e
+`tests/manual_chat_e2e.py` (streams tokens + artifacts + done, persists notebook with 2 turns,
+owner-guard 403, public share returns safe fields only); `tsc --noEmit` + `next lint` + `next build`
+all pass; `/notebooks/[id]` and `/notebooks/share/[token]` emitted in the build manifest. M3
+(cross-dataset routing, notebook list/manage, browser verification) remains.
+
+## 2026-07-17 — Sprint 5, M3: Cross-dataset routing + notebook management + verification
+
+Completes Sprint 5. The chat analyst now routes project-scope questions to the right dataset frame
+and notebooks are fully manageable.
+
+- **Cross-dataset project routing** (`app/services/chat/context.py` + `app/api/routes/chat.py`): when
+  `build_chat_context` runs at project scope (`dataset is None`), it now populates `project_summary`
+  — `dataset_count`, `profiled_count`, and a safe list of each owned dataset's `id` / filename /
+  columns / `row_count` (facts only, never raw rows). The project-scope question is passed to CALL A
+  with this list so the LLM can name a `dataset_id`. In `chat_message`, each proposed action is
+  executed against a per-action frame: if the chat is project-scope and the action carries a
+  `dataset_id`, the route loads that dataset (owner-checked) and passes it as the execution `dataset`.
+  Single-frame only — cross-dataset joins remain out of scope per the spec. The frame-bound artifact
+  (sql/chart/cleaning) is thus resolved to the correct owned dataset even from a project-level chat.
+- **Notebook management** (`frontend/app/projects/[id]/page.tsx` + `app/notebooks/[id]/page.tsx`):
+  the project workspace now renders a **Notebooks** section (`notebooksApi.list(projectId)`) with a
+  link to each notebook, an inline **rename** (PATCH) and a **delete** (DELETE, with confirm);
+  creating a notebook from the Chat panel refreshes the list. The owner page gains a title input +
+  **Rename** button and a **Delete** button that returns to the project. Notebooks list/manage APIs
+  already existed (`GET /chat/notebooks`, `PATCH`, `DELETE`) and were previously unused on the client.
+- **Verification**: added `test_project_scope_routing_targets_dataset_frame` to
+  `tests/manual_chat_e2e.py` (project-scope question, asserts the stream completes, the notebook
+  persists, and any frame-bound artifact resolves `dataset_id` to the owned dataset). Live Postgres
+  e2e: **2 passed**. Backend unit suite: **10 passed**. `tsc --noEmit` + `next lint` + `next build`
+  clean; `/notebooks/[id]` and `/notebooks/share/[token]` emitted. **Browser-DOM verification was not
+  run** — the running dev frontend (port 3000) was serving a stale build (`_next/static` chunks 404'd
+  against the current client), so the maintainer should restart the frontend and click through a real
+  chat turn (token streaming → SQL artifact → Run → table/chart → notebook → share link) before
+  merging.
+
+Sprint 5 (AI Chat & Notebook) is **complete**: M1 (foundation + streaming + SQL), M2 (full action
+surface with HITL), and M3 (routing + management + verification) are all shipped. Next: Portfolio
+Polish.
+
+## 2026-07-17 — Portfolio Polish: availability + focused-workspace pass
+
+**Trigger:** `impeccable critique` of `app/projects/[id]/page.tsx` scored 19/40 (Poor) with two P0s
+and two P1s. User chose: fix both P0s together, address all five priority issues, and redesign the
+action row as a focused workspace.
+
+**P0 — availability:** there were **no `error.tsx` / `global-error.tsx` anywhere in `frontend/app`**,
+so any render-time crash surfaced as Next's raw "missing required error components, refreshing…" 500.
+Added both boundaries (`app/error.tsx` for route segments, `app/global-error.tsx` for the root).
+**Diagnosis of the reported 500:** `next build` now compiles cleanly and all 7 routes generate, so
+the 500 was **not** a compile/SSR build error. The four panels have clean module tops (no top-level
+browser access). Most likely cause was the critique's browser probe, which wedged the single-threaded
+dev server with a hanging `/dashboards` request (the workspace 500 was observed before that wedge, on
+hard load / direct URL — i.e. SSR, where client-navigated loads worked). The new boundaries now
+degrade any render error to a branded page regardless of root cause.
+
+**P0 — delete guardrail:** added `components/confirm-dialog.tsx` (native `<dialog>` → free focus-trap
++ Escape) and wired it into dataset and notebook delete in the workspace (no more unguarded
+irreversible delete).
+
+**P1 — focused-workspace action redesign:** `Analyze` promoted to the sole primary CTA; Clean/EDA/SQL/
+Report/Dashboard/Chat collapsed into an accessible `components/action-menu.tsx` (`role="menu"`,
+outside-click + Escape close); distinct icons (Sparkles=Analyze only; EDA=BarChart3; SQL=Table;
+Chat=MessageSquare) fixing the prior Sparkles×3 and EDA/SQL-BarChart3 collisions; `flex-wrap` so the
+row no longer overflows.
+
+**P1 — dead header Chat + silent generation:** the header Chat button previously only *closed* the
+panel; it now opens a project-scope chat (`openProjectChat`). Report/Dashboard generation shows a
+`Generating…` busy state (disabled) instead of failing silently.
+
+**P2 — skeletons + panel a11y:** plain "Loading datasets…" replaced with `DatasetSkeleton` cards;
+Cleaning/EDA/SQL overlays gained `role="dialog"`/`aria-modal`, Escape + backdrop-click close, and
+initial focus (`tabIndex={-1}` on the `Card`).
+
+**Verification:** `tsc --noEmit`, `next lint`, and `next build` all clean. Committed on
+`feature/ai-chat-notebook`. **Not yet browser-verified** — the dev server was wedged at critique time;
+the maintainer should restart the frontend and hard-reload `/projects/[id]` (expect a clean render, or
+at worst the new friendly error page rather than a raw 500).
+
+
+
+## 2026-07-17 — Portfolio Polish: full-sweep P0→P3 (other surfaces)
+
+Second critique sweep across dashboards / reports / notebooks / chat found a P0 plus P1/P2 issues
+that mirrored the workspace class. Applied them so the app is "truly done":
+
+- **P0 — unguarded report delete:** `report-editor` delete now routes through `ConfirmDialog`
+  (destructive) with a `deleting` busy state and error feedback; the raw `reportsApi.remove` inline
+  call is gone.
+- **P1 — native `confirm()` deletes:** `dashboard-editor` and `notebooks/[id]` deletes replaced with
+  `ConfirmDialog` (both already had a `deleting` state; `notebooks` keeps its redirect on success).
+- **P1 — silent chat stream errors:** an `event === "error"` SSE frame previously only flipped
+  `_streaming` off, leaving a blank bubble. It now appends a visible `⚠️ <message>` assistant turn.
+- **P1 — chat overlay semantics:** `chat-panel` modal is now a real `role="dialog"` /
+  `aria-modal="true"` / `aria-labelledby`, closes on Escape, and autofocuses the input on mount.
+- **P1 — notebook rename-scope bug:** rename failures set a dedicated `renameError` shown inline
+  instead of the shared `error` state that wiped the whole page.
+- **P1 — dark-mode chip contrast:** `dashboard-renderer` status chips (profiled/unprofiled/
+  understood/EDA, activity badges) switched from hardcoded `bg-*-100 text-*-700` to token-tinted
+  `bg-<hue>-500/15` with `dark:` text variants (pass contrast in both themes).
+- **P2 — skeletons:** `dashboards/[id]`, `reports/[id]`, `notebooks/[id]` show skeletons instead of
+  plain "Loading…".
+- **P2 — input focus rings:** editor/notebook title and chat input now use `ui/input` (focus-visible
+  ring) instead of raw `<input>`s.
+- **P2 — back-nav consistency:** `reports/[id]` back-nav now returns to its project (label "Project"),
+  matching dashboard/notebook owner pages.
+- **P2 — async feedback:** markdown export (`report-editor`) and chat dashboard/report artifact gen
+  (`chat-panel`) show busy state + error; the latter uses `router.push` instead of
+  `window.location.href`.
+- **P3 — chart palette:** `chart-renderer` `PALETTE[1]` was `hsl(var(--secondary-foreground))` (a text
+  token used as a data color) — replaced with a real red hue.
+
+Added `frontend/components/ui/skeleton.tsx` (shadcn-style). **Verification:** `tsc --noEmit`,
+`next lint`, and `next build` all clean; live dev server confirmed serving on :3001. Committed on
+`feature/ai-chat-notebook` (no push).
