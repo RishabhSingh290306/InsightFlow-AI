@@ -437,3 +437,28 @@ Full design: `docs/superpowers/specs/2026-07-17-dashboard-recommendations-design
 - Testing strategy evolution
 - Performance optimizations
 - Lessons learned during implementation
+## 2026-07-17 — Dashboard Recommendations M2 (project scope + remaining widgets)
+
+### Build Note: M2 shipped as a single reusable engine (both scopes)
+
+**Decision:** Extend the M1 dashboard engine to a **single `DashboardContext` + widget
+registry** serving both `dataset` and `project` scope; add the remaining widgets rather
+than a separate project code path.
+
+**What landed (M2):**
+- `assemble_context` now branches on scope. `project` scope aggregates the profiles,
+  understandings, EDA results, SQL history, reports, and version lineages of **every
+  owned dataset** in the project. `dataset` scope populates `lineage[dataset.id]` for the
+  new `version_timeline` widget.
+- Six new registry widgets, all deterministic: `project_kpis` (aggregated counts/rows/
+  activity), `dataset_summaries` (per-dataset status cards), `recent_reports`,
+  `activity_feed` (upload/SQL/report events), `version_timeline` (dataset-only lineage),
+  `recommended_next` (both scopes — understanding-implied questions + gap heuristics).
+- `POST /dashboards/preview` opens **project scope** (owner-guarded); dataset scope keeps
+  its 409-before-profile rule. AI curation (`propose_dashboard`) is scope-agnostic, so the
+  project catalog is curated with the same best-effort/fallback contract.
+- `dashboard-renderer.tsx` gained components + `WidgetBody` cases for all six new widget
+  types, reusing the existing `Card` primitives.
+
+**Rationale:** Widgets stay independent and registered — adding future widgets needs no
+engine change (spec §7). Project scope is "more context, same engine," not a fork.
