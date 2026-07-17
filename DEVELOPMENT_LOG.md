@@ -246,6 +246,54 @@ returns `422` and creates **no** version. `py_compile` + `tsc --noEmit` + `next 
 `next build` all pass. Frontend `.next` cache cleared once (stale vendor chunk) — unrelated
 to the change.
 
+## 2026-07-17 — Sprint 3, M1–M3: Insights + Reports (shipped)
+
+Turns a user's *accepted* analysis artifacts into a curated, AI-narrated, editable report
+that can be shared via a public read-only link and exported to PDF/Markdown. Closes the
+loop of the platform's core principle — **deterministic facts → AI interpretation → human
+approval → deterministic execution** — at the consumption layer.
+
+- **`reports` table** (migration `g8h9i0j1k2l3`): `project_id`/`owner_id` FKs + indexes,
+  `scope` (`dataset`|`project`), nullable `dataset_id`, `title`, `sections` JSON (the
+  canonical `Report` representation), unique indexed `share_token`, `ai_available` bool,
+  `created_at`/`updated_at`/`generated_at`. A dedicated table (not a JSON column on
+  `Dataset`/`Project`) so a project can hold multiple reports + history, and so future
+  analytics/versioning columns slot in cleanly.
+- **Canonical Report JSON** — `Report` is an ordered `list[ReportSection]`; each section
+  holds `blocks` mixing editable `prose` with artifact references (`chart`/`sql`/`table`/
+  `lineage`/`custom_note`). The renderer resolves those references from `payload` and never
+  recomputes — it is **presentation-only**.
+- **Assembly service** (`app/services/reporting/`): the *only* place a report is built.
+  Pure deterministic builders fill the factual sections (cover, dataset overview, data
+  quality, cleaning summary, EDA *accepted* charts only, SQL history, version lineage);
+  `narrate_report` sends structured facts (never raw data) to `complete_json` for the
+  executive summary / insights / recommendations prose, and on any LLM failure returns a
+  deterministic templated narrative with `ai_available=False` (so the UI shows a
+  "rule-based report" banner and never 5xx).
+- **Routes** (`/api/v1/reports`): owner-guarded `generate` (409 before any profile;
+  422 on bad scope/dataset/project), `list`, `get`, `patch` (replace sections/title —
+  the HITL edit surface), `delete`, `export` (Markdown blob / self-contained printable
+  HTML). **Public** `GET /share/{token}` takes **no auth dependency** and returns only
+  `ReportShareRead` (title/scope/sections/ai_available/generated_at) — no owner PII, no
+  project linkage, no mutation verbs, no other datasets reachable.
+- **Frontend**: `report-renderer` (presentation-only, reuses `ChartRenderer`), `report-editor`
+  (live HITL: edit prose, reorder, remove, rename, add custom-note sections; Save = PATCH;
+  Download PDF via `window.print()`; Download Markdown; Copy Share Link), owner page
+  `app/reports/[id]`, public page `app/reports/share/[token]` (branded footer "Generated
+  with InsightFlow AI · Analyze your own dataset →", download buttons, read-only). Generate
+  Report buttons on the project workspace (project scope + per-dataset, guarded by profile).
+  `globals.css` print stylesheet hides `.no-print` and flattens the background for PDF.
+
+Verified: `pytest` (assembly builders + AI-fallback + render), TestClient e2e (409 before
+profile, dataset-scope generate builds 10 ordered sections, public share returns safe
+fields only, bad token 404), `tsc`/`next lint`/`next build` all pass.
+
+**Forward-looking extension points (designed-for, not implemented):** report versioning
+(`parent_report_id`), report analytics (views/downloads), report metadata (AI model, dataset
+version), and additional export formats (DOCX/HTML) — the schema already accommodates them
+without redesign.
+
+
 ## 2026-07-17 — Sprint 2, M1: EDA + Visualizations (shipped)
 
 Read-only analysis workflow completing the HITL pattern: deterministic backend

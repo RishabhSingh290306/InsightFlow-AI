@@ -14,6 +14,7 @@
 | Auth + Projects UI | ✅ Done | Login/register, auth-guarded projects, workspace, design tokens |
 | Dataset upload & versioning | ✅ Done | Storage adapter, multipart upload, pandas metadata, stem versioning |
 | AI Dataset Understanding | ✅ Done | Two-stage: deterministic profiling + best-effort OpenRouter interpretation |
+| Insights + Reports | ✅ Done | Canonical Report JSON + assembly service; AI-narrated, HITL-editable; public read-only share link; PDF/Markdown export |
 
 ## Current Sprint
 
@@ -32,6 +33,14 @@ Design: `docs/superpowers/specs/2026-07-17-eda-visualizations-design.md`
 - [x] **M1 — EDA + Visualizations:** deterministic `build_candidates` + best-effort `propose_charts` (fallback), universal `ChartSpec`, `POST/GET/PATCH /eda` (stored on `dataset.eda`), Recharts `ChartRenderer` + accept/reject `eda-panel`, end-to-end verification
 - [x] **M2 — SQL Generation:** Question→SQL loop; `app/services/sql/` single engine (DuckDB read-only sandbox + sqlglot validation, best-effort `generate_sql`/`generate_insights`), `POST/GET/DELETE /sql/{generate,run,history}`, `sql_queries` history table, `sql-panel` (ask→edit→execute→results→history) reusing `ChartRenderer`
 - [x] **M3 — Conversational Investigation (follow-up questions):** additive on M2 — multi-turn chain + chat-style `sql-panel` thread UI + `parent_query_id`-linked history; combined `interpret_result` (insights + follow-ups, one best-effort call); `generate_sql` gains `chain` context; HITL preserved (follow-up chips auto-generate the next SQL, never auto-execute)
+
+**Sprint 3 — Insights + Reports** *(design approved 2026-07-17)*
+
+Design: `docs/superpowers/specs/2026-07-17-insights-reports-design.md`
+
+- [x] **M1 — Report assembly + storage + API:** `reports` table + migration; `Report` JSON canonical (ordered `Section[]`); assembly service (deterministic factual sections + best-effort AI prose/`ai_available` fallback, scoped `dataset`/`project`); owner-guarded `generate`/`list`/`get`/`patch`/`delete`/`export`; public read-only `share/{token}` endpoint returning only safe fields
+- [x] **M2 — Editor UI + export:** `report-renderer` (presentation-only, reuses `ChartRenderer`), `report-editor` (edit/reorder/remove/rename/custom-note, live preview), PDF (browser `window.print()`) + Markdown export, copy share link; Generate Report entry points on the project workspace (per-dataset + per-project)
+- [x] **M3 — Public share view:** `/reports/share/[token]` read-only, branded footer ("Generated with InsightFlow AI · Analyze your own dataset →"), download buttons, no mutation/data leak
 
 **Sprint 0 — Foundations** *(complete)*
 
@@ -104,7 +113,7 @@ for detailed rationale on:
 | EDA + Visualizations | 2026-08-20 | ✅ Complete |
 | SQL Generation | 2026-08-27 | ✅ Complete |
 | Conversational Investigation | 2026-07-24 | ✅ Complete |
-| Insights + Reports | 2026-09-03 | Pending |
+| Insights + Reports | 2026-09-03 | ✅ Complete |
 | Dashboard Recommendations | 2026-09-10 | Pending |
 | AI Chat & Notebook | 2026-09-17 | Pending |
 | Portfolio Polish | 2026-09-24 | Pending |
