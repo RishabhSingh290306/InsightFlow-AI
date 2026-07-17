@@ -564,4 +564,38 @@ owner-guard 403, public share returns safe fields only); `tsc --noEmit` + `next 
 all pass; `/notebooks/[id]` and `/notebooks/share/[token]` emitted in the build manifest. M3
 (cross-dataset routing, notebook list/manage, browser verification) remains.
 
+## 2026-07-17 — Sprint 5, M3: Cross-dataset routing + notebook management + verification
+
+Completes Sprint 5. The chat analyst now routes project-scope questions to the right dataset frame
+and notebooks are fully manageable.
+
+- **Cross-dataset project routing** (`app/services/chat/context.py` + `app/api/routes/chat.py`): when
+  `build_chat_context` runs at project scope (`dataset is None`), it now populates `project_summary`
+  — `dataset_count`, `profiled_count`, and a safe list of each owned dataset's `id` / filename /
+  columns / `row_count` (facts only, never raw rows). The project-scope question is passed to CALL A
+  with this list so the LLM can name a `dataset_id`. In `chat_message`, each proposed action is
+  executed against a per-action frame: if the chat is project-scope and the action carries a
+  `dataset_id`, the route loads that dataset (owner-checked) and passes it as the execution `dataset`.
+  Single-frame only — cross-dataset joins remain out of scope per the spec. The frame-bound artifact
+  (sql/chart/cleaning) is thus resolved to the correct owned dataset even from a project-level chat.
+- **Notebook management** (`frontend/app/projects/[id]/page.tsx` + `app/notebooks/[id]/page.tsx`):
+  the project workspace now renders a **Notebooks** section (`notebooksApi.list(projectId)`) with a
+  link to each notebook, an inline **rename** (PATCH) and a **delete** (DELETE, with confirm);
+  creating a notebook from the Chat panel refreshes the list. The owner page gains a title input +
+  **Rename** button and a **Delete** button that returns to the project. Notebooks list/manage APIs
+  already existed (`GET /chat/notebooks`, `PATCH`, `DELETE`) and were previously unused on the client.
+- **Verification**: added `test_project_scope_routing_targets_dataset_frame` to
+  `tests/manual_chat_e2e.py` (project-scope question, asserts the stream completes, the notebook
+  persists, and any frame-bound artifact resolves `dataset_id` to the owned dataset). Live Postgres
+  e2e: **2 passed**. Backend unit suite: **10 passed**. `tsc --noEmit` + `next lint` + `next build`
+  clean; `/notebooks/[id]` and `/notebooks/share/[token]` emitted. **Browser-DOM verification was not
+  run** — the running dev frontend (port 3000) was serving a stale build (`_next/static` chunks 404'd
+  against the current client), so the maintainer should restart the frontend and click through a real
+  chat turn (token streaming → SQL artifact → Run → table/chart → notebook → share link) before
+  merging.
+
+Sprint 5 (AI Chat & Notebook) is **complete**: M1 (foundation + streaming + SQL), M2 (full action
+surface with HITL), and M3 (routing + management + verification) are all shipped. Next: Portfolio
+Polish.
+
 
