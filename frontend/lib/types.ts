@@ -383,3 +383,62 @@ export interface DashboardPatchRequest {
   ai_summary?: Record<string, unknown> | null;
   user_notes?: Record<string, string> | null;
 }
+
+// --- AI Chat & Notebook ---------------------------------------------------
+
+export type ChatArtifactType = "sql" | "chart" | "cleaning" | "dashboard" | "report";
+
+export interface ChatArtifact {
+  type: ChatArtifactType;
+  dataset_id?: number | null;
+  proposal?: Record<string, unknown> | null; // e.g. SqlProposal
+  specs?: Record<string, unknown>[] | null;
+  catalog?: Record<string, unknown>[] | null;
+  status: string; // proposed|executed|accepted|rejected|opened|error
+  error?: string | null;
+  result?: Record<string, unknown> | null;
+}
+
+export interface ChatTurn {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  actions: ChatArtifact[];
+  parent_id?: string | null;
+  created_at: string;
+  _streaming?: boolean; // transient UI flag (stripped before persistence; backend builds its own turns)
+}
+
+export interface ChatMessageRequest {
+  notebook_id?: number | null;
+  project_id: number;
+  dataset_id?: number | null;
+  content: string;
+  parent_message_id?: string | null;
+}
+
+export interface NotebookRead {
+  id: number;
+  project_id: number;
+  owner_id: number;
+  scope: string;
+  dataset_id: number | null;
+  title: string;
+  share_token: string;
+  ai_available: boolean;
+  created_at: string;
+  updated_at: string;
+  generated_at: string | null;
+}
+
+export interface NotebookDetailRead extends NotebookRead {
+  turns: ChatTurn[];
+}
+
+export interface NotebookShareRead {
+  title: string;
+  scope: string;
+  turns: ChatTurn[];
+  ai_available: boolean;
+  generated_at: string | null;
+}
