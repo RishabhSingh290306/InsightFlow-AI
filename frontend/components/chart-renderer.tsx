@@ -100,14 +100,18 @@ function Heatmap({ data, columns }: { data: Record<string, unknown>[]; columns: 
 
 export function ChartRenderer({ spec }: { spec: ChartSpec }) {
   const color = ACCENT;
-  switch (spec.chart_type) {
+  const chartType =
+    typeof spec.chart_type === "string"
+      ? spec.chart_type.toLowerCase().replace(/\s*chart$/, "").trim()
+      : spec.chart_type;
+  switch (chartType) {
     case "histogram":
     case "bar":
       return (
         <ResponsiveContainer width="100%" height={220}>
           <BarChart data={spec.data as Record<string, unknown>[]}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey={spec.chart_type === "histogram" ? "bin" : "category"} />
+            <XAxis dataKey={chartType === "histogram" ? "bin" : "category"} />
             <YAxis />
             <Tooltip />
             <Bar dataKey="count" fill={color} />

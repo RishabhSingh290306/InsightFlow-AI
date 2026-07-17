@@ -150,6 +150,7 @@ function ArtifactCard({ artifact, dataset, projectId }: { artifact: ChatArtifact
   const [genError, setGenError] = useState<string | null>(null);
 
   if (artifact.type === "sql") {
+    const dsId = artifact.dataset_id ?? dataset?.id ?? null;
     const proposal = artifact.proposal as unknown as SqlProposal | undefined;
     const viz = proposal?.suggested_visualization as SqlVisualization | null;
     return (
@@ -158,11 +159,11 @@ function ArtifactCard({ artifact, dataset, projectId }: { artifact: ChatArtifact
         <pre className="my-1 overflow-x-auto rounded bg-muted p-2 text-xs">{proposal?.sql || "(no query proposed)"}</pre>
         {proposal?.explanation && <p className="text-muted-foreground">{proposal.explanation}</p>}
         {!result && (
-          <Button size="sm" className="mt-2" disabled={running || !proposal?.sql} onClick={async () => {
-            if (!proposal?.sql || !dataset) return;
+          <Button size="sm" className="mt-2" disabled={running || !proposal?.sql || dsId == null} onClick={async () => {
+            if (!proposal?.sql || dsId == null) return;
             setRunning(true);
             try {
-              const r = await sqlApi.run({ dataset_id: dataset.id, sql: proposal.sql, business_question: proposal.business_question });
+              const r = await sqlApi.run({ dataset_id: dsId, sql: proposal.sql, business_question: proposal.business_question });
               setResult(r);
             } finally { setRunning(false); }
           }}>{running ? "Running…" : "Run query"}</Button>
