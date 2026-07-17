@@ -13,11 +13,12 @@ from typing import Any
 class DashboardContext:
     scope: str  # "dataset" | "project"
     project: Any = None
-    dataset: Any = None
+    dataset: Any = None  # set for dataset scope
+    datasets: list[Any] = field(default_factory=list)  # all project datasets (project scope)
     dataset_version_id: int | None = None
     profiles: dict[int, Any] = field(default_factory=dict)
     understandings: dict[int, Any] = field(default_factory=dict)
     eda_results: dict[int, Any] = field(default_factory=dict)
     sql_history: list[Any] = field(default_factory=list)
     reports: list[Any] = field(default_factory=list)
-    lineage: dict[int, list[Any]] = field(default_factory=dict)
+    lineage: dict[int, list[Any]] = field(default_factory=dict)  # dataset_id -> version chain
