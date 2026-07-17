@@ -26,7 +26,7 @@ class Notebook(SQLModel, table=True):
     scope: str = "dataset"  # "dataset" | "project"
     dataset_id: int | None = Field(default=None, index=True, foreign_key="datasets.id")
     title: str
-    turns: dict | None = Field(default=None, sa_column=Column(JSON))
+    turns: list | None = Field(default=None, sa_column=Column(JSON))
     share_token: str = Field(index=True, unique=True)
     ai_available: bool = True  # True only if every persisted turn used AI
     created_at: datetime = Field(default_factory=_now)
