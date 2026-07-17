@@ -12,15 +12,16 @@ import {
   FileText,
   LayoutDashboard,
   LogOut,
+  Pencil,
   Sparkles,
   Table as TableIcon,
   Trash2,
   Upload,
 } from "lucide-react";
 
-import { dashboardsApi, datasetsApi, projectsApi, reportsApi } from "@/lib/api";
+import { dashboardsApi, datasetsApi, notebooksApi, projectsApi, reportsApi } from "@/lib/api";
 import { clearToken, getToken } from "@/lib/auth";
-import type { DatasetRead, ProjectRead } from "@/lib/types";
+import type { DatasetRead, NotebookRead, ProjectRead } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -76,6 +77,19 @@ export default function ProjectWorkspacePage() {
   const [reporting, setReporting] = useState<number | null>(null);
   const [chatId, setChatId] = useState<number | null>(null);
   const [chatDataset, setChatDataset] = useState<DatasetRead | null>(null);
+  const [notebooks, setNotebooks] = useState<NotebookRead[]>([]);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [busyId, setBusyId] = useState<number | null>(null);
+
+  const loadNotebooks = useCallback(async () => {
+    try {
+      const nbs = await notebooksApi.list(projectId);
+      setNotebooks(nbs ?? []);
+    } catch {
+      // Notebooks list is secondary; ignore failures here (chat still works).
+    }
+  }, [projectId]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -99,8 +113,11 @@ export default function ProjectWorkspacePage() {
       router.replace("/login");
       return;
     }
-    if (Number.isFinite(projectId)) void load();
-  }, [router, projectId, load]);
+    if (Number.isFinite(projectId)) {
+      void load();
+      void loadNotebooks();
+    }
+  }, [router, projectId, load, loadNotebooks]);
 
   async function onUpload(e: React.FormEvent) {
     e.preventDefault();
@@ -218,6 +235,38 @@ export default function ProjectWorkspacePage() {
     // Add the new version to the workspace; its lineage is visible via History.
     setDatasets((prev) => [...prev, newDataset]);
     setCleaningId(null);
+  }
+
+  function startRename(n: NotebookRead) {
+    setEditingId(n.id);
+    setEditTitle(n.title);
+  }
+
+  async function onRename(id: number) {
+    const title = editTitle.trim();
+    if (!title) return;
+    setBusyId(id);
+    try {
+      const updated = await notebooksApi.update(id, { title });
+      setNotebooks((prev) => prev.map((n) => (n.id === id ? { ...n, title: updated.title } : n)));
+      setEditingId(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Rename failed");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function onDeleteNotebook(id: number) {
+    setBusyId(id);
+    try {
+      await notebooksApi.remove(id);
+      setNotebooks((prev) => prev.filter((n) => n.id !== id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Delete failed");
+    } finally {
+      setBusyId(null);
+    }
   }
 
   return (
@@ -452,6 +501,73 @@ export default function ProjectWorkspacePage() {
         </div>
       </section>
 
+      <section className="flex flex-col gap-4">
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-muted-foreground" />
+          <h2 className="text-lg font-semibold">Notebooks</h2>
+        </div>
+        {notebooks.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            No notebooks yet — use the <span className="font-medium">Chat</span> button above or on a dataset to start one.
+          </p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {notebooks.map((n) => {
+              const isEditing = editingId === n.id;
+              const isBusy = busyId === n.id;
+              return (
+                <Card key={n.id}>
+                  <CardContent className="flex flex-wrap items-center justify-between gap-3 py-3">
+                    <div className="flex min-w-0 flex-1 flex-col gap-1">
+                      {isEditing ? (
+                        <input
+                          value={editTitle}
+                          onChange={(e) => setEditTitle(e.target.value)}
+                          className="w-full min-w-[200px] rounded-md border px-2 py-1 text-sm"
+                          aria-label="Rename notebook"
+                        />
+                      ) : (
+                        <Link
+                          href={`/notebooks/${n.id}`}
+                          className="truncate font-medium hover:underline"
+                        >
+                          {n.title}
+                        </Link>
+                      )}
+                      <span className="text-xs text-muted-foreground">
+                        {n.scope}
+                        {n.dataset_id !== null && n.dataset_id !== undefined ? ` · dataset #${n.dataset_id}` : ""}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {isEditing ? (
+                        <>
+                          <Button size="sm" onClick={() => onRename(n.id)} disabled={isBusy || !editTitle.trim()}>
+                            Save
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => setEditingId(null)} disabled={isBusy}>
+                            Cancel
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button size="sm" variant="ghost" onClick={() => startRename(n)} aria-label="Rename notebook">
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => onDeleteNotebook(n.id)} disabled={isBusy} aria-label="Delete notebook">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
       {cleaningId !== null && (
         <CleaningPanel
           dataset={datasets.find((d) => d.id === cleaningId)!}
@@ -479,7 +595,7 @@ export default function ProjectWorkspacePage() {
           projectId={projectId}
           dataset={chatDataset}
           notebookId={chatId}
-          onNotebookCreated={(id) => setChatId(id)}
+          onNotebookCreated={(id) => { setChatId(id); void loadNotebooks(); }}
           onClose={() => { setChatId(null); setChatDataset(null); }}
         />
       ) : null}
