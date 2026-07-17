@@ -312,6 +312,34 @@ proposer/insights), `tsc`/`next lint`/`next build` all pass; manual TestClient e
 history list + search, delete. The `app/services/sql/` package is the single SQL engine the
 future AI Chat reuses.
 
+## 2026-07-17 — Sprint 2, M3: Conversational Investigation (follow-up questions) (shipped)
+
+Additive milestone on the SQL Generation engine. Turns isolated queries into a multi-turn
+investigation: after each result the AI suggests chain-aware follow-up questions; the panel is a
+chat-style thread; each turn links to its parent in history.
+
+- **`app/schemas/sql.py`** — `SqlChainTurn`; `SqlGenerateRequest.chain`; `SqlRunRequest.parent_query_id`;
+  `SqlResult.followup_questions`/`followups_ai_available`; `SqlQueryRecord.parent_query_id`.
+- **`app/services/sql/insights.py`** — `interpret_result(question, sql, result_summary, profile, chain=None)`
+  replaces `generate_insights`: one best-effort `complete_json` call returns `(insights,
+  followup_questions, ai_available)`. On failure → templated insight + empty followups.
+- **`app/services/sql/proposer.py`** — `generate_sql` gains `chain` (prior turns injected into the
+  prompt) so follow-up SQL is informed by the investigation so far.
+- **`app/models/sql_query.py`** + migration `f7a8b9c0d1e2` — nullable `parent_query_id`
+  (self-FK + index) links each turn to the one it followed up.
+- **`app/api/routes/sql.py`** — `generate` forwards `chain`; `run` calls `interpret_result`,
+  persists `parent_query_id` (owner-guarded: foreign/invalid parent → 422), returns
+  `followup_questions`.
+- **Frontend** — `lib/types.ts` (`SqlChainTurn` + extended contracts), `lib/api.ts`
+  (`sqlApi.generate(req)`), `components/sql-panel.tsx` reworked into a thread: each turn shows the
+  question, editable SQL, result table, chart, insights, and follow-up chips; clicking a chip
+  proactively generates the next turn's SQL (**never auto-executes** — HITL preserved); history
+  renders the chain (indented under the parent).
+
+Verified: `pytest` (schemas + interpreter + proposer + engine, 25 passed), `tsc`/`next lint`/`next
+build` all pass; manual TestClient e2e confirms generate-with-chain, run returns followups, persisted
+row carries `parent_query_id`, invalid parent → 422.
+
 ## Future Log Entries
 
 - AI workflow design decisions
