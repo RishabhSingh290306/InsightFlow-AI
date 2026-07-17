@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, FileDown, FileText, Trash2, ArrowUp, ArrowDown, Plus } from "lucide-react";
+import { Copy, FileDown, FileText, Trash2, ArrowUp, ArrowDown, Plus, Loader2 } from "lucide-react";
 import type { ReportRead, ReportSection, ReportUpdateRequest } from "@/lib/types";
 import { reportsApi } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { ReportRenderer } from "@/components/report-renderer";
 
 function emptyCustomSection(): ReportSection {
@@ -20,8 +22,36 @@ export function ReportEditor({ report, onDeleted }: { report: ReportRead; onDele
   const [sections, setSections] = useState<ReportSection[]>(report.sections);
   const [title, setTitle] = useState(report.title);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
+
+  async function exportMarkdown() {
+    setExporting(true);
+    setMsg(null);
+    try {
+      await reportsApi.exportMarkdown(report.id);
+    } catch {
+      setMsg("Export failed.");
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  async function confirmRemove() {
+    setDeleting(true);
+    setMsg(null);
+    try {
+      await reportsApi.remove(report.id);
+      onDeleted?.();
+    } catch {
+      setMsg("Delete failed.");
+      setDeleting(false);
+      setConfirmDelete(false);
+    }
+  }
 
   function updateSection(id: string, patch: Partial<ReportSection>) {
     setSections((prev) => prev.map((s) => (s.id === id ? { ...s, ...patch } : s)));
@@ -77,8 +107,8 @@ export function ReportEditor({ report, onDeleted }: { report: ReportRead; onDele
   return (
     <div className="flex flex-col gap-6">
       <div className="no-print flex flex-wrap items-center gap-2">
-        <input
-          className="rounded border px-2 py-1 text-sm"
+        <Input
+          className="h-8 w-64 text-sm"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           aria-label="Report title"
@@ -87,13 +117,13 @@ export function ReportEditor({ report, onDeleted }: { report: ReportRead; onDele
         <Button size="sm" variant="outline" onClick={() => window.print()}>
           <FileDown className="h-4 w-4" /> Download PDF
         </Button>
-        <Button size="sm" variant="outline" onClick={() => reportsApi.exportMarkdown(report.id)}>
-          <FileText className="h-4 w-4" /> Download Markdown
+        <Button size="sm" variant="outline" onClick={exportMarkdown} disabled={exporting}>
+          {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />} Download Markdown
         </Button>
         <Button size="sm" variant="outline" onClick={copyShare}>
           <Copy className="h-4 w-4" /> Copy Share Link
         </Button>
-        <Button size="sm" variant="ghost" onClick={async () => { await reportsApi.remove(report.id); onDeleted?.(); }}>
+        <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(true)} disabled={deleting}>
           <Trash2 className="h-4 w-4" /> Delete
         </Button>
         <Button size="sm" variant="ghost" onClick={addCustom}><Plus className="h-4 w-4" /> Add Section</Button>
@@ -105,8 +135,8 @@ export function ReportEditor({ report, onDeleted }: { report: ReportRead; onDele
         {sections.map((sec, idx) => (
           <div key={sec.id} className="rounded-md border p-3">
             <div className="mb-2 flex items-center gap-2">
-              <input
-                className="rounded border px-2 py-1 text-sm font-medium"
+              <Input
+                className="h-8 flex-1 text-sm font-medium"
                 value={sec.title}
                 onChange={(e) => updateSection(sec.id, { title: e.target.value })}
                 aria-label="Section title"
@@ -137,6 +167,16 @@ export function ReportEditor({ report, onDeleted }: { report: ReportRead; onDele
       <div className="rounded-md border p-4">
         <ReportRenderer sections={sections} />
       </div>
+
+      <ConfirmDialog
+        open={confirmDelete}
+        title="Delete this report?"
+        description="This permanently removes the report and its sections. This cannot be undone."
+        confirmLabel={deleting ? "Deleting…" : "Delete report"}
+        destructive
+        onConfirm={confirmRemove}
+        onCancel={() => !deleting && setConfirmDelete(false)}
+      />
     </div>
   );
 }

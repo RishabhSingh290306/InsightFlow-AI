@@ -1,10 +1,12 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { Send, Sparkles, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Send, Sparkles, X, Loader2 } from "lucide-react";
 import { chatApi, sqlApi, dashboardsApi, reportsApi } from "@/lib/api";
 import type { ChatArtifact, ChatTurn, DatasetRead, SqlProposal, SqlResult, SqlVisualization } from "@/lib/types";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { ChartRenderer } from "@/components/chart-renderer";
 
 interface Props {
@@ -16,10 +18,18 @@ interface Props {
 }
 
 export function ChatPanel({ projectId, dataset, notebookId, onNotebookCreated, onClose }: Props) {
+  const router = useRouter();
   const [turns, setTurns] = useState<ChatTurn[]>([]);
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
+  const [genBusy, setGenBusy] = useState(false);
+  const [genError, setGenError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
 
   function pushAssistantToken(text: string) {
     setTurns((prev) => {
@@ -63,7 +73,18 @@ export function ChatPanel({ projectId, dataset, notebookId, onNotebookCreated, o
             if (e.data.notebook_id && !notebookId) onNotebookCreated(Number(e.data.notebook_id));
             setTurns((p) => p.map((t, i) => (i === p.length - 1 ? { ...t, _streaming: false } : t)));
           } else if (e.event === "error") {
-            setTurns((p) => p.map((t, i) => (i === p.length - 1 ? { ...t, _streaming: false } : t)));
+            const message = String(e.data.message ?? "Something went wrong while generating a response.");
+            setTurns((p) => {
+              const next = p.map((t, i) => (i === p.length - 1 ? { ...t, _streaming: false } : t));
+              next.push({
+                id: crypto.randomUUID(),
+                role: "assistant",
+                content: `⚠️ ${message}`,
+                actions: [],
+                _streaming: false,
+              } as ChatTurn);
+              return next;
+            });
           }
         },
       );
@@ -73,10 +94,22 @@ export function ChatPanel({ projectId, dataset, notebookId, onNotebookCreated, o
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
-      <div className="flex h-[80vh] w-full max-w-2xl flex-col rounded-lg border bg-background shadow-xl" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      onClick={onClose}
+      onKeyDown={(e) => {
+        if (e.key === "Escape") onClose();
+      }}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="chat-panel-title"
+        className="flex h-[80vh] w-full max-w-2xl flex-col rounded-lg border bg-background shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
         <header className="flex items-center justify-between border-b px-4 py-2">
-          <h2 className="flex items-center gap-2 text-sm font-semibold">
+          <h2 id="chat-panel-title" className="flex items-center gap-2 text-sm font-semibold">
             <Sparkles className="h-4 w-4" /> Ask your data
             {dataset ? <span className="text-xs text-muted-foreground">· {dataset.original_filename}</span> : <span className="text-xs text-muted-foreground">· project</span>}
           </h2>
@@ -94,8 +127,8 @@ export function ChatPanel({ projectId, dataset, notebookId, onNotebookCreated, o
           ))}
         </div>
         <form className="flex gap-2 border-t p-3" onSubmit={(e) => { e.preventDefault(); send(); }}>
-          <input
-            className="flex-1 rounded-md border px-3 py-2 text-sm"
+          <Input
+            ref={inputRef}
             placeholder="e.g. Why did revenue drop in Q3?"
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -109,9 +142,12 @@ export function ChatPanel({ projectId, dataset, notebookId, onNotebookCreated, o
 }
 
 function ArtifactCard({ artifact, dataset, projectId }: { artifact: ChatArtifact; dataset?: DatasetRead | null; projectId: number }) {
+  const router = useRouter();
   const [result, setResult] = useState<SqlResult | null>(null);
   const [running, setRunning] = useState(false);
   const [accepted, setAccepted] = useState<string[]>([]);
+  const [genBusy, setGenBusy] = useState(false);
+  const [genError, setGenError] = useState<string | null>(null);
 
   if (artifact.type === "sql") {
     const proposal = artifact.proposal as unknown as SqlProposal | undefined;
@@ -190,13 +226,30 @@ function ArtifactCard({ artifact, dataset, projectId }: { artifact: ChatArtifact
   if (artifact.type === "dashboard" || artifact.type === "report") {
     const scope = ((artifact.proposal as Record<string, unknown> | null)?.scope as string | undefined) ?? (dataset ? "dataset" : "project");
     const gen = artifact.type === "dashboard" ? dashboardsApi.generate : reportsApi.generate;
+    const isDashboard = artifact.type === "dashboard";
+    async function generate() {
+      setGenBusy(true);
+      setGenError(null);
+      try {
+        const r = await gen(
+          scope === "dataset"
+            ? { scope: "dataset", dataset_id: dataset!.id, project_id: projectId }
+            : { scope: "project", project_id: projectId },
+        );
+        router.push(isDashboard ? `/dashboards/${r.id}` : `/reports/${r.id}`);
+      } catch {
+        setGenError("Generation failed.");
+        setGenBusy(false);
+      }
+    }
     return (
       <div className="mt-2 rounded-md border bg-background p-3 text-left text-sm">
-        <p className="font-medium">{artifact.type === "dashboard" ? "Dashboard" : "Report"} recommendation</p>
-        <Button size="sm" className="mt-2" onClick={async () => {
-          const r = await gen(scope === "dataset" ? { scope: "dataset", dataset_id: dataset!.id, project_id: projectId } : { scope: "project", project_id: projectId });
-          window.location.href = artifact.type === "dashboard" ? `/dashboards/${r.id}` : `/reports/${r.id}`;
-        }}>{artifact.type === "dashboard" ? "Open dashboard" : "Generate report"}</Button>
+        <p className="font-medium">{isDashboard ? "Dashboard" : "Report"} recommendation</p>
+        <Button size="sm" className="mt-2" onClick={generate} disabled={genBusy}>
+          {genBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+          {isDashboard ? "Open dashboard" : "Generate report"}
+        </Button>
+        {genError && <p className="mt-2 text-xs text-destructive">{genError}</p>}
       </div>
     );
   }

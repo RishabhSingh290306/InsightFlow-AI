@@ -8,6 +8,9 @@ import { notebooksApi } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import type { NotebookDetailRead } from "@/lib/types";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 export default function NotebookPage() {
   const router = useRouter();
@@ -17,7 +20,9 @@ export default function NotebookPage() {
   const [error, setError] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [saving, setSaving] = useState(false);
+  const [renameError, setRenameError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const load = useCallback(async () => {
     setError(null);
@@ -34,18 +39,18 @@ export default function NotebookPage() {
     const next = title.trim();
     if (!next || next === nb?.title) return;
     setSaving(true);
+    setRenameError(null);
     try {
       const updated = await notebooksApi.update(id, { title: next });
       setNb((prev) => (prev ? { ...prev, title: updated.title } : prev));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Rename failed");
+      setRenameError(err instanceof Error ? err.message : "Rename failed");
     } finally {
       setSaving(false);
     }
   }
 
-  async function onDelete() {
-    if (!confirm("Delete this notebook? This cannot be undone.")) return;
+  async function confirmRemove() {
     setDeleting(true);
     try {
       await notebooksApi.remove(id);
@@ -53,11 +58,21 @@ export default function NotebookPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Delete failed");
       setDeleting(false);
+      setConfirmDelete(false);
     }
   }
 
   if (error) return <main className="container py-10"><p className="text-destructive">{error}</p></main>;
-  if (!nb) return <main className="container py-10"><p className="text-muted-foreground">Loading…</p></main>;
+  if (!nb) return (
+    <main className="container py-10">
+      <div className="flex flex-col gap-6">
+        <Skeleton className="h-8 w-40" />
+        <Skeleton className="h-10 w-80" />
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-24 w-full" />
+      </div>
+    </main>
+  );
 
   return (
     <main className="container flex min-h-screen flex-col gap-6 py-10">
@@ -69,21 +84,22 @@ export default function NotebookPage() {
           <Button size="sm" variant="outline" onClick={() => navigator.clipboard.writeText(`${location.origin}/notebooks/share/${nb.share_token}`)}>
             Copy share link
           </Button>
-          <Button size="sm" variant="destructive" onClick={onDelete} disabled={deleting}>
+          <Button size="sm" variant="destructive" onClick={() => setConfirmDelete(true)} disabled={deleting}>
             <Trash2 className="h-4 w-4" /> {deleting ? "Deleting…" : "Delete"}
           </Button>
         </div>
       </header>
       <div className="flex flex-wrap items-center gap-3">
-        <input
+        <Input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="rounded-md border px-3 py-2 text-2xl font-bold tracking-tight"
+          className="h-auto w-auto max-w-md py-1 text-2xl font-bold tracking-tight"
           aria-label="Notebook title"
         />
         <Button size="sm" onClick={onRename} disabled={saving || !title.trim() || title.trim() === nb.title}>
           {saving ? "Saving…" : "Rename"}
         </Button>
+        {renameError && <span className="text-xs text-destructive">{renameError}</span>}
       </div>
       {!nb.ai_available && <p className="text-sm text-muted-foreground">AI unavailable for parts of this chat — rule-based fallback used.</p>}
       <div className="flex flex-col gap-4">
@@ -95,6 +111,16 @@ export default function NotebookPage() {
           </div>
         ))}
       </div>
+
+      <ConfirmDialog
+        open={confirmDelete}
+        title="Delete this notebook?"
+        description="This permanently removes the conversation and its artifacts. This cannot be undone."
+        confirmLabel={deleting ? "Deleting…" : "Delete notebook"}
+        destructive
+        onConfirm={confirmRemove}
+        onCancel={() => !deleting && setConfirmDelete(false)}
+      />
     </main>
   );
 }

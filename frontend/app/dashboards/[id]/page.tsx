@@ -8,7 +8,22 @@ import { dashboardsApi } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import type { DashboardDetailRead } from "@/lib/types";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { DashboardEditor } from "@/components/dashboard-editor";
+
+function DashboardSkeleton() {
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="no-print flex items-center gap-2">
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-8 w-16" />
+        <Skeleton className="h-8 w-24" />
+      </div>
+      <Skeleton className="h-40 w-full" />
+      <Skeleton className="h-72 w-full" />
+    </div>
+  );
+}
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -35,7 +50,7 @@ export default function DashboardPage() {
   }, [router, id, load]);
 
   if (error) return <main className="container py-10"><p className="text-destructive">{error}</p></main>;
-  if (!dashboard) return <main className="container py-10"><p className="text-muted-foreground">Loading…</p></main>;
+  if (!dashboard) return <main className="container py-10"><DashboardSkeleton /></main>;
 
   return (
     <main className="container flex min-h-screen flex-col gap-6 py-10">

@@ -21,7 +21,7 @@ import type { ChartSpec } from "@/lib/types";
 const ACCENT = "hsl(var(--primary))";
 const PALETTE = [
   "hsl(var(--primary))",
-  "hsl(var(--secondary-foreground))",
+  "hsl(0 72% 51%)",
   "hsl(142 71% 45%)",
   "hsl(38 92% 50%)",
   "hsl(280 65% 60%)",

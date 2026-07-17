@@ -163,15 +163,15 @@ function DatasetSummaries({ data }: { data: Record<string, unknown> }) {
           </div>
           <div className="mt-2 flex flex-wrap gap-1 text-[10px]">
             {d.has_profile ? (
-              <span className="rounded bg-emerald-100 px-1.5 py-0.5 text-emerald-700">profiled</span>
+              <span className="rounded bg-emerald-500/15 px-1.5 py-0.5 text-emerald-700 dark:text-emerald-400">profiled</span>
             ) : (
-              <span className="rounded bg-amber-100 px-1.5 py-0.5 text-amber-700">unprofiled</span>
+              <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-amber-700 dark:text-amber-400">unprofiled</span>
             )}
             {Boolean(d.has_understanding) && (
-              <span className="rounded bg-sky-100 px-1.5 py-0.5 text-sky-700">understood</span>
+              <span className="rounded bg-sky-500/15 px-1.5 py-0.5 text-sky-700 dark:text-sky-400">understood</span>
             )}
             {Boolean(d.has_eda) && (
-              <span className="rounded bg-violet-100 px-1.5 py-0.5 text-violet-700">EDA</span>
+              <span className="rounded bg-violet-500/15 px-1.5 py-0.5 text-violet-700 dark:text-violet-400">EDA</span>
             )}
           </div>
         </div>
@@ -204,9 +204,9 @@ function ActivityFeed({ data }: { data: Record<string, unknown> }) {
   const activities = (data.activities as Record<string, unknown>[]) ?? [];
   if (activities.length === 0) return <p className="text-sm text-muted-foreground">No activity yet.</p>;
   const badge: Record<string, string> = {
-    upload: "bg-blue-100 text-blue-700",
-    sql: "bg-violet-100 text-violet-700",
-    report: "bg-emerald-100 text-emerald-700",
+    upload: "bg-blue-500/15 text-blue-700 dark:text-blue-400",
+    sql: "bg-violet-500/15 text-violet-700 dark:text-violet-400",
+    report: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
   };
   return (
     <ul className="flex flex-col gap-2">
