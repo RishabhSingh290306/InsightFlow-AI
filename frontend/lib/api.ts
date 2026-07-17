@@ -5,6 +5,8 @@ import type {
   ChartSpec,
   CleaningOperation,
   CleaningPlan,
+  DashboardPreviewRequest,
+  DashboardView,
   DatasetRead,
   EdaAcceptRequest,
   EdaResult,
@@ -272,5 +274,15 @@ export const reportsApi = {
   },
   share(token: string): Promise<ReportShareRead> {
     return request<ReportShareRead>(`/api/v1/reports/share/${token}`);
+  },
+};
+
+export const dashboardsApi = {
+  // Ephemeral dataset-scope preview (M1). Returns a resolved DashboardView.
+  preview(req: DashboardPreviewRequest): Promise<DashboardView> {
+    return request<DashboardView>("/api/v1/dashboards/preview", {
+      method: "POST",
+      body: JSON.stringify(req),
+    });
   },
 };

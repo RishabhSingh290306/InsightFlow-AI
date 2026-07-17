@@ -305,3 +305,43 @@ export interface ReportUpdateRequest {
   title?: string | null;
   sections: ReportSection[];
 }
+
+// --- Dashboard Recommendations -------------------------------------------
+
+export interface WidgetMeta {
+  type: string;
+  title: string;
+  description: string;
+  applies_to_scopes: string[];
+}
+
+export interface CatalogEntry {
+  widget: WidgetMeta;
+  data: Record<string, unknown>;
+}
+
+export interface DashboardSpec {
+  scope: "dataset" | "project";
+  widget_order: string[];
+  hidden_widgets: string[];
+  groups: { title: string; widget_types: string[] }[];
+  ai_summary: {
+    executive: string;
+    per_widget: Record<string, string>;
+    next_analyses: string[];
+  } | null;
+  user_notes: Record<string, string> | null;
+}
+
+export interface DashboardView {
+  scope: string;
+  spec: DashboardSpec;
+  widgets: CatalogEntry[];
+  ai_available: boolean;
+}
+
+export interface DashboardPreviewRequest {
+  scope: string;
+  project_id?: number;
+  dataset_id?: number;
+}
