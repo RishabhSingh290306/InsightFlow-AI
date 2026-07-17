@@ -638,3 +638,38 @@ the maintainer should restart the frontend and hard-reload `/projects/[id]` (exp
 at worst the new friendly error page rather than a raw 500).
 
 
+
+## 2026-07-17 — Portfolio Polish: full-sweep P0→P3 (other surfaces)
+
+Second critique sweep across dashboards / reports / notebooks / chat found a P0 plus P1/P2 issues
+that mirrored the workspace class. Applied them so the app is "truly done":
+
+- **P0 — unguarded report delete:** `report-editor` delete now routes through `ConfirmDialog`
+  (destructive) with a `deleting` busy state and error feedback; the raw `reportsApi.remove` inline
+  call is gone.
+- **P1 — native `confirm()` deletes:** `dashboard-editor` and `notebooks/[id]` deletes replaced with
+  `ConfirmDialog` (both already had a `deleting` state; `notebooks` keeps its redirect on success).
+- **P1 — silent chat stream errors:** an `event === "error"` SSE frame previously only flipped
+  `_streaming` off, leaving a blank bubble. It now appends a visible `⚠️ <message>` assistant turn.
+- **P1 — chat overlay semantics:** `chat-panel` modal is now a real `role="dialog"` /
+  `aria-modal="true"` / `aria-labelledby`, closes on Escape, and autofocuses the input on mount.
+- **P1 — notebook rename-scope bug:** rename failures set a dedicated `renameError` shown inline
+  instead of the shared `error` state that wiped the whole page.
+- **P1 — dark-mode chip contrast:** `dashboard-renderer` status chips (profiled/unprofiled/
+  understood/EDA, activity badges) switched from hardcoded `bg-*-100 text-*-700` to token-tinted
+  `bg-<hue>-500/15` with `dark:` text variants (pass contrast in both themes).
+- **P2 — skeletons:** `dashboards/[id]`, `reports/[id]`, `notebooks/[id]` show skeletons instead of
+  plain "Loading…".
+- **P2 — input focus rings:** editor/notebook title and chat input now use `ui/input` (focus-visible
+  ring) instead of raw `<input>`s.
+- **P2 — back-nav consistency:** `reports/[id]` back-nav now returns to its project (label "Project"),
+  matching dashboard/notebook owner pages.
+- **P2 — async feedback:** markdown export (`report-editor`) and chat dashboard/report artifact gen
+  (`chat-panel`) show busy state + error; the latter uses `router.push` instead of
+  `window.location.href`.
+- **P3 — chart palette:** `chart-renderer` `PALETTE[1]` was `hsl(var(--secondary-foreground))` (a text
+  token used as a data color) — replaced with a real red hue.
+
+Added `frontend/components/ui/skeleton.tsx` (shadcn-style). **Verification:** `tsc --noEmit`,
+`next lint`, and `next build` all clean; live dev server confirmed serving on :3001. Committed on
+`feature/ai-chat-notebook` (no push).
