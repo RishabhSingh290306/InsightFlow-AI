@@ -9,6 +9,7 @@ import {
   BarChart3,
   ChevronDown,
   Database,
+  FileText,
   LogOut,
   Sparkles,
   Table as TableIcon,
@@ -16,7 +17,7 @@ import {
   Upload,
 } from "lucide-react";
 
-import { datasetsApi, projectsApi } from "@/lib/api";
+import { datasetsApi, projectsApi, reportsApi } from "@/lib/api";
 import { clearToken, getToken } from "@/lib/auth";
 import type { DatasetRead, ProjectRead } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -70,6 +71,7 @@ export default function ProjectWorkspacePage() {
   const [edaId, setEdaId] = useState<number | null>(null);
   const [sqlId, setSqlId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [reporting, setReporting] = useState<number | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -180,6 +182,20 @@ export default function ProjectWorkspacePage() {
     router.replace("/login");
   }
 
+  async function onGenerateReport(scope: "dataset" | "project", datasetId?: number) {
+    setError(null);
+    try {
+      const rep = await reportsApi.generate(
+        scope === "dataset"
+          ? { scope: "dataset", dataset_id: datasetId, project_id: projectId }
+          : { scope: "project", project_id: projectId }
+      );
+      router.push(`/reports/${rep.id}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to generate report");
+    }
+  }
+
   function onAppliedClean(newDataset: DatasetRead) {
     // Add the new version to the workspace; its lineage is visible via History.
     setDatasets((prev) => [...prev, newDataset]);
@@ -195,6 +211,10 @@ export default function ProjectWorkspacePage() {
               <ArrowLeft className="h-4 w-4" />
               Projects
             </Link>
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => onGenerateReport("project")}>
+            <FileText className="h-4 w-4" />
+            Report
           </Button>
           <Button variant="outline" size="sm" onClick={logout}>
             <LogOut className="h-4 w-4" />
@@ -332,6 +352,16 @@ export default function ProjectWorkspacePage() {
                         >
                           <BarChart3 className="h-4 w-4" />
                           SQL
+                        </Button>
+                      )}
+                      {d.profile && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => onGenerateReport("dataset", d.id)}
+                        >
+                          <FileText className="h-4 w-4" />
+                          Report
                         </Button>
                       )}
                     </div>

@@ -55,3 +55,9 @@
     @apply bg-background text-foreground font-sans antialiased;
   }
 }
+
+@media print {
+  .no-print { display: none !important; }
+  body { background: #fff; }
+  .report-container { box-shadow: none; }
+}
