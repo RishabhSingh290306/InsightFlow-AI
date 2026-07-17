@@ -179,6 +179,18 @@ export interface SqlVisualization {
   y?: string | null;
 }
 
+export interface SqlChainTurn {
+  business_question: string;
+  sql: string;
+  result_summary: string;
+}
+
+export interface SqlGenerateRequest {
+  dataset_id: number;
+  question: string;
+  chain?: SqlChainTurn[] | null;
+}
+
 export interface SqlProposal {
   business_question: string;
   sql: string;
@@ -195,6 +207,7 @@ export interface SqlRunRequest {
   business_question?: string | null;
   explanation?: string | null;
   suggested_visualization?: SqlVisualization | null;
+  parent_query_id?: number | null;
 }
 
 export interface SqlResult {
@@ -205,6 +218,8 @@ export interface SqlResult {
   duration_ms: number;
   insights: string[];
   insights_ai_available: boolean;
+  followup_questions: string[];
+  followups_ai_available: boolean;
   persisted_id: number | null;
 }
 
@@ -224,4 +239,5 @@ export interface SqlQueryRecord {
   truncated: boolean | null;
   duration_ms: number | null;
   executed_at: string;
+  parent_query_id: number | null;
 }

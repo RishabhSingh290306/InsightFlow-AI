@@ -10,6 +10,7 @@ import type {
   EdaResult,
   ProjectCreate,
   ProjectRead,
+  SqlGenerateRequest,
   SqlProposal,
   SqlQueryRecord,
   SqlResult,
@@ -207,10 +208,10 @@ export const edaApi = {
 };
 
 export const sqlApi = {
-  generate(datasetId: number, question: string): Promise<SqlProposal> {
+  generate(req: SqlGenerateRequest): Promise<SqlProposal> {
     return request<SqlProposal>("/api/v1/sql/generate", {
       method: "POST",
-      body: JSON.stringify({ dataset_id: datasetId, question }),
+      body: JSON.stringify(req),
     });
   },
   run(req: SqlRunRequest): Promise<SqlResult> {

@@ -95,7 +95,7 @@ export function SqlPanel({ dataset, onClose }: { dataset: DatasetRead; onClose: 
     setGenerating(true);
     setError(null);
     try {
-      const p = await sqlApi.generate(dataset.id, question);
+      const p = await sqlApi.generate({ dataset_id: dataset.id, question });
       setProposal(p);
       setSqlText(p.sql);
     } catch (err) {
