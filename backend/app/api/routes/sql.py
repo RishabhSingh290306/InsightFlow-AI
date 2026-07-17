@@ -21,6 +21,7 @@ from app.core.storage import get_storage
 from app.models.dataset import Dataset
 from app.models.sql_query import SqlQuery
 from app.schemas.sql import (
+    SqlChainTurn,
     SqlGenerateRequest,
     SqlProposal,
     SqlQueryRecord,
@@ -30,7 +31,7 @@ from app.schemas.sql import (
 from app.schemas.understanding import DatasetProfile, DatasetUnderstanding
 from app.services.cleaning.engine import load_dataframe
 from app.services.sql.engine import execute_query, suggest_chart, validate_sql
-from app.services.sql.insights import generate_insights
+from app.services.sql.insights import interpret_result
 from app.services.sql.proposer import generate_sql
 
 router = APIRouter(tags=["sql"])
@@ -57,7 +58,7 @@ async def generate(body: SqlGenerateRequest, session: SessionDep, current_user: 
     understanding = (
         DatasetUnderstanding.model_validate(ds.understanding) if ds.understanding else None
     )
-    return await generate_sql(body.question, profile, understanding)
+    return await generate_sql(body.question, profile, understanding, chain=body.chain)
 
 
 @router.post("/sql/run", response_model=SqlResult)
@@ -90,8 +91,25 @@ async def run(body: SqlRunRequest, session: SessionDep, current_user: CurrentUse
         f"row_count={res['row_count']}, columns={res['columns']}, "
         f"sample={json.dumps(res['rows'][:3], default=str)}"
     )
-    insight_items, insights_avail = await generate_insights(
-        body.business_question or "", body.sql, summary, profile
+
+    # Optional parent linkage — must belong to the same owner (owner-guarded).
+    parent_id = None
+    if body.parent_query_id is not None:
+        parent = session.get(SqlQuery, body.parent_query_id)
+        if parent is None or parent.owner_id != current_user.id:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="parent_query_id is invalid or not owned by you.",
+            )
+        parent_id = parent.id
+
+    chain = None
+    if parent_id is not None:
+        chain = [SqlChainTurn(business_question=parent.business_question, sql=parent.sql,
+                              result_summary=f"row_count={parent.row_count}")]
+
+    insight_items, followups, insights_avail = await interpret_result(
+        body.business_question or "", body.sql, summary, profile, chain=chain
     )
 
     record = SqlQuery(
@@ -99,7 +117,7 @@ async def run(body: SqlRunRequest, session: SessionDep, current_user: CurrentUse
         business_question=body.business_question or "", sql=body.sql, edited=body.edited,
         explanation=body.explanation or "", suggested_visualization=viz, insights=insight_items,
         columns=res["columns"], row_count=res["row_count"], truncated=res["truncated"],
-        duration_ms=res["duration_ms"],
+        duration_ms=res["duration_ms"], parent_query_id=parent_id,
     )
     session.add(record)
     session.commit()
@@ -108,7 +126,8 @@ async def run(body: SqlRunRequest, session: SessionDep, current_user: CurrentUse
     return SqlResult(
         columns=res["columns"], rows=res["rows"], row_count=res["row_count"],
         truncated=res["truncated"], duration_ms=res["duration_ms"], insights=insight_items,
-        insights_ai_available=insights_avail, persisted_id=record.id,
+        insights_ai_available=insights_avail, followup_questions=followups,
+        followups_ai_available=insights_avail, persisted_id=record.id,
     )
 
 
