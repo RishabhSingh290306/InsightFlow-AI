@@ -510,3 +510,58 @@ manual Postgres e2e `tests/manual_dashboard_e2e.py` (preview dataset + project, 
 owner-guard 403); `tsc --noEmit` + `next lint` + `next build` all pass; `/dashboards/[id]` emitted in
 the build manifest.
 
+## 2026-07-17 — Sprint 5, M1+M2: AI Chat & Notebook (chat-first analyst + full action surface)
+
+Closes the platform vision: *deterministic facts → AI interpretation → human approval →
+deterministic execution*, surfaced through a natural-language interface. A notebook is a saved chat
+session; the chat UI *is* the notebook editor. Reuses every existing engine unchanged.
+
+- **Streaming primitive** (`app/services/llm.py`): `complete_stream(...)` — `async for` over
+  OpenRouter's SSE deltas, raises on missing key / connection error so callers fall back. Existing
+  `complete_json` untouched. **Real token streaming** (not simulated dripping) per the approved design.
+- **`notebooks` table** (migration `i0j1k2l3m4n5`, on `h9i0j1k2l3m4`): `project_id`/`owner_id` FKs +
+  indexes, `scope` ("dataset"|"project"), nullable `dataset_id` (indexed FK), `title`, `turns` JSON
+  (ordered `ChatTurn[]`, config + artifact state only — never raw rows), unique indexed `share_token`,
+  `ai_available` bool (True only if every persisted turn used AI), `created_at`/`updated_at`,
+  nullable `generated_at` (set on first assistant turn). `turns` is `list | None` (stores a turn
+  list) via `sa_column=Column(JSON)`.
+- **Two-call turn** (`app/services/chat/orchestrator.py`): `plan_turn` (CALL A, `complete_json`)
+  picks proposed `ChatAction`s from a fixed catalog and **drops** any action type outside it
+  (`_validate`-style guard); `stream_narrative` (CALL B, `complete_stream`) streams the prose live;
+  `_fallback_turn` returns a deterministic SQL action when a frame+profile exist, else text-only —
+  `ai_available=False`. Both best-effort; failures never 5xx the stream.
+- **Executor** (`app/services/chat/executor.py`): `run_action` deterministically turns each proposed
+  action into a `ChatArtifact` by calling the existing engines — `sql` (`generate_sql`), `chart`
+  (`build_candidates` over the loaded frame), `cleaning` (`propose_plan`), `dashboard`
+  (`assemble_context`+`build_catalog`+`propose_dashboard`), `report` (scope-only link proposal). All
+  lazy-imported. Artifacts are `proposed`; execution reuses existing guarded endpoints (SQL Run,
+  cleaning apply, dashboard/report generate).
+- **Routes** (`app/api/routes/chat.py`): `POST /chat/message` returns `text/event-stream` —
+  builds context, runs the two-call turn, deterministically executes proposed artifacts, emits
+  `token`/`artifact`/`done`/`error` SSE events, and persists user+assistant turns into `notebooks`.
+  Notebooks CRUD: `GET /notebooks?project_id=`, `POST /notebooks`, `GET /notebooks/{id}`
+  (`NotebookDetailRead`, turns attached), `PATCH /notebooks/{id}` (rename), `DELETE /notebooks/{id}`
+  (204). `GET /notebooks/share/{token}` is **public** (no auth dependency) and returns only safe
+  fields (no owner/project linkage). `_owned` returns 404 if absent, **403 if another user's**;
+  `_resolve_scope` owner-checks project + dataset.
+- **Frontend**: `lib/types.ts` (`ChatArtifact`/`ChatTurn`/`Notebook*`/`ChatMessageRequest` — note
+  `ChatTurn._streaming` is a transient UI flag stripped before persistence), `lib/api.ts`
+  (`chatApi.message` SSE consumer via `fetch` + `ReadableStream` reader — EventSource can't POST;
+  parses `event:`/`data:` frames — plus `notebooksApi` CRUD + `share`). `components/chat-panel.tsx`:
+  live token streaming into the assistant bubble + inline SQL Run (table + `ChartRenderer` viz
+  reusing `sqlApi.run`); M2 renders **chart** (accept/reject checkboxes + `ChartRenderer`),
+  **cleaning** (operation review), **dashboard**/**report** (Generate/Open link → existing
+  `generate` endpoints). Entry points in `app/projects/[id]/page.tsx`: **Chat** button in the project
+  header (project scope) and per profiled dataset card (dataset scope). Owner page
+  `app/notebooks/[id]/page.tsx` (copy share link, back-to-project) + public
+  `app/notebooks/share/[token]/page.tsx` via `components/notebook-share.tsx` (branded footer,
+  read-only, no mutation).
+
+Verified: backend unit tests `tests/test_chat_*.py` (10 passed — streaming primitive, orchestrator
+intent/narrative/fallback, executor per action type); manual Postgres e2e
+`tests/manual_chat_e2e.py` (streams tokens + artifacts + done, persists notebook with 2 turns,
+owner-guard 403, public share returns safe fields only); `tsc --noEmit` + `next lint` + `next build`
+all pass; `/notebooks/[id]` and `/notebooks/share/[token]` emitted in the build manifest. M3
+(cross-dataset routing, notebook list/manage, browser verification) remains.
+
+

@@ -15,6 +15,9 @@
 | Dataset upload & versioning | ✅ Done | Storage adapter, multipart upload, pandas metadata, stem versioning |
 | AI Dataset Understanding | ✅ Done | Two-stage: deterministic profiling + best-effort OpenRouter interpretation |
 | Insights + Reports | ✅ Done | Canonical Report JSON + assembly service; AI-narrated, HITL-editable; public read-only share link; PDF/Markdown export |
+| EDA + Visualizations / SQL / Cleaning | ✅ Done | Charts (EDA), Question→SQL (DuckDB sandbox), cleaning registry + apply (Sprints 2–3) |
+| Dashboard Recommendations | ✅ Done | Widget catalog, dataset/project scope, persisted dashboards + editor (Sprint 4) |
+| AI Chat & Notebook | 🟡 In progress | SSE streaming chat over existing engines; `notebooks` table + share; **M1+M2 done**, M3 (routing + management) pending |
 
 ## Current Sprint
 
@@ -49,6 +52,14 @@ Design: `docs/superpowers/specs/2026-07-17-dashboard-recommendations-design.md`
 - [x] **M1 — Engine + dataset-scope core:** `app/services/dashboard/` package (widget ABC, registry, context, `build_catalog`, `propose_dashboard` + deterministic fallback, `render`); M1 widgets (`kpi_cards`, `data_quality`, `recommended_charts`, `ai_insights`, `sql_widget`); on-demand `POST /preview` (dataset scope); `dashboard-renderer` (read-only, reuses `ChartRenderer`); backend unit tests
 - [x] **M2 — Project scope + remaining widgets:** project-scope context assembly; remaining widgets (`project_kpis`, `dataset_summaries`, `recent_reports`, `activity_feed`, `version_timeline`, `recommended_next`); `POST /preview` extended to project scope; renderer handles project widgets; tests
 - [x] **M3 — Persistence + HITL editor + entry points:** `dashboards` table + migration + `Dashboard` model + `DashboardSpec` schema; full CRUD (`generate`/`list`/`get`+view/`patch`/`regenerate`/`delete`, owner-guarded); `dashboard-editor` (hide/show, reorder, per-widget notes, regenerate, save); entry points (Dashboard button per profiled dataset + project header) + owner page `app/dashboards/[id]`; end-to-end verification
+
+**Sprint 5 — AI Chat & Notebook** *(design approved 2026-07-17)*
+
+Design: `docs/superpowers/specs/2026-07-17-ai-chat-notebook-design.md`
+
+- [x] **M1 — Chat foundation + streaming + SQL:** `complete_stream` primitive; `notebooks` table + migration; chat schemas/context/orchestrator (intent `complete_json` + narrative `complete_stream`)/executor; SSE `POST /chat/message` + notebooks CRUD + public share; frontend types + SSE client + `chat-panel` (live streaming + inline SQL Run); entry points + owner/share pages; e2e
+- [x] **M2 — Full action surface:** executor proposes **charts** (EDA), **cleaning**, **dashboard** + **report** artifacts; `chat-panel` renders each with HITL (chart accept/reject + `ChartRenderer`, cleaning review, dashboard/report Generate links); tests + build
+- [ ] **M3 — Routing, notebook management & verification:** cross-dataset project routing; notebook list/manage (rename/delete); browser e2e verification
 
 **Sprint 0 — Foundations** *(complete)*
 
@@ -123,5 +134,5 @@ for detailed rationale on:
 | Conversational Investigation | 2026-07-24 | ✅ Complete |
 | Insights + Reports | 2026-09-03 | ✅ Complete |
 | Dashboard Recommendations | 2026-09-10 | ✅ Complete (M1+M2+M3) |
-| AI Chat & Notebook | 2026-09-17 | Pending |
+| AI Chat & Notebook | 2026-09-17 | In progress (M1+M2 ✅, M3 pending) |
 | Portfolio Polish | 2026-09-24 | Pending |
