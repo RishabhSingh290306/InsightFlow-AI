@@ -95,7 +95,7 @@ async def generate(body: ReportGenerateRequest, session: SessionDep, current_use
     session.add(report)
     session.commit()
     session.refresh(report)
-    return ReportRead.model_validate(report)
+    return report
 
 
 @router.get("", response_model=list[ReportRead])
@@ -105,12 +105,12 @@ def list_reports(session: SessionDep, current_user: CurrentUser, project_id: int
         .where(Report.project_id == project_id, Report.owner_id == current_user.id)
         .order_by(Report.created_at.desc())
     )
-    return [ReportRead.model_validate(r) for r in session.exec(stmt).all()]
+    return list(session.exec(stmt).all())
 
 
 @router.get("/{report_id}", response_model=ReportRead)
 def get_report(report_id: int, session: SessionDep, current_user: CurrentUser) -> ReportRead:
-    return ReportRead.model_validate(_owned(report_id, session, current_user))
+    return _owned(report_id, session, current_user)
 
 
 @router.patch("/{report_id}", response_model=ReportRead)
@@ -123,7 +123,7 @@ def update_report(report_id: int, body: ReportUpdateRequest, session: SessionDep
     session.add(r)
     session.commit()
     session.refresh(r)
-    return ReportRead.model_validate(r)
+    return r
 
 
 @router.delete("/{report_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -136,7 +136,7 @@ def delete_report(report_id: int, session: SessionDep, current_user: CurrentUser
 @router.get("/{report_id}/export")
 def export_report(report_id: int, session: SessionDep, current_user: CurrentUser, format: str = Query("markdown")):
     r = _owned(report_id, session, current_user)
-    report = ReportRead.model_validate(r)
+    report = ReportRead.model_validate(r.model_dump())
     if format == "markdown":
         return Response(
             content=report_to_markdown(report), media_type="text/markdown",
