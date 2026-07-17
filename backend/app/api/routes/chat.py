@@ -113,7 +113,14 @@ async def chat_message(body: ChatMessageRequest, session: SessionDep, current_us
                 narrative.append(token)
                 yield _sse("token", {"text": token})
             for action in proposed:
-                artifact = await run_action(session, action, project, dataset, current_user)
+                # Project-scope routing: an action may name a dataset frame to
+                # run against (single-frame only; cross-dataset joins out of scope).
+                exec_ds = dataset
+                if exec_ds is None and action.dataset_id is not None:
+                    candidate = session.get(Dataset, action.dataset_id)
+                    if candidate is not None and candidate.owner_id == current_user.id:
+                        exec_ds = candidate
+                artifact = await run_action(session, action, project, exec_ds, current_user)
                 actions.append(artifact)
                 yield _sse("artifact", {"artifact": artifact.model_dump(mode="json")})
         except Exception as e:  # never 5xx the stream

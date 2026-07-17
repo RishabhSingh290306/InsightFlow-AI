@@ -59,3 +59,38 @@ def test_chat_message_streams_and_persists():
     assert shared["title"] == detail["title"]
     assert "owner_id" not in shared
     assert client.get("/api/v1/chat/notebooks/share/bogus").status_code == 404
+
+
+def test_project_scope_routing_targets_dataset_frame():
+    email = "chat_route_e2e@example.com"
+    client.post("/api/v1/auth/register", json={"email": email, "password": "pw"})
+    tok = client.post("/api/v1/auth/login", data={"username": email, "password": "pw"}).json()["access_token"]
+    h = _auth(tok)
+    pid = client.post("/api/v1/projects", json={"name": "r", "description": "d"}, headers=h).json()["id"]
+
+    csv = b"region,score\nnorth,10\nsouth,20\nwest,5\n"
+    did = client.post(
+        f"/api/v1/datasets/projects/{pid}",
+        headers=h, files={"file": ("t.csv", io.BytesIO(csv), "text/csv")},
+    ).json()["id"]
+    client.post(f"/api/v1/datasets/{did}/understand", headers=h)  # profile
+
+    # Project-scope question (no dataset_id): routing must pick the owned frame.
+    r = client.post(
+        "/api/v1/chat/message",
+        headers=h,
+        json={"project_id": pid, "dataset_id": None, "content": "What is the top region by score in the data?"},
+    )
+    assert r.status_code == 200
+    assert "event: done" in r.text
+
+    nbs = client.get(f"/api/v1/chat/notebooks?project_id={pid}", headers=h).json()
+    assert len(nbs) == 1
+    detail = client.get(f"/api/v1/chat/notebooks/{nbs[0]['id']}", headers=h).json()
+    assert len(detail["turns"]) == 2  # user + assistant
+    actions = detail["turns"][1]["actions"]
+    assert len(actions) >= 1
+    # Any frame-bound artifact must resolve to the owned dataset (single-frame routing).
+    for a in actions:
+        if a["type"] in ("sql", "chart", "cleaning"):
+            assert a["dataset_id"] == did
