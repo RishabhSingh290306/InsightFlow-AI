@@ -10,8 +10,10 @@ import {
   ChevronDown,
   Database,
   FileText,
+  History,
   LayoutDashboard,
   LogOut,
+  MessageSquare,
   Pencil,
   Sparkles,
   Table as TableIcon,
@@ -34,6 +36,8 @@ import { CleaningPanel } from "@/components/cleaning-panel";
 import { EdaPanel } from "@/components/eda-panel";
 import { SqlPanel } from "@/components/sql-panel";
 import { ChatPanel } from "@/components/chat-panel";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+import { ActionMenu, MenuItem } from "@/components/action-menu";
 
 const ACCEPTED = ".csv,.xlsx,.xls";
 
@@ -56,6 +60,11 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
+type ConfirmTarget =
+  | { kind: "dataset"; id: number; name: string }
+  | { kind: "notebook"; id: number; name: string }
+  | null;
+
 export default function ProjectWorkspacePage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
@@ -74,13 +83,15 @@ export default function ProjectWorkspacePage() {
   const [edaId, setEdaId] = useState<number | null>(null);
   const [sqlId, setSqlId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [reporting, setReporting] = useState<number | null>(null);
+  const [generating, setGenerating] = useState(false);
   const [chatId, setChatId] = useState<number | null>(null);
   const [chatDataset, setChatDataset] = useState<DatasetRead | null>(null);
+  const [projectChat, setProjectChat] = useState(false);
   const [notebooks, setNotebooks] = useState<NotebookRead[]>([]);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [busyId, setBusyId] = useState<number | null>(null);
+  const [confirmTarget, setConfirmTarget] = useState<ConfirmTarget>(null);
 
   const loadNotebooks = useCallback(async () => {
     try {
@@ -155,7 +166,7 @@ export default function ProjectWorkspacePage() {
     }
   }
 
-  async function onDelete(id: number) {
+  async function onDeleteDataset(id: number) {
     setError(null);
     try {
       await datasetsApi.remove(id);
@@ -203,31 +214,33 @@ export default function ProjectWorkspacePage() {
     router.replace("/login");
   }
 
-  async function onGenerateReport(scope: "dataset" | "project", datasetId?: number) {
+  async function generateReportOrDashboard(
+    kind: "report" | "dashboard",
+    scope: "dataset" | "project",
+    datasetId?: number,
+  ) {
     setError(null);
+    setGenerating(true);
     try {
-      const rep = await reportsApi.generate(
-        scope === "dataset"
-          ? { scope: "dataset", dataset_id: datasetId, project_id: projectId }
-          : { scope: "project", project_id: projectId }
-      );
-      router.push(`/reports/${rep.id}`);
+      if (kind === "report") {
+        const rep = await reportsApi.generate(
+          scope === "dataset"
+            ? { scope: "dataset", dataset_id: datasetId, project_id: projectId }
+            : { scope: "project", project_id: projectId },
+        );
+        router.push(`/reports/${rep.id}`);
+      } else {
+        const dash = await dashboardsApi.generate(
+          scope === "dataset"
+            ? { scope: "dataset", dataset_id: datasetId, project_id: projectId }
+            : { scope: "project", project_id: projectId },
+        );
+        router.push(`/dashboards/${dash.id}`);
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to generate report");
-    }
-  }
-
-  async function onGenerateDashboard(scope: "dataset" | "project", datasetId?: number) {
-    setError(null);
-    try {
-      const dash = await dashboardsApi.generate(
-        scope === "dataset"
-          ? { scope: "dataset", dataset_id: datasetId, project_id: projectId }
-          : { scope: "project", project_id: projectId }
-      );
-      router.push(`/dashboards/${dash.id}`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to generate dashboard");
+      setError(err instanceof Error ? err.message : "Generation failed");
+    } finally {
+      setGenerating(false);
     }
   }
 
@@ -269,32 +282,61 @@ export default function ProjectWorkspacePage() {
     }
   }
 
+  function openProjectChat() {
+    setChatDataset(null);
+    setChatId(null);
+    setProjectChat(true);
+  }
+
+  function openDatasetChat(d: DatasetRead) {
+    setChatDataset(d);
+    setProjectChat(false);
+  }
+
+  function closeChat() {
+    setChatId(null);
+    setChatDataset(null);
+    setProjectChat(false);
+  }
+
+  function confirmDelete() {
+    const target = confirmTarget;
+    setConfirmTarget(null);
+    if (!target) return;
+    if (target.kind === "dataset") void onDeleteDataset(target.id);
+    else void onDeleteNotebook(target.id);
+  }
+
+  const chatOpen = chatId !== null || chatDataset !== null || projectChat;
+
   return (
     <main className="container flex min-h-screen flex-col gap-8 py-10">
       <header className="flex flex-col gap-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <Button variant="ghost" size="sm" asChild>
             <Link href="/projects">
               <ArrowLeft className="h-4 w-4" />
               Projects
             </Link>
           </Button>
-          <Button size="sm" variant="outline" onClick={() => onGenerateReport("project")}>
-            <FileText className="h-4 w-4" />
-            Report
-          </Button>
-          <Button size="sm" variant="outline" onClick={() => onGenerateDashboard("project")}>
-            <LayoutDashboard className="h-4 w-4" />
-            Dashboard
-          </Button>
-          <Button size="sm" variant="outline" onClick={() => { setChatDataset(null); setChatId(null); }}>
-            <Sparkles className="h-4 w-4" />
-            Chat
-          </Button>
-          <Button variant="outline" size="sm" onClick={logout}>
-            <LogOut className="h-4 w-4" />
-            Sign out
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button size="sm" variant="outline" onClick={() => generateReportOrDashboard("report", "project")} disabled={generating}>
+              <FileText className="h-4 w-4" />
+              {generating ? "Generating…" : "Report"}
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => generateReportOrDashboard("dashboard", "project")} disabled={generating}>
+              <LayoutDashboard className="h-4 w-4" />
+              {generating ? "Generating…" : "Dashboard"}
+            </Button>
+            <Button size="sm" variant="outline" onClick={openProjectChat}>
+              <MessageSquare className="h-4 w-4" />
+              Chat
+            </Button>
+            <Button variant="outline" size="sm" onClick={logout}>
+              <LogOut className="h-4 w-4" />
+              Sign out
+            </Button>
+          </div>
         </div>
         <div>
           <h1 className="text-2xl font-bold tracking-tight">
@@ -332,12 +374,15 @@ export default function ProjectWorkspacePage() {
 
         <div className="flex flex-col gap-4">
           {loading ? (
-            <p className="text-sm text-muted-foreground">Loading datasets…</p>
+            <>
+              <DatasetSkeleton />
+              <DatasetSkeleton />
+            </>
           ) : datasets.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center gap-2 py-10 text-center">
                 <Database className="h-8 w-8 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">No datasets yet. Upload one.</p>
+                <p className="text-sm text-muted-foreground">No datasets yet. Upload one to get started.</p>
               </CardContent>
             </Card>
           ) : (
@@ -350,7 +395,7 @@ export default function ProjectWorkspacePage() {
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex flex-col gap-1">
                         <CardTitle className="flex flex-wrap items-center gap-2 text-lg">
-                          {d.original_filename}
+                          <span className="break-all">{d.original_filename}</span>
                           <span className="rounded bg-secondary px-1.5 py-0.5 text-xs font-medium text-secondary-foreground">
                             v{d.version}
                           </span>
@@ -368,16 +413,17 @@ export default function ProjectWorkspacePage() {
                           variant="ghost"
                           size="icon"
                           aria-label="Delete dataset"
-                          onClick={() => onDelete(d.id)}
+                          className="text-muted-foreground hover:text-destructive"
+                          onClick={() => setConfirmTarget({ kind: "dataset", id: d.id, name: d.original_filename })}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
-                    <div className="flex gap-2 pt-1">
+                    <div className="flex flex-wrap items-center gap-2 pt-1">
                       <Button
                         size="sm"
-                        variant="outline"
+                        variant="default"
                         onClick={() => onAnalyze(d.id)}
                         disabled={isAnalyzing}
                       >
@@ -392,72 +438,35 @@ export default function ProjectWorkspacePage() {
                           {isOpen ? "Hide" : "View analysis"}
                         </Button>
                       )}
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => onShowHistory(d.id)}
-                      >
+                      <Button size="sm" variant="ghost" onClick={() => onShowHistory(d.id)}>
+                        <History className="h-4 w-4" />
                         History
                       </Button>
                       {d.profile && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setCleaningId(d.id)}
-                        >
-                          <Sparkles className="h-4 w-4" />
-                          Clean
-                        </Button>
-                      )}
-                      {d.profile && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => setEdaId(d.id)}
-                        >
-                          <BarChart3 className="h-4 w-4" />
-                          EDA
-                        </Button>
-                      )}
-                      {d.profile && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => setSqlId(d.id)}
-                        >
-                          <BarChart3 className="h-4 w-4" />
-                          SQL
-                        </Button>
-                      )}
-                      {d.profile && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => onGenerateReport("dataset", d.id)}
-                        >
-                          <FileText className="h-4 w-4" />
-                          Report
-                        </Button>
-                      )}
-                      {d.profile && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => onGenerateDashboard("dataset", d.id)}
-                        >
-                          <LayoutDashboard className="h-4 w-4" />
-                          Dashboard
-                        </Button>
-                      )}
-                      {d.profile && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => { setChatDataset(d); setChatId(null); }}
-                        >
-                          <Sparkles className="h-4 w-4" />
-                          Chat
-                        </Button>
+                        <ActionMenu label="Actions">
+                          {(close) => (
+                            <>
+                              <MenuItem icon={<Sparkles className="h-4 w-4" />} onSelect={() => { close(); setCleaningId(d.id); }}>
+                                Clean
+                              </MenuItem>
+                              <MenuItem icon={<BarChart3 className="h-4 w-4" />} onSelect={() => { close(); setEdaId(d.id); }}>
+                                EDA
+                              </MenuItem>
+                              <MenuItem icon={<TableIcon className="h-4 w-4" />} onSelect={() => { close(); setSqlId(d.id); }}>
+                                SQL
+                              </MenuItem>
+                              <MenuItem icon={<FileText className="h-4 w-4" />} onSelect={() => { close(); void generateReportOrDashboard("report", "dataset", d.id); }}>
+                                Report
+                              </MenuItem>
+                              <MenuItem icon={<LayoutDashboard className="h-4 w-4" />} onSelect={() => { close(); void generateReportOrDashboard("dashboard", "dataset", d.id); }}>
+                                Dashboard
+                              </MenuItem>
+                              <MenuItem icon={<MessageSquare className="h-4 w-4" />} onSelect={() => { close(); openDatasetChat(d); }}>
+                                Chat
+                              </MenuItem>
+                            </>
+                          )}
+                        </ActionMenu>
                       )}
                     </div>
                   </CardHeader>
@@ -554,7 +563,7 @@ export default function ProjectWorkspacePage() {
                           <Button size="sm" variant="ghost" onClick={() => startRename(n)} aria-label="Rename notebook">
                             <Pencil className="h-4 w-4" />
                           </Button>
-                          <Button size="sm" variant="ghost" onClick={() => onDeleteNotebook(n.id)} disabled={isBusy} aria-label="Delete notebook">
+                          <Button size="sm" variant="ghost" onClick={() => setConfirmTarget({ kind: "notebook", id: n.id, name: n.title })} disabled={isBusy} aria-label="Delete notebook" className="text-muted-foreground hover:text-destructive">
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </>
@@ -590,16 +599,51 @@ export default function ProjectWorkspacePage() {
         />
       )}
 
-      {chatId !== null || chatDataset !== null ? (
+      {chatOpen && (
         <ChatPanel
           projectId={projectId}
           dataset={chatDataset}
           notebookId={chatId}
           onNotebookCreated={(id) => { setChatId(id); void loadNotebooks(); }}
-          onClose={() => { setChatId(null); setChatDataset(null); }}
+          onClose={closeChat}
         />
-      ) : null}
+      )}
+
+      <ConfirmDialog
+        open={confirmTarget !== null}
+        title={confirmTarget?.kind === "notebook" ? "Delete notebook?" : "Delete dataset?"}
+        description={
+          confirmTarget
+            ? `This permanently deletes "${confirmTarget.name}" and all of its versions. This cannot be undone.`
+            : undefined
+        }
+        confirmLabel="Delete"
+        destructive
+        onConfirm={confirmDelete}
+        onCancel={() => setConfirmTarget(null)}
+      />
     </main>
+  );
+}
+
+function DatasetSkeleton() {
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col gap-2">
+            <div className="h-5 w-48 animate-pulse rounded bg-muted" />
+            <div className="h-4 w-64 animate-pulse rounded bg-muted" />
+          </div>
+          <div className="h-8 w-8 animate-pulse rounded bg-muted" />
+        </div>
+        <div className="flex gap-2 pt-2">
+          <div className="h-9 w-28 animate-pulse rounded-md bg-muted" />
+          <div className="h-9 w-32 animate-pulse rounded-md bg-muted" />
+          <div className="h-9 w-24 animate-pulse rounded-md bg-muted" />
+        </div>
+      </CardHeader>
+    </Card>
   );
 }
 
