@@ -166,8 +166,9 @@ async def complete_stream(
     operations.
   - `dashboard` → `dashboard.proposer.propose_dashboard(ctx, scope)` →
     `CatalogEntry[]`.
-  - `report` → returns `scope` + a generated flag (the actual report is produced
-    via the existing Reports `generate` when the human clicks).
+  - `report` → returns `scope` only (the actual report is produced via the
+    existing Reports `generate` endpoint when the human clicks **Generate**; the
+    chat artifact is a proposal/link, never an auto-generated report).
   - All calls are best-effort; a failed engine call yields an artifact with
     `status: "error"` and a message, never a raised 5xx.
 
@@ -197,8 +198,9 @@ async def complete_stream(
 | `title` | str | |
 | `turns` | JSON | ordered `ChatTurn[]` (config + artifact state only; no raw rows) |
 | `share_token` | str | unique, indexed |
-| `ai_available` | bool | |
-| `created_at`/`updated_at`/`generated_at` | timestamps | |
+| `ai_available` | bool | **True only if every persisted turn used AI**; set `False` if any turn fell back to the deterministic path |
+| `created_at`/`updated_at` | timestamps | `updated_at` bumps on every turn append |
+| `generated_at` | timestamp | set on the **first** assistant turn (first AI generation); `NULL` until then |
 
 A dedicated table (not a JSON column on `Dataset`/`Project`) so a project holds
 multiple notebooks + history. `turns` is `dict | None` via
@@ -210,6 +212,9 @@ multiple notebooks + history. `turns` is `dict | None` via
   Body `ChatMessageRequest`. Creates a notebook if `notebook_id` absent (title
   derived from first question), appends the user turn + streams the assistant
   turn, persists both into `turns`, returns `done` with `notebook_id`/`message_id`.
+  `parent_message_id` (optional) links a follow-up turn to its parent for history
+  rendering; `NULL` for a top-level message. It is stored on the assistant
+  `ChatTurn` and used only for UI threading — it does not change execution.
 - `GET /notebooks?project_id=` — owner list.
 - `POST /notebooks` — create (explicit, for "New chat").
 - `GET /notebooks/{id}` — owner; returns `NotebookDetailRead` (turns attached).
