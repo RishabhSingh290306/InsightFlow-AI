@@ -29,3 +29,23 @@ def test_render_empty_order_uses_catalog_order():
     view = render(spec, ctx, ai_available=False)
     assert [w.widget.type for w in view.widgets] == ["kpi_cards", "data_quality"]
     assert view.ai_available is False
+
+
+def test_render_project_scope_with_order_and_hidden():
+    entries = [
+        CatalogEntry(widget=WidgetMeta(type="project_kpis", title="P", description="d", applies_to_scopes=["project"]), data={"kpis": []}),
+        CatalogEntry(widget=WidgetMeta(type="dataset_summaries", title="S", description="d", applies_to_scopes=["project"]), data={"datasets": []}),
+        CatalogEntry(widget=WidgetMeta(type="recent_reports", title="R", description="d", applies_to_scopes=["project"]), data={"reports": []}),
+    ]
+    ctx = DashboardContext(scope="project")
+    import app.services.dashboard.engine as E
+
+    E.build_catalog = lambda c: entries  # type: ignore
+    spec = DashboardSpec(
+        scope="project",
+        widget_order=["recent_reports", "project_kpis", "dataset_summaries"],
+        hidden_widgets=["project_kpis"],
+    )
+    view = render(spec, ctx, ai_available=True)
+    assert view.scope == "project"
+    assert [w.widget.type for w in view.widgets] == ["recent_reports", "dataset_summaries"]
