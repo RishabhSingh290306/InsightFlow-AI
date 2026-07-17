@@ -1,6 +1,6 @@
 import asyncio
 
-from app.schemas.sql import SqlProposal, SqlVisualization
+from app.schemas.sql import SqlChainTurn, SqlProposal, SqlVisualization
 from app.schemas.understanding import DatasetProfile
 from app.services.sql import insights, proposer
 
@@ -53,6 +53,23 @@ def test_insights_fallback_on_error(monkeypatch):
     async def boom(*a, **k):
         raise RuntimeError("no key")
     monkeypatch.setattr(insights, "complete_json", boom)
-    items, avail = asyncio.run(insights.generate_insights("q", "SELECT 1", "row_count=3", _profile()))
+    ins, fups, avail = asyncio.run(
+        insights.interpret_result("q", "SELECT 1", "row_count=3", _profile())
+    )
     assert avail is False
-    assert items  # deterministic templated fallback
+    assert fups == []
+    assert ins  # deterministic templated fallback
+
+
+def test_generate_uses_chain(monkeypatch):
+    captured = {}
+
+    async def fake(_s, u, model=None):
+        captured["u"] = u
+        return {"sql": "SELECT age FROM dataset", "explanation": "e", "confidence": 0.9}
+
+    monkeypatch.setattr(proposer, "complete_json", fake)
+    chain = [SqlChainTurn(business_question="q0", sql="SELECT 1", result_summary="1 row")]
+    p = asyncio.run(proposer.generate_sql("q", _profile(), chain=chain))
+    assert p.ai_available is True
+    assert "chain" in captured["u"]

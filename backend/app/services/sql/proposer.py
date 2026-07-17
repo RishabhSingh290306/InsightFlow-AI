@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import json
 
-from app.schemas.sql import SqlProposal, SqlVisualization
+from app.schemas.sql import SqlChainTurn, SqlProposal, SqlVisualization
 from app.schemas.understanding import DatasetProfile, DatasetUnderstanding
 from app.services.llm import complete_json
 from app.services.sql.engine import validate_sql
@@ -40,12 +40,21 @@ async def generate_sql(
     question: str,
     profile: DatasetProfile,
     understanding: DatasetUnderstanding | None = None,
+    chain: list[SqlChainTurn] | None = None,
 ) -> SqlProposal:
     profile_json = profile.model_dump(mode="json")
     profile_json.pop("preview", None)  # never send raw-looking rows
-    user_prompt = json.dumps(
-        {"question": question, "profile": profile_json}, indent=2
-    )
+    user_prompt: dict = {"question": question, "profile": profile_json}
+    if chain:
+        user_prompt["chain"] = [
+            {
+                "business_question": t.business_question,
+                "sql": t.sql,
+                "result_summary": t.result_summary,
+            }
+            for t in chain
+        ]
+    user_prompt = json.dumps(user_prompt, indent=2)
     try:
         data = await complete_json(_SYSTEM, user_prompt)
         sql = str(data.get("sql", "")).strip()
