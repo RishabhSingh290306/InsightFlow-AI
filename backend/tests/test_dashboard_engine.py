@@ -49,3 +49,24 @@ def test_render_project_scope_with_order_and_hidden():
     view = render(spec, ctx, ai_available=True)
     assert view.scope == "project"
     assert [w.widget.type for w in view.widgets] == ["recent_reports", "dataset_summaries"]
+
+
+def test_render_include_hidden_flags_and_keeps_data():
+    entries = [
+        CatalogEntry(widget=WidgetMeta(type="kpi_cards", title="K", description="d", applies_to_scopes=["dataset"]), data={"kpis": [{"label": "Rows", "value": 9}]}),
+        CatalogEntry(widget=WidgetMeta(type="data_quality", title="Q", description="d", applies_to_scopes=["dataset"]), data={"issues": []}),
+    ]
+    ctx = DashboardContext(scope="dataset")
+    import app.services.dashboard.engine as E
+
+    E.build_catalog = lambda c: entries  # type: ignore
+    spec = DashboardSpec(scope="dataset", widget_order=[], hidden_widgets=["data_quality"])
+    # Default: hidden widget dropped.
+    visible = render(spec, ctx, ai_available=True)
+    assert [w.widget.type for w in visible.widgets] == ["kpi_cards"]
+    # include_hidden: hidden widget present, flagged, with its data intact.
+    full = render(spec, ctx, ai_available=True, include_hidden=True)
+    assert [w.widget.type for w in full.widgets] == ["kpi_cards", "data_quality"]
+    hidden_entry = next(w for w in full.widgets if w.widget.type == "data_quality")
+    assert hidden_entry.is_hidden is True
+    assert hidden_entry.data == {"issues": []}

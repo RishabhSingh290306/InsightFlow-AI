@@ -10,6 +10,7 @@ import {
   ChevronDown,
   Database,
   FileText,
+  LayoutDashboard,
   LogOut,
   Sparkles,
   Table as TableIcon,
@@ -17,7 +18,7 @@ import {
   Upload,
 } from "lucide-react";
 
-import { datasetsApi, projectsApi, reportsApi } from "@/lib/api";
+import { dashboardsApi, datasetsApi, projectsApi, reportsApi } from "@/lib/api";
 import { clearToken, getToken } from "@/lib/auth";
 import type { DatasetRead, ProjectRead } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -196,6 +197,20 @@ export default function ProjectWorkspacePage() {
     }
   }
 
+  async function onGenerateDashboard(scope: "dataset" | "project", datasetId?: number) {
+    setError(null);
+    try {
+      const dash = await dashboardsApi.generate(
+        scope === "dataset"
+          ? { scope: "dataset", dataset_id: datasetId, project_id: projectId }
+          : { scope: "project", project_id: projectId }
+      );
+      router.push(`/dashboards/${dash.id}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to generate dashboard");
+    }
+  }
+
   function onAppliedClean(newDataset: DatasetRead) {
     // Add the new version to the workspace; its lineage is visible via History.
     setDatasets((prev) => [...prev, newDataset]);
@@ -215,6 +230,10 @@ export default function ProjectWorkspacePage() {
           <Button size="sm" variant="outline" onClick={() => onGenerateReport("project")}>
             <FileText className="h-4 w-4" />
             Report
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => onGenerateDashboard("project")}>
+            <LayoutDashboard className="h-4 w-4" />
+            Dashboard
           </Button>
           <Button variant="outline" size="sm" onClick={logout}>
             <LogOut className="h-4 w-4" />
@@ -362,6 +381,16 @@ export default function ProjectWorkspacePage() {
                         >
                           <FileText className="h-4 w-4" />
                           Report
+                        </Button>
+                      )}
+                      {d.profile && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => onGenerateDashboard("dataset", d.id)}
+                        >
+                          <LayoutDashboard className="h-4 w-4" />
+                          Dashboard
                         </Button>
                       )}
                     </div>

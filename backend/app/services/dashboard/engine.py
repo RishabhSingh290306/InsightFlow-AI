@@ -11,6 +11,7 @@ from __future__ import annotations
 from sqlmodel import select
 
 from app.models.dataset import Dataset
+from app.models.project import Project
 from app.models.report import Report
 from app.models.sql_query import SqlQuery
 from app.schemas.dashboard import DashboardSpec, DashboardView
@@ -122,16 +123,57 @@ def _assemble_dataset_context(session, project, dataset, user) -> DashboardConte
     )
 
 
-def render(spec: DashboardSpec, ctx: DashboardContext, ai_available: bool = True) -> DashboardView:
+def render(spec: DashboardSpec, ctx: DashboardContext, ai_available: bool = True, include_hidden: bool = False) -> DashboardView:
+    """Resolve the spec against the live context.
+
+    `include_hidden` keeps hidden widgets in the output (flagged `is_hidden`)
+    so the owner editor can show/toggle them without losing their computed
+    data. The read-only public renderer always passes `include_hidden=False`.
+    """
     catalog = build_catalog(ctx)
     by_type = {e.widget.type: e for e in catalog}
     order = spec.widget_order or list(by_type.keys())
-    widgets = []
-    for t in order:
-        if t in spec.hidden_widgets:
-            continue
+    widgets: list = []
+
+    def _place(t: str) -> None:
         entry = by_type.get(t)
         if entry is None:
-            continue
-        widgets.append(entry)
+            return
+        if t in spec.hidden_widgets:
+            if not include_hidden:
+                return
+            widgets.append(entry.model_copy(update={"is_hidden": True}))
+        else:
+            widgets.append(entry)
+
+    for t in order:
+        _place(t)
+    # Append any catalog entries the AI order didn't list.
+    listed = set(order)
+    for t in by_type:
+        if t not in listed:
+            _place(t)
     return DashboardView(scope=ctx.scope, spec=spec, widgets=widgets, ai_available=ai_available)
+
+
+def resolve_context(session, dashboard, user) -> DashboardContext:
+    """Re-assemble the live context for a *stored* dashboard.
+
+    The stored `Dashboard.spec` is config only; the widgets' live data is
+    re-resolved from the latest artifacts each time the dashboard is viewed
+    (spec §5). Used by the GET/regenerate routes.
+    """
+    project = session.get(Project, dashboard.project_id)
+    dataset = session.get(Dataset, dashboard.dataset_id) if dashboard.dataset_id else None
+    return assemble_context(session, project, user, scope=dashboard.scope, dataset=dataset)
+
+
+def render_dashboard(dashboard, session, user) -> DashboardView:
+    """Re-render a stored dashboard against the latest artifacts.
+
+    Hidden widgets are included (flagged `is_hidden`) so the owner editor can
+    restore them without losing their computed data.
+    """
+    ctx = resolve_context(session, dashboard, user)
+    spec = DashboardSpec.model_validate(dashboard.spec)
+    return render(spec, ctx, ai_available=dashboard.ai_available, include_hidden=True)

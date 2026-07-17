@@ -462,3 +462,51 @@ than a separate project code path.
 
 **Rationale:** Widgets stay independent and registered — adding future widgets needs no
 engine change (spec §7). Project scope is "more context, same engine," not a fork.
+
+## 2026-07-17 — Dashboard Recommendations M3 (persistence + HITL editor + entry points)
+
+Closes Sprint 4. Turns the on-demand preview into a durable, editable project asset and
+completes the HITL loop (same contract as Reports): *AI curates → human hides/reorders/notes/
+regenerates/saves → renderer resolves live data*.
+
+- **`dashboards` table** (migration `h9i0j1k2l3m4`, on `g8h9i0j1k2l3`): `project_id`/`owner_id`
+  FKs + indexes, `scope`, nullable `dataset_id` (indexed FK), nullable `dataset_version_id`,
+  `title`, `spec` JSON (the config-only `DashboardSpec`), `ai_available` bool,
+  `refreshed_at`/`created_at`/`updated_at`. Dedicated table (not a column on `Dataset`/`Project`)
+  so a project holds multiple dashboards + history. Model `spec` is `dict | None` via
+  `sa_column=Column(JSON)` (the `Column(...)` wrapper is required for SQLModel to accept a
+  `dict`/`JSON` field — bare `sa_column=JSON` raises at import).
+- **`DashboardSpec` schema** (`app/schemas/dashboard.py`): config-only (`scope`, `widget_order`,
+  `hidden_widgets`, `groups`, `ai_summary`, `user_notes`). Added `DashboardRead` /
+  `DashboardDetailRead` (`view` attached) / `DashboardGenerateRequest` / `DashboardPatchRequest`
+  and `is_hidden: bool = False` on `CatalogEntry` so the editor can re-show hidden widgets.
+- **Engine** (`app/services/dashboard/engine.py`): `render(..., include_hidden=False)` now keeps
+  hidden widgets (flagged `is_hidden`, data intact) when `include_hidden=True`; `render_dashboard`
+  (the owner GET) uses `include_hidden=True` so the HITL editor never loses a hidden widget's
+  computed data when toggled back on. `resolve_context` re-assembles the live context for a stored
+  dashboard.
+- **Routes** (`app/api/routes/dashboards.py`): owner-guarded full CRUD — `POST /generate` (409
+  before any profile, project 404 if no datasets / 409 if none profiled), `GET /list?project_id=`,
+  `GET /{id}` (returns `DashboardDetailRead` with the resolved `view`), `PATCH /{id}` (applies only
+  provided fields to the stored spec — HITL edit surface), `POST /{id}/regenerate` (re-runs
+  `propose_dashboard`, **preserving** the human's `hidden_widgets` + `user_notes`, recomputing
+  order/groups/summary), `DELETE /{id}` (204). `_owned` returns 404 if absent, **403 if it exists
+  but belongs to another user** — so the owner-guard test asserts 403, not 404. `POST /preview` is
+  kept from M2 (both scopes). **Fix:** `preview_dashboard` called `render(...)` which was never
+  imported into the routes module (pre-existing M2 wiring gap the unit tests missed) — added
+  `render` to the engine import.
+- **Frontend**: `lib/types.ts` (`DashboardRead`/`DashboardDetailRead`/`DashboardGenerateRequest`/
+  `DashboardPatchRequest`, `CatalogEntry.is_hidden`), `lib/api.ts` (`dashboardsApi.generate/list/
+  get/update/regenerate/remove` beside `preview`), `components/dashboard-editor.tsx` (hide/show per
+  widget, up/down reorder, per-widget notes, Save = PATCH, Regenerate = re-fetch + refresh, Delete
+  with confirm; live preview rebuilt from `view.widgets` honoring local order/hidden and passed to
+  `DashboardRenderer`), owner page `app/dashboards/[id]/page.tsx` (auth-guarded, loads
+  `get(id)`, back-to-project link). Entry points in `app/projects/[id]/page.tsx`: a **Dashboard**
+  button in the project header (project scope) and per profiled dataset card (dataset scope), both
+  routing to `/dashboards/{id}`.
+
+Verified: backend unit suite `pytest` (71 passed, incl. a new `render` `include_hidden` test);
+manual Postgres e2e `tests/manual_dashboard_e2e.py` (preview dataset + project, full CRUD lifecycle,
+owner-guard 403); `tsc --noEmit` + `next lint` + `next build` all pass; `/dashboards/[id]` emitted in
+the build manifest.
+

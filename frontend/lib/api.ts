@@ -5,7 +5,11 @@ import type {
   ChartSpec,
   CleaningOperation,
   CleaningPlan,
+  DashboardGenerateRequest,
+  DashboardPatchRequest,
   DashboardPreviewRequest,
+  DashboardDetailRead,
+  DashboardRead,
   DashboardView,
   DatasetRead,
   EdaAcceptRequest,
@@ -278,11 +282,38 @@ export const reportsApi = {
 };
 
 export const dashboardsApi = {
-  // Ephemeral dataset-scope preview (M1). Returns a resolved DashboardView.
+  // Ephemeral preview (M1/M2). Returns a resolved DashboardView.
   preview(req: DashboardPreviewRequest): Promise<DashboardView> {
     return request<DashboardView>("/api/v1/dashboards/preview", {
       method: "POST",
       body: JSON.stringify(req),
     });
+  },
+  // Persisted CRUD (M3).
+  generate(req: DashboardGenerateRequest): Promise<DashboardRead> {
+    return request<DashboardRead>("/api/v1/dashboards/generate", {
+      method: "POST",
+      body: JSON.stringify(req),
+    });
+  },
+  list(projectId: number): Promise<DashboardRead[]> {
+    return request<DashboardRead[]>(`/api/v1/dashboards/list?project_id=${projectId}`);
+  },
+  get(id: number): Promise<DashboardDetailRead> {
+    return request<DashboardDetailRead>(`/api/v1/dashboards/${id}`);
+  },
+  update(id: number, body: DashboardPatchRequest): Promise<DashboardRead> {
+    return request<DashboardRead>(`/api/v1/dashboards/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    });
+  },
+  regenerate(id: number): Promise<DashboardRead> {
+    return request<DashboardRead>(`/api/v1/dashboards/${id}/regenerate`, {
+      method: "POST",
+    });
+  },
+  remove(id: number): Promise<void> {
+    return request<void>(`/api/v1/dashboards/${id}`, { method: "DELETE" });
   },
 };

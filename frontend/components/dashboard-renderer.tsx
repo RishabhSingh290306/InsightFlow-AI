@@ -315,20 +315,22 @@ export function DashboardRenderer({ view }: { view: DashboardView }) {
       {view.spec.ai_summary?.executive && (
         <p className="text-sm text-muted-foreground">{view.spec.ai_summary.executive}</p>
       )}
-      {view.widgets.map((entry) => (
-        <Card key={entry.widget.type}>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <IconFor type={entry.widget.type} />
-              {entry.widget.title}
-            </CardTitle>
-            <CardDescription>{entry.widget.description}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <WidgetBody entry={entry} />
-          </CardContent>
-        </Card>
-      ))}
+      {view.widgets
+        .filter((entry) => !entry.is_hidden)
+        .map((entry) => (
+          <Card key={entry.widget.type}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <IconFor type={entry.widget.type} />
+                {entry.widget.title}
+              </CardTitle>
+              <CardDescription>{entry.widget.description}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <WidgetBody entry={entry} />
+            </CardContent>
+          </Card>
+        ))}
     </div>
   );
 }

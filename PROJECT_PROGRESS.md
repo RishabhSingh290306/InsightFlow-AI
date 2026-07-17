@@ -48,7 +48,7 @@ Design: `docs/superpowers/specs/2026-07-17-dashboard-recommendations-design.md`
 
 - [x] **M1 — Engine + dataset-scope core:** `app/services/dashboard/` package (widget ABC, registry, context, `build_catalog`, `propose_dashboard` + deterministic fallback, `render`); M1 widgets (`kpi_cards`, `data_quality`, `recommended_charts`, `ai_insights`, `sql_widget`); on-demand `POST /preview` (dataset scope); `dashboard-renderer` (read-only, reuses `ChartRenderer`); backend unit tests
 - [x] **M2 — Project scope + remaining widgets:** project-scope context assembly; remaining widgets (`project_kpis`, `dataset_summaries`, `recent_reports`, `activity_feed`, `version_timeline`, `recommended_next`); `POST /preview` extended to project scope; renderer handles project widgets; tests
-- [ ] **M3 — Persistence + HITL editor + entry points:** `dashboards` table + migration + `Dashboard` model + `DashboardSpec` schema; full CRUD (`generate`/`list`/`get`+view/`patch`/`regenerate`/`delete`, owner-guarded); `dashboard-editor` (accept/reject, reorder, notes, regenerate, save); entry points (Dashboard button per dataset + project header) + owner page `app/dashboards/[id]`; end-to-end verification
+- [x] **M3 — Persistence + HITL editor + entry points:** `dashboards` table + migration + `Dashboard` model + `DashboardSpec` schema; full CRUD (`generate`/`list`/`get`+view/`patch`/`regenerate`/`delete`, owner-guarded); `dashboard-editor` (hide/show, reorder, per-widget notes, regenerate, save); entry points (Dashboard button per profiled dataset + project header) + owner page `app/dashboards/[id]`; end-to-end verification
 
 **Sprint 0 — Foundations** *(complete)*
 
@@ -122,6 +122,6 @@ for detailed rationale on:
 | SQL Generation | 2026-08-27 | ✅ Complete |
 | Conversational Investigation | 2026-07-24 | ✅ Complete |
 | Insights + Reports | 2026-09-03 | ✅ Complete |
-| Dashboard Recommendations | 2026-09-10 | 🟢 M1+M2 shipped; M3 pending |
+| Dashboard Recommendations | 2026-09-10 | ✅ Complete (M1+M2+M3) |
 | AI Chat & Notebook | 2026-09-17 | Pending |
 | Portfolio Polish | 2026-09-24 | Pending |

@@ -318,6 +318,7 @@ export interface WidgetMeta {
 export interface CatalogEntry {
   widget: WidgetMeta;
   data: Record<string, unknown>;
+  is_hidden?: boolean;
 }
 
 export interface DashboardSpec {
@@ -344,4 +345,41 @@ export interface DashboardPreviewRequest {
   scope: string;
   project_id?: number;
   dataset_id?: number;
+}
+
+// --- Dashboard Recommendations: persistence (M3) ---------------------------
+
+export interface DashboardRead {
+  id: number;
+  project_id: number;
+  owner_id: number;
+  scope: string;
+  dataset_id: number | null;
+  dataset_version_id: number | null;
+  title: string;
+  spec: DashboardSpec;
+  ai_available: boolean;
+  refreshed_at: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DashboardDetailRead extends DashboardRead {
+  view: DashboardView;
+}
+
+export interface DashboardGenerateRequest {
+  scope: string;
+  project_id?: number | null;
+  dataset_id?: number | null;
+  title?: string | null;
+}
+
+export interface DashboardPatchRequest {
+  title?: string | null;
+  widget_order?: string[];
+  hidden_widgets?: string[];
+  groups?: { title: string; widget_types: string[] }[];
+  ai_summary?: Record<string, unknown> | null;
+  user_notes?: Record<string, string> | null;
 }

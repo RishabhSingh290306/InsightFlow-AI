@@ -75,3 +75,105 @@ def test_dashboard_project_preview_e2e():
     # dataset-only widgets must not leak into a project dashboard
     assert "kpi_cards" not in types
     assert "sql_widget" not in types
+
+
+def test_dashboard_crud_e2e():
+    """Full CRUD lifecycle for a persisted dashboard (M3)."""
+    email = "dashboard_crud_e2e@example.com"
+    client.post("/api/v1/auth/register", json={"email": email, "password": "pw"})
+    tok = client.post("/api/v1/auth/login", data={"username": email, "password": "pw"}).json()["access_token"]
+    h = _auth(tok)
+    pid = client.post("/api/v1/projects", json={"name": "crud", "description": "d"}, headers=h).json()["id"]
+
+    csv = b"region,score\nnorth,10\nsouth,20\nwest,5\n"
+    did = client.post(
+        f"/api/v1/datasets/projects/{pid}",
+        headers=h, files={"file": ("t.csv", io.BytesIO(csv), "text/csv")},
+    ).json()["id"]
+
+    # 409 before analysis (cannot persist an unprofiled dashboard)
+    r = client.post("/api/v1/dashboards/generate", json={"scope": "dataset", "dataset_id": did, "project_id": pid}, headers=h)
+    assert r.status_code == 409
+
+    client.post(f"/api/v1/datasets/{did}/understand", headers=h)
+    client.post(f"/api/v1/datasets/{did}/eda", headers=h)
+
+    # GENERATE
+    gen = client.post("/api/v1/dashboards/generate", json={"scope": "dataset", "dataset_id": did, "project_id": pid}, headers=h)
+    assert gen.status_code == 200
+    dash = gen.json()
+    assert dash["scope"] == "dataset"
+    assert dash["dataset_id"] == did
+    assert dash["spec"]["widget_order"]
+    did_id = dash["id"]
+
+    # LIST
+    listing = client.get(f"/api/v1/dashboards/list?project_id={pid}", headers=h)
+    assert listing.status_code == 200
+    assert any(d["id"] == did_id for d in listing.json())
+
+    # GET (owner) returns the resolved view
+    gotten = client.get(f"/api/v1/dashboards/{did_id}", headers=h)
+    assert gotten.status_code == 200
+    body = gotten.json()
+    assert body["id"] == did_id
+    assert "widgets" in body["view"]
+    assert body["view"]["scope"] == "dataset"
+
+    # PATCH — hide a widget + add a note
+    all_types = [w["widget"]["type"] for w in body["view"]["widgets"]]
+    hidden_one = all_types[0]
+    patched = client.patch(
+        f"/api/v1/dashboards/{did_id}",
+        json={"hidden_widgets": [hidden_one], "user_notes": {hidden_one: "check this"}},
+        headers=h,
+    )
+    assert patched.status_code == 200
+    pj = patched.json()
+    assert hidden_one in pj["spec"]["hidden_widgets"]
+    assert pj["spec"]["user_notes"].get(hidden_one) == "check this"
+
+    # REGENERATE — preserves hidden + notes, recomputes order/summary
+    reg = client.post(f"/api/v1/dashboards/{did_id}/regenerate", headers=h)
+    assert reg.status_code == 200
+    rj = reg.json()
+    assert hidden_one in rj["spec"]["hidden_widgets"]
+    assert rj["spec"]["user_notes"].get(hidden_one) == "check this"
+    # widget order should still contain every visible widget type
+    assert set(rj["spec"]["widget_order"]) >= {t for t in all_types if t != hidden_one}
+
+    # DELETE
+    d = client.delete(f"/api/v1/dashboards/{did_id}", headers=h)
+    assert d.status_code == 204
+    gone = client.get(f"/api/v1/dashboards/{did_id}", headers=h)
+    assert gone.status_code == 404
+
+
+def test_dashboard_owner_guard_e2e():
+    """Dashboards are owner-guarded: another user gets 404/403."""
+    email_a = "dash_owner_a@example.com"
+    email_b = "dash_owner_b@example.com"
+    for e in (email_a, email_b):
+        client.post("/api/v1/auth/register", json={"email": e, "password": "pw"})
+    tok_a = client.post("/api/v1/auth/login", data={"username": email_a, "password": "pw"}).json()["access_token"]
+    tok_b = client.post("/api/v1/auth/login", data={"username": email_b, "password": "pw"}).json()["access_token"]
+    ha, hb = _auth(tok_a), _auth(tok_b)
+    pid = client.post("/api/v1/projects", json={"name": "owner", "description": "d"}, headers=ha).json()["id"]
+
+    csv = b"region,score\nnorth,10\nsouth,20\nwest,5\n"
+    did = client.post(
+        f"/api/v1/datasets/projects/{pid}",
+        headers=ha, files={"file": ("t.csv", io.BytesIO(csv), "text/csv")},
+    ).json()["id"]
+    client.post(f"/api/v1/datasets/{did}/understand", headers=ha)
+
+    dash_id = client.post(
+        "/api/v1/dashboards/generate",
+        json={"scope": "dataset", "dataset_id": did, "project_id": pid},
+        headers=ha,
+    ).json()["id"]
+
+    # Owner B gets 403 (exists, but not theirs) on GET/PATCH/DELETE of owner A's dashboard.
+    assert client.get(f"/api/v1/dashboards/{dash_id}", headers=hb).status_code == 403
+    assert client.patch(f"/api/v1/dashboards/{dash_id}", json={"title": "x"}, headers=hb).status_code == 403
+    assert client.delete(f"/api/v1/dashboards/{dash_id}", headers=hb).status_code == 403

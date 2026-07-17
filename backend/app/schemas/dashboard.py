@@ -6,6 +6,8 @@ live data from the latest artifacts at render time.
 """
 from __future__ import annotations
 
+from datetime import datetime
+
 from pydantic import BaseModel
 
 
@@ -23,6 +25,7 @@ class CatalogEntry(BaseModel):
 
     widget: WidgetMeta
     data: dict = {}
+    is_hidden: bool = False
 
 
 class DashboardSpec(BaseModel):
@@ -51,3 +54,46 @@ class DashboardPreviewRequest(BaseModel):
     scope: str
     project_id: int | None = None
     dataset_id: int | None = None
+
+
+class DashboardRead(BaseModel):
+    """A persisted dashboard (the stored spec + metadata)."""
+
+    id: int
+    project_id: int
+    owner_id: int
+    scope: str
+    dataset_id: int | None = None
+    dataset_version_id: int | None = None
+    title: str
+    spec: DashboardSpec
+    ai_available: bool
+    refreshed_at: datetime
+    created_at: datetime
+    updated_at: datetime
+
+
+class DashboardDetailRead(DashboardRead):
+    """A dashboard plus its live-resolved view (for the owner editor page)."""
+
+    view: DashboardView
+
+
+class DashboardGenerateRequest(BaseModel):
+    """Body for POST /dashboards/generate."""
+
+    scope: str  # "dataset" | "project"
+    project_id: int | None = None
+    dataset_id: int | None = None
+    title: str | None = None
+
+
+class DashboardPatchRequest(BaseModel):
+    """HITL edits to a stored dashboard. All fields optional (only set ones apply)."""
+
+    title: str | None = None
+    widget_order: list[str] | None = None
+    hidden_widgets: list[str] | None = None
+    groups: list[dict] | None = None
+    ai_summary: dict | None = None
+    user_notes: dict | None = None
