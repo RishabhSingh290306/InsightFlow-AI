@@ -89,7 +89,7 @@ export function ChatPanel({ projectId, dataset, notebookId, onNotebookCreated, o
               <div className={`inline-block max-w-[90%] rounded-lg px-3 py-2 text-sm ${t.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
                 {t.content || (t._streaming ? "…" : "")}
               </div>
-              {t.actions?.map((a, i) => <ArtifactCard key={i} artifact={a} dataset={dataset} />)}
+              {t.actions?.map((a, i) => <ArtifactCard key={i} artifact={a} dataset={dataset} projectId={projectId} />)}
             </div>
           ))}
         </div>
@@ -108,9 +108,10 @@ export function ChatPanel({ projectId, dataset, notebookId, onNotebookCreated, o
   );
 }
 
-function ArtifactCard({ artifact, dataset }: { artifact: ChatArtifact; dataset?: DatasetRead | null }) {
+function ArtifactCard({ artifact, dataset, projectId }: { artifact: ChatArtifact; dataset?: DatasetRead | null; projectId: number }) {
   const [result, setResult] = useState<SqlResult | null>(null);
   const [running, setRunning] = useState(false);
+  const [accepted, setAccepted] = useState<string[]>([]);
 
   if (artifact.type === "sql") {
     const proposal = artifact.proposal as unknown as SqlProposal | undefined;
@@ -156,10 +157,49 @@ function ArtifactCard({ artifact, dataset }: { artifact: ChatArtifact; dataset?:
       </div>
     );
   }
-  // M1: non-sql types are inert proposals (filled in M2).
-  return (
-    <div className="mt-2 rounded-md border bg-background p-3 text-left text-sm text-muted-foreground">
-      {artifact.type} — coming soon.
-    </div>
-  );
+
+  if (artifact.type === "chart") {
+    const specs = (artifact.specs ?? []) as unknown as import("@/lib/types").ChartSpec[];
+    return (
+      <div className="mt-2 rounded-md border bg-background p-3 text-left text-sm">
+        <p className="font-medium">Recommended charts</p>
+        {specs.map((s) => (
+          <div key={s.id} className="my-2">
+            <label className="flex items-center gap-2 text-xs">
+              <input type="checkbox" checked={accepted.includes(s.id)} onChange={(e) => setAccepted((p) => e.target.checked ? [...p, s.id] : p.filter((x) => x !== s.id))} />
+              {s.title}
+            </label>
+            <ChartRenderer spec={s} />
+          </div>
+        ))}
+        <p className="text-xs text-muted-foreground">{accepted.length} selected</p>
+      </div>
+    );
+  }
+
+  if (artifact.type === "cleaning") {
+    const ops = ((artifact.proposal as Record<string, unknown> | null)?.operations as Record<string, unknown>[] | undefined) ?? [];
+    return (
+      <div className="mt-2 rounded-md border bg-background p-3 text-left text-sm">
+        <p className="font-medium">Cleaning suggestions</p>
+        <ul className="list-inside list-disc text-xs">{ops.map((o: Record<string, unknown>, i: number) => <li key={i}>{String(o.op)}: {String(o.explanation ?? "")}</li>)}</ul>
+      </div>
+    );
+  }
+
+  if (artifact.type === "dashboard" || artifact.type === "report") {
+    const scope = ((artifact.proposal as Record<string, unknown> | null)?.scope as string | undefined) ?? (dataset ? "dataset" : "project");
+    const gen = artifact.type === "dashboard" ? dashboardsApi.generate : reportsApi.generate;
+    return (
+      <div className="mt-2 rounded-md border bg-background p-3 text-left text-sm">
+        <p className="font-medium">{artifact.type === "dashboard" ? "Dashboard" : "Report"} recommendation</p>
+        <Button size="sm" className="mt-2" onClick={async () => {
+          const r = await gen(scope === "dataset" ? { scope: "dataset", dataset_id: dataset!.id, project_id: projectId } : { scope: "project", project_id: projectId });
+          window.location.href = artifact.type === "dashboard" ? `/dashboards/${r.id}` : `/reports/${r.id}`;
+        }}>{artifact.type === "dashboard" ? "Open dashboard" : "Generate report"}</Button>
+      </div>
+    );
+  }
+
+  return <div className="mt-2 rounded-md border bg-background p-3 text-left text-sm text-muted-foreground">{artifact.type}</div>;
 }
