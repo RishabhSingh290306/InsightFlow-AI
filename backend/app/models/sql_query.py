@@ -23,6 +23,7 @@ class SqlQuery(SQLModel, table=True):
     project_id: int = Field(index=True, foreign_key="projects.id")
     dataset_id: int = Field(index=True, foreign_key="datasets.id")
     owner_id: int = Field(index=True, foreign_key="users.id")
+    parent_query_id: int | None = Field(default=None, foreign_key="sql_queries.id", index=True)
     business_question: str = Field(sa_column=Column(Text))
     sql: str = Field(sa_column=Column(Text))
     edited: bool = False
