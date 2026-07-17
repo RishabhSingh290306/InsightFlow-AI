@@ -21,11 +21,20 @@ class SqlVisualization(BaseModel):
     y: str | None = None
 
 
+class SqlChainTurn(BaseModel):
+    """One prior turn of an investigation, sent as context for chain-aware generation."""
+
+    business_question: str
+    sql: str
+    result_summary: str  # 1-line summary of that turn's result
+
+
 class SqlGenerateRequest(BaseModel):
     """Body for POST /sql/generate."""
 
     dataset_id: int
     question: str
+    chain: list[SqlChainTurn] | None = None
 
 
 class SqlProposal(BaseModel):
@@ -48,6 +57,7 @@ class SqlRunRequest(BaseModel):
     business_question: str | None = None
     explanation: str | None = None
     suggested_visualization: SqlVisualization | None = None
+    parent_query_id: int | None = None
 
 
 class SqlResult(BaseModel):
@@ -60,6 +70,8 @@ class SqlResult(BaseModel):
     duration_ms: float
     insights: list[str] = []
     insights_ai_available: bool = True
+    followup_questions: list[str] = []
+    followups_ai_available: bool = True
     persisted_id: int | None = None
 
 
@@ -81,3 +93,4 @@ class SqlQueryRecord(BaseModel):
     truncated: bool | None = None
     duration_ms: float | None = None
     executed_at: datetime
+    parent_query_id: int | None = None
