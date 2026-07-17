@@ -388,6 +388,48 @@ Verified: `pytest` (schemas + interpreter + proposer + engine, 25 passed), `tsc`
 build` all pass; manual TestClient e2e confirms generate-with-chain, run returns followups, persisted
 row carries `parent_query_id`, invalid parent → 422.
 
+## 2026-07-17 — Sprint 4: Dashboard Recommendations (design approved)
+
+### Architecture Decision: Single reusable dashboard engine, two scopes
+
+**Decision:** One `Dashboard Engine` serves **dataset-scoped** and **project-scoped**
+dashboards. The *scope* selects the data source; the *renderer* is scope-independent.
+Widgets are independent, registered modules (`DashboardWidget` ABC in a registry),
+so future widgets (tables, timelines, SQL/report/activity widgets) are drop-in modules
+with no engine change. Mirrors the cleaning `CleaningOp` plugin pattern.
+
+**Rationale:**
+- Avoids two parallel systems (per-dataset vs per-project) that would diverge.
+- Widget registry gives the extensibility the platform needs for future dashboard types.
+- Renderer independence keeps presentation logic decoupled from data scope.
+
+### Architecture Decision: Deterministic catalog first, AI curates + writes prose
+
+**Decision:** `build_catalog` (deterministic) runs every widget's `availability` +
+`build` against stored artifacts and returns candidate widgets with real data. The AI
+then **selects / orders / groups** widgets and **writes prose** (executive summary,
+per-widget insight cards, recommended-next-analyses) from catalog *metadata only*. On
+any LLM/validation failure → deterministic fallback (all widgets, fixed order, template
+summaries, `ai_available=False`). AI never invents widgets or computes facts.
+
+**Rationale:** Same best-effort, deterministic-fallback contract as EDA's
+`propose_charts` and Reports' `narrate_report` — reliability preserved, dashboard always
+renders.
+
+### Architecture Decision: Persisted spec, live-rendered data (HITL like Reports)
+
+**Decision:** A `Dashboard` row stores the *spec* (widget order, hidden widgets, groups,
+AI summary, user notes, scope, dataset version reference, refreshed timestamp) — never
+rendered data. The renderer resolves each widget's **live** data from the latest
+artifacts at render time. Human can accept/reject, reorder, add notes, regenerate, save
+— the same HITL workflow as Reports. A future snapshot feature would freeze a payload
+copy (designed-for, not built).
+
+**Rationale:** Keeps dashboards fresh against evolving project data while remaining a
+durable, editable project asset; reuses the proven Reports persistence/editor pattern.
+
+Full design: `docs/superpowers/specs/2026-07-17-dashboard-recommendations-design.md`.
+
 ## Future Log Entries
 
 - AI workflow design decisions

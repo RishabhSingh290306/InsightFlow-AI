@@ -42,6 +42,14 @@ Design: `docs/superpowers/specs/2026-07-17-insights-reports-design.md`
 - [x] **M2 — Editor UI + export:** `report-renderer` (presentation-only, reuses `ChartRenderer`), `report-editor` (edit/reorder/remove/rename/custom-note, live preview), PDF (browser `window.print()`) + Markdown export, copy share link; Generate Report entry points on the project workspace (per-dataset + per-project)
 - [x] **M3 — Public share view:** `/reports/share/[token]` read-only, branded footer ("Generated with InsightFlow AI · Analyze your own dataset →"), download buttons, no mutation/data leak
 
+**Sprint 4 — Dashboard Recommendations** *(design approved 2026-07-17)*
+
+Design: `docs/superpowers/specs/2026-07-17-dashboard-recommendations-design.md`
+
+- [ ] **M1 — Engine + dataset-scope core:** `app/services/dashboard/` package (widget ABC, registry, context, `build_catalog`, `propose_dashboard` + deterministic fallback, `render`); M1 widgets (`kpi_cards`, `data_quality`, `recommended_charts`, `ai_insights`, `sql_widget`); on-demand `POST /preview` (dataset scope); `dashboard-renderer` (read-only, reuses `ChartRenderer`); backend unit tests
+- [ ] **M2 — Project scope + remaining widgets:** project-scope context assembly; remaining widgets (`project_kpis`, `dataset_summaries`, `recent_reports`, `activity_feed`, `cleaning_history`/`version_timeline`, `recommended_next`); `POST /preview` extended to project scope; renderer handles project widgets; tests
+- [ ] **M3 — Persistence + HITL editor + entry points:** `dashboards` table + migration + `Dashboard` model + `DashboardSpec` schema; full CRUD (`generate`/`list`/`get`+view/`patch`/`regenerate`/`delete`, owner-guarded); `dashboard-editor` (accept/reject, reorder, notes, regenerate, save); entry points (Dashboard button per dataset + project header) + owner page `app/dashboards/[id]`; end-to-end verification
+
 **Sprint 0 — Foundations** *(complete)*
 
 - [x] Initialize Next.js 15 project with App Router (Tailwind + ShadCN primitives)
@@ -114,6 +122,6 @@ for detailed rationale on:
 | SQL Generation | 2026-08-27 | ✅ Complete |
 | Conversational Investigation | 2026-07-24 | ✅ Complete |
 | Insights + Reports | 2026-09-03 | ✅ Complete |
-| Dashboard Recommendations | 2026-09-10 | Pending |
+| Dashboard Recommendations | 2026-09-10 | 🟡 In design |
 | AI Chat & Notebook | 2026-09-17 | Pending |
 | Portfolio Polish | 2026-09-24 | Pending |
