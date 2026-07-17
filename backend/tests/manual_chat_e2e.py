@@ -37,7 +37,8 @@ def test_chat_message_streams_and_persists():
     assert "event: token" in body
     assert "event: artifact" in body
     assert "event: done" in body
-    assert '"type": "sql"' in body or '"type":"sql"' in body
+    _types = ("sql", "chart", "cleaning", "dashboard", "report")
+    assert any(f'"type": "{t}"' in body or f'"type":"{t}"' in body for t in _types)
 
     # A notebook row was created with the persisted turns.
     nbs = client.get(f"/api/v1/chat/notebooks?project_id={pid}", headers=h).json()
@@ -45,7 +46,7 @@ def test_chat_message_streams_and_persists():
     nb_id = nbs[0]["id"]
     detail = client.get(f"/api/v1/chat/notebooks/{nb_id}", headers=h).json()
     assert len(detail["turns"]) == 2  # user + assistant
-    assert detail["turns"][1]["actions"][0]["type"] == "sql"
+    assert len(detail["turns"][1]["actions"]) >= 1  # at least one proposed artifact
 
     # Owner-guard: another user gets 403 (not 404).
     client.post("/api/v1/auth/register", json={"email": "other@example.com", "password": "pw"})

@@ -43,7 +43,7 @@ from app.services.chat.orchestrator import plan_turn, stream_narrative
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
-_AVAILABLE_ACTIONS_M1 = ["sql"]  # M2 extends to chart/cleaning/dashboard/report
+_AVAILABLE_ACTIONS = ["sql", "chart", "cleaning", "dashboard", "report"]
 
 
 def _owned(notebook_id: int, session: SessionDep, user: CurrentUser) -> Notebook:
@@ -106,7 +106,7 @@ async def chat_message(body: ChatMessageRequest, session: SessionDep, current_us
         ai_available = True
         try:
             proposed, summary, avail = await plan_turn(
-                ctx, body.content, [], _AVAILABLE_ACTIONS_M1
+                ctx, body.content, [], _AVAILABLE_ACTIONS
             )
             ai_available = ai_available and avail
             async for token in stream_narrative(ctx, body.content, proposed, summary):
