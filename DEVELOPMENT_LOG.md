@@ -598,4 +598,43 @@ Sprint 5 (AI Chat & Notebook) is **complete**: M1 (foundation + streaming + SQL)
 surface with HITL), and M3 (routing + management + verification) are all shipped. Next: Portfolio
 Polish.
 
+## 2026-07-17 — Portfolio Polish: availability + focused-workspace pass
+
+**Trigger:** `impeccable critique` of `app/projects/[id]/page.tsx` scored 19/40 (Poor) with two P0s
+and two P1s. User chose: fix both P0s together, address all five priority issues, and redesign the
+action row as a focused workspace.
+
+**P0 — availability:** there were **no `error.tsx` / `global-error.tsx` anywhere in `frontend/app`**,
+so any render-time crash surfaced as Next's raw "missing required error components, refreshing…" 500.
+Added both boundaries (`app/error.tsx` for route segments, `app/global-error.tsx` for the root).
+**Diagnosis of the reported 500:** `next build` now compiles cleanly and all 7 routes generate, so
+the 500 was **not** a compile/SSR build error. The four panels have clean module tops (no top-level
+browser access). Most likely cause was the critique's browser probe, which wedged the single-threaded
+dev server with a hanging `/dashboards` request (the workspace 500 was observed before that wedge, on
+hard load / direct URL — i.e. SSR, where client-navigated loads worked). The new boundaries now
+degrade any render error to a branded page regardless of root cause.
+
+**P0 — delete guardrail:** added `components/confirm-dialog.tsx` (native `<dialog>` → free focus-trap
++ Escape) and wired it into dataset and notebook delete in the workspace (no more unguarded
+irreversible delete).
+
+**P1 — focused-workspace action redesign:** `Analyze` promoted to the sole primary CTA; Clean/EDA/SQL/
+Report/Dashboard/Chat collapsed into an accessible `components/action-menu.tsx` (`role="menu"`,
+outside-click + Escape close); distinct icons (Sparkles=Analyze only; EDA=BarChart3; SQL=Table;
+Chat=MessageSquare) fixing the prior Sparkles×3 and EDA/SQL-BarChart3 collisions; `flex-wrap` so the
+row no longer overflows.
+
+**P1 — dead header Chat + silent generation:** the header Chat button previously only *closed* the
+panel; it now opens a project-scope chat (`openProjectChat`). Report/Dashboard generation shows a
+`Generating…` busy state (disabled) instead of failing silently.
+
+**P2 — skeletons + panel a11y:** plain "Loading datasets…" replaced with `DatasetSkeleton` cards;
+Cleaning/EDA/SQL overlays gained `role="dialog"`/`aria-modal`, Escape + backdrop-click close, and
+initial focus (`tabIndex={-1}` on the `Card`).
+
+**Verification:** `tsc --noEmit`, `next lint`, and `next build` all clean. Committed on
+`feature/ai-chat-notebook`. **Not yet browser-verified** — the dev server was wedged at critique time;
+the maintainer should restart the frontend and hard-reload `/projects/[id]` (expect a clean render, or
+at worst the new friendly error page rather than a raw 500).
+
 

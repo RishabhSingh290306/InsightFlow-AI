@@ -135,4 +135,4 @@ for detailed rationale on:
 | Insights + Reports | 2026-09-03 | ✅ Complete |
 | Dashboard Recommendations | 2026-09-10 | ✅ Complete (M1+M2+M3) |
 | AI Chat & Notebook | 2026-09-17 | ✅ Complete (M1+M2+M3) |
-| Portfolio Polish | 2026-09-24 | Pending |
+| Portfolio Polish | 2026-07-17 | ✅ Complete (availability + action redesign + a11y) |
