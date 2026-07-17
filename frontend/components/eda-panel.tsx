@@ -5,6 +5,7 @@ import { BarChart3, Check, Loader2, Sparkles, TriangleAlert, X, XCircle } from "
 
 import { edaApi } from "@/lib/api";
 import type { ChartSpec, DatasetRead, EdaResult } from "@/lib/types";
+import { StageProgress, useCycle } from "@/components/stage-progress";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartRenderer } from "@/components/chart-renderer";
@@ -20,11 +21,14 @@ function ConfidenceBadge({ value }: { value: number }) {
   return <span className={`rounded px-1.5 py-0.5 text-xs font-medium ${cls}`}>{pct}% conf.</span>;
 }
 
+const EDA_STAGES = ["Profiling dataset", "Detecting patterns", "Recommending charts"];
+
 export function EdaPanel({ dataset, onClose }: { dataset: DatasetRead; onClose: () => void }) {
   const [result, setResult] = useState<EdaResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const edaStage = useCycle(EDA_STAGES.length, 800, loading);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -74,7 +78,7 @@ export function EdaPanel({ dataset, onClose }: { dataset: DatasetRead; onClose: 
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 py-10"
+      className="overlay-enter fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 py-10"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -82,8 +86,8 @@ export function EdaPanel({ dataset, onClose }: { dataset: DatasetRead; onClose: 
         if (e.key === "Escape") onClose();
       }}
     >
-      <Card role="dialog" aria-modal="true" aria-label={`EDA · ${dataset.original_filename}`} tabIndex={-1} className="w-full max-w-3xl">
-        <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
+      <Card role="dialog" aria-modal="true" aria-label={`EDA · ${dataset.original_filename}`} tabIndex={-1} className="dialog-enter flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden">
+        <CardHeader className="flex shrink-0 flex-row items-center justify-between gap-4 space-y-0">
           <div className="flex flex-col gap-1">
             <CardTitle className="flex items-center gap-2 text-lg">
               <BarChart3 className="h-4 w-4" /> EDA · {dataset.original_filename}
@@ -96,10 +100,11 @@ export function EdaPanel({ dataset, onClose }: { dataset: DatasetRead; onClose: 
             <X className="h-4 w-4" />
           </Button>
         </CardHeader>
-        <CardContent className="flex flex-col gap-4">
+        <CardContent className="flex flex-1 flex-col gap-4 overflow-y-auto">
           {loading ? (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" /> Generating EDA…
+            <div className="flex flex-col gap-3 rounded-lg border bg-muted/30 p-4">
+              <span className="text-sm font-medium">Analyzing your dataset</span>
+              <StageProgress stages={EDA_STAGES} activeIndex={edaStage} />
             </div>
           ) : error ? (
             <div className="flex items-center gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
@@ -111,7 +116,7 @@ export function EdaPanel({ dataset, onClose }: { dataset: DatasetRead; onClose: 
                 {!result.ai_available && (
                   <div className="flex items-center gap-2 rounded-md border border-dashed p-3 text-sm text-muted-foreground">
                     <Sparkles className="h-4 w-4 shrink-0" />
-                    AI suggestions unavailable — showing auto-generated charts from the profile.
+                    Suggestions unavailable — showing auto-generated charts from the profile.
                   </div>
                 )}
                 <div className="flex flex-col gap-3">

@@ -309,7 +309,7 @@ export function DashboardRenderer({ view }: { view: DashboardView }) {
     <div className="flex flex-col gap-4">
       {!view.ai_available && (
         <div className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">
-          Rule-based dashboard (AI suggestions unavailable).
+          Rule-based dashboard (suggestions unavailable).
         </div>
       )}
       {view.spec.ai_summary?.executive && (
@@ -318,7 +318,7 @@ export function DashboardRenderer({ view }: { view: DashboardView }) {
       {view.widgets
         .filter((entry) => !entry.is_hidden)
         .map((entry) => (
-          <Card key={entry.widget.type}>
+          <Card key={entry.widget.type} className="card-hover">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <IconFor type={entry.widget.type} />

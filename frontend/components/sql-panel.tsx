@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   BarChart3,
   Loader2,
@@ -24,6 +24,7 @@ import type {
 } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { StageProgress } from "@/components/stage-progress";
 
 function ConfidenceBadge({ value }: { value: number }) {
   const pct = Math.round(value * 100);
@@ -83,11 +84,14 @@ interface Turn {
   running: boolean;
   result: SqlResult | null;
   error: string | null;
+  runStage: number;
   parentQueryId: number | null; // persisted id of the turn this followed up
   persistedId: number | null;
 }
 
 let TURN_SEQ = 0;
+
+const SQL_RUN_STAGES = ["Validating query", "Executing", "Formatting results"];
 
 export function SqlPanel({ dataset, onClose }: { dataset: DatasetRead; onClose: () => void }) {
   const [turns, setTurns] = useState<Turn[]>([]);
@@ -96,6 +100,7 @@ export function SqlPanel({ dataset, onClose }: { dataset: DatasetRead; onClose: 
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<SqlQueryRecord[]>([]);
   const [historyQ, setHistoryQ] = useState("");
+  const runTimers = useRef<Record<number, ReturnType<typeof setInterval>>>({});
 
   const loadHistory = useCallback(async () => {
     try {
@@ -132,6 +137,7 @@ export function SqlPanel({ dataset, onClose }: { dataset: DatasetRead; onClose: 
       running: false,
       result: null,
       error: null,
+      runStage: 0,
       parentQueryId: parentPersistedId,
       persistedId: null,
     };
@@ -162,10 +168,22 @@ export function SqlPanel({ dataset, onClose }: { dataset: DatasetRead; onClose: 
 
   async function executeTurn(turnId: number) {
     setTurns((prev) =>
-      prev.map((t) => (t.id === turnId ? { ...t, running: true, error: null } : t)),
+      prev.map((t) => (t.id === turnId ? { ...t, running: true, error: null, runStage: 0 } : t)),
     );
     const turn = turns.find((t) => t.id === turnId);
     if (!turn) return;
+    // Event-driven progress: advance stages on a timer so the user always
+    // knows what the query is doing, even though the backend runs as one call.
+    if (runTimers.current[turnId]) clearInterval(runTimers.current[turnId]);
+    runTimers.current[turnId] = setInterval(() => {
+      setTurns((prev) =>
+        prev.map((t) =>
+          t.id === turnId
+            ? { ...t, runStage: Math.min(t.runStage + 1, SQL_RUN_STAGES.length - 1) }
+            : t,
+        ),
+      );
+    }, 850);
     try {
       const r = await sqlApi.run({
         dataset_id: dataset.id,
@@ -176,6 +194,7 @@ export function SqlPanel({ dataset, onClose }: { dataset: DatasetRead; onClose: 
         suggested_visualization: turn.proposal?.suggested_visualization ?? null,
         parent_query_id: turn.parentQueryId,
       });
+      if (runTimers.current[turnId]) clearInterval(runTimers.current[turnId]);
       setTurns((prev) =>
         prev.map((t) =>
           t.id === turnId ? { ...t, running: false, result: r, persistedId: r.persisted_id } : t,
@@ -183,6 +202,7 @@ export function SqlPanel({ dataset, onClose }: { dataset: DatasetRead; onClose: 
       );
       await loadHistory();
     } catch (err) {
+      if (runTimers.current[turnId]) clearInterval(runTimers.current[turnId]);
       setTurns((prev) =>
         prev.map((t) =>
           t.id === turnId
@@ -217,7 +237,7 @@ export function SqlPanel({ dataset, onClose }: { dataset: DatasetRead; onClose: 
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 py-10"
+      className="overlay-enter fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 py-10"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -225,8 +245,8 @@ export function SqlPanel({ dataset, onClose }: { dataset: DatasetRead; onClose: 
         if (e.key === "Escape") onClose();
       }}
     >
-      <Card role="dialog" aria-modal="true" aria-label={`SQL · ${dataset.original_filename}`} tabIndex={-1} className="w-full max-w-3xl">
-        <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
+      <Card role="dialog" aria-modal="true" aria-label={`SQL · ${dataset.original_filename}`} tabIndex={-1} className="dialog-enter flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden">
+        <CardHeader className="flex shrink-0 flex-row items-center justify-between gap-4 space-y-0">
           <div className="flex flex-col gap-1">
             <CardTitle className="flex items-center gap-2 text-lg">
               <BarChart3 className="h-4 w-4" /> SQL · {dataset.original_filename}
@@ -239,7 +259,7 @@ export function SqlPanel({ dataset, onClose }: { dataset: DatasetRead; onClose: 
             <X className="h-4 w-4" />
           </Button>
         </CardHeader>
-        <CardContent className="flex flex-col gap-4">
+        <CardContent className="flex flex-1 flex-col gap-4 overflow-y-auto">
           {error && (
             <div className="flex items-center gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
               <TriangleAlert className="h-4 w-4 shrink-0" /> {error}
@@ -278,7 +298,7 @@ export function SqlPanel({ dataset, onClose }: { dataset: DatasetRead; onClose: 
                 </div>
 
                 {t.generating && (
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <div role="status" aria-live="polite" className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Loader2 className="h-3 w-3 animate-spin" /> Generating SQL…
                   </div>
                 )}
@@ -305,7 +325,7 @@ export function SqlPanel({ dataset, onClose }: { dataset: DatasetRead; onClose: 
                       }
                       rows={5}
                       spellCheck={false}
-                      className="w-full rounded-md border bg-muted/30 p-2 font-mono text-xs"
+                      className="min-h-0 min-w-0 w-full resize-y rounded-md border bg-muted/30 p-2 font-mono text-xs"
                       placeholder="SELECT * FROM dataset LIMIT 10"
                     />
                     <Button
@@ -323,6 +343,13 @@ export function SqlPanel({ dataset, onClose }: { dataset: DatasetRead; onClose: 
                   </>
                 )}
 
+                {t.running && (
+                  <div role="status" aria-live="polite" className="flex flex-col gap-2 rounded-md border border-primary/30 bg-primary/5 p-3">
+                    <span className="text-xs font-medium text-primary">Running query</span>
+                    <StageProgress stages={SQL_RUN_STAGES} activeIndex={t.runStage} />
+                  </div>
+                )}
+
                 {t.result && (
                   <div className="flex flex-col gap-3 rounded-md border p-3">
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -332,11 +359,11 @@ export function SqlPanel({ dataset, onClose }: { dataset: DatasetRead; onClose: 
                       </span>
                     </div>
                     <div className="max-h-64 overflow-auto rounded border">
-                      <table className="w-full text-left text-xs">
+                      <table className="w-full border-collapse text-left text-xs">
                         <thead className="bg-muted text-muted-foreground">
                           <tr>
                             {t.result.columns.map((c) => (
-                              <th key={c} className="px-2 py-1 font-medium">
+                              <th key={c} className="max-w-[14rem] break-words px-2 py-1 font-medium align-top">
                                 {c}
                               </th>
                             ))}
@@ -346,7 +373,7 @@ export function SqlPanel({ dataset, onClose }: { dataset: DatasetRead; onClose: 
                           {t.result.rows.map((row, i) => (
                             <tr key={i} className="border-t">
                               {t.result!.columns.map((c) => (
-                                <td key={c} className="px-2 py-1">
+                                <td key={c} className="max-w-[14rem] break-words px-2 py-1 align-top">
                                   {String(row[c] ?? "")}
                                 </td>
                               ))}
@@ -430,14 +457,14 @@ export function SqlPanel({ dataset, onClose }: { dataset: DatasetRead; onClose: 
                     rec.parent_query_id !== null ? "ml-4 border-dashed" : ""
                   }`}
                 >
-                  <div className="flex flex-col gap-1">
-                    <span className="font-medium">{rec.business_question || "(no question)"}</span>
+                  <div className="flex min-w-0 flex-1 flex-col gap-1">
+                    <span className="break-words font-medium">{rec.business_question || "(no question)"}</span>
                     <code className="block truncate font-mono text-[10px] text-muted-foreground">{rec.sql}</code>
                     <span className="text-muted-foreground">
                       {rec.row_count} rows · {rec.edited ? "edited" : "as-generated"}
                     </span>
                   </div>
-                  <Button variant="ghost" size="icon" aria-label="Delete" onClick={() => onDelete(rec.id)}>
+                  <Button variant="ghost" size="icon" aria-label="Delete" onClick={() => onDelete(rec.id)} className="shrink-0 self-start">
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>

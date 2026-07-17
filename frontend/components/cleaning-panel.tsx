@@ -367,7 +367,7 @@ export function CleaningPanel({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 py-10"
+      className="overlay-enter fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 py-10"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -375,8 +375,8 @@ export function CleaningPanel({
         if (e.key === "Escape") onClose();
       }}
     >
-      <Card role="dialog" aria-modal="true" aria-label={`Cleaning plan · ${dataset.original_filename}`} tabIndex={-1} className="w-full max-w-3xl">
-        <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
+      <Card role="dialog" aria-modal="true" aria-label={`Cleaning plan · ${dataset.original_filename}`} tabIndex={-1} className="dialog-enter flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden">
+        <CardHeader className="flex shrink-0 flex-row items-center justify-between gap-4 space-y-0">
           <div className="flex flex-col gap-1">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Sparkles className="h-4 w-4" />
@@ -391,7 +391,7 @@ export function CleaningPanel({
           </Button>
         </CardHeader>
 
-        <CardContent className="flex flex-col gap-4">
+        <CardContent className="flex flex-1 flex-col gap-4 overflow-y-auto">
           {loading ? (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -407,7 +407,7 @@ export function CleaningPanel({
               {plan && !plan.ai_available && (
                 <div className="flex items-center gap-2 rounded-md border border-dashed p-3 text-sm text-muted-foreground">
                   <Sparkles className="h-4 w-4 shrink-0" />
-                  AI suggestions unavailable — showing a rule-based plan derived from the profile.
+                  Suggestions unavailable — showing a rule-based plan derived from the profile.
                 </div>
               )}
 

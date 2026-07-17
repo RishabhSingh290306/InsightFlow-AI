@@ -16,6 +16,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -83,6 +84,15 @@ export default function ProjectsPage() {
         </Button>
       </header>
 
+      {error && !loading && (
+        <div className="flex flex-col gap-3 rounded-lg border border-destructive/40 bg-destructive/10 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-destructive">{error}</p>
+          <Button variant="outline" size="sm" onClick={() => void load()}>
+            Retry
+          </Button>
+        </div>
+      )}
+
       <section className="grid gap-6 lg:grid-cols-[320px_1fr]">
         <Card>
           <CardHeader>
@@ -110,7 +120,7 @@ export default function ProjectsPage() {
                   placeholder="Optional"
                 />
               </div>
-              {error && <p className="text-sm text-destructive">{error}</p>}
+              {error && loading && <p className="text-sm text-destructive">{error}</p>}
               <Button type="submit" disabled={creating || !name.trim()}>
                 <Plus className="h-4 w-4" />
                 {creating ? "Creating…" : "Create project"}
@@ -121,7 +131,10 @@ export default function ProjectsPage() {
 
         <div className="flex flex-col gap-4">
           {loading ? (
-            <p className="text-sm text-muted-foreground">Loading projects…</p>
+            <>
+              <ProjectCardSkeleton />
+              <ProjectCardSkeleton />
+            </>
           ) : projects.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center gap-2 py-10 text-center">
@@ -133,7 +146,7 @@ export default function ProjectsPage() {
             </Card>
           ) : (
             projects.map((p) => (
-              <Card key={p.id}>
+              <Card key={p.id} className="card-hover animate-slide-up">
                 <CardHeader>
                   <CardTitle className="text-lg">{p.name}</CardTitle>
                   {p.description && (
@@ -154,5 +167,19 @@ export default function ProjectsPage() {
         </div>
       </section>
     </main>
+  );
+}
+
+function ProjectCardSkeleton() {
+  return (
+    <Card>
+      <CardHeader>
+        <Skeleton className="h-5 w-40" />
+        <Skeleton className="h-4 w-56" />
+      </CardHeader>
+      <CardContent>
+        <Skeleton className="h-4 w-32" />
+      </CardContent>
+    </Card>
   );
 }

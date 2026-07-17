@@ -2,12 +2,17 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { getToken } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 
-export default function HeroActions() {
+export default function HeroActions({
+  primaryLabel = "Get started",
+}: {
+  primaryLabel?: string;
+}) {
   const router = useRouter();
   const [authed, setAuthed] = useState(false);
 
@@ -17,9 +22,12 @@ export default function HeroActions() {
 
   if (authed) {
     return (
-      <div className="flex gap-3">
-        <Button onClick={() => router.push("/projects")}>Open workspace</Button>
-        <Button variant="outline" asChild>
+      <div className="flex flex-wrap items-center justify-center gap-3">
+        <Button onClick={() => router.push("/projects")} size="lg">
+          Open workspace
+          <ArrowRight className="h-4 w-4" />
+        </Button>
+        <Button variant="outline" size="lg" asChild>
           <Link href="/login">Account</Link>
         </Button>
       </div>
@@ -27,11 +35,11 @@ export default function HeroActions() {
   }
 
   return (
-    <div className="flex gap-3">
-      <Button asChild>
-        <Link href="/register">Get started</Link>
+    <div className="flex flex-wrap items-center justify-center gap-3">
+      <Button asChild size="lg">
+        <Link href="/register">{primaryLabel}</Link>
       </Button>
-      <Button variant="outline" asChild>
+      <Button variant="outline" size="lg" asChild>
         <Link href="/login">Sign in</Link>
       </Button>
     </div>

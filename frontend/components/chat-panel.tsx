@@ -8,6 +8,7 @@ import type { ChatArtifact, ChatTurn, DatasetRead, SqlProposal, SqlResult, SqlVi
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ChartRenderer } from "@/components/chart-renderer";
+import { Markdown } from "@/components/markdown";
 
 interface Props {
   projectId: number;
@@ -95,7 +96,7 @@ export function ChatPanel({ projectId, dataset, notebookId, onNotebookCreated, o
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      className="overlay-enter fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
       onClick={onClose}
       onKeyDown={(e) => {
         if (e.key === "Escape") onClose();
@@ -105,7 +106,7 @@ export function ChatPanel({ projectId, dataset, notebookId, onNotebookCreated, o
         role="dialog"
         aria-modal="true"
         aria-labelledby="chat-panel-title"
-        className="flex h-[80vh] w-full max-w-2xl flex-col rounded-lg border bg-background shadow-xl"
+        className="dialog-enter flex h-[80vh] w-full max-w-2xl flex-col rounded-lg border bg-background shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <header className="flex items-center justify-between border-b px-4 py-2">
@@ -119,10 +120,35 @@ export function ChatPanel({ projectId, dataset, notebookId, onNotebookCreated, o
           {turns.length === 0 && <p className="text-sm text-muted-foreground">Ask a question about this {dataset ? "dataset" : "project"}.</p>}
           {turns.map((t) => (
             <div key={t.id} className={t.role === "user" ? "text-right" : "text-left"}>
-              <div className={`inline-block max-w-[90%] rounded-lg px-3 py-2 text-sm ${t.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
-                {t.content || (t._streaming ? "…" : "")}
+              <div
+                className={`animate-slide-up inline-block max-w-[90%] rounded-2xl px-3.5 py-2.5 text-sm ${
+                  t.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"
+                }`}
+              >
+                {t.role === "user" ? (
+                  t.content
+                ) : t._streaming && !t.content ? (
+                  <span className="flex items-center gap-1.5 text-muted-foreground">
+                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-current" />
+                    Thinking…
+                  </span>
+                ) : (
+                  <>
+                    <Markdown content={t.content} />
+                    {t._streaming && (
+                      <span
+                        className="caret-blink ml-0.5 inline-block align-middle text-primary"
+                        aria-hidden
+                      >
+                        ▍
+                      </span>
+                    )}
+                  </>
+                )}
               </div>
-              {t.actions?.map((a, i) => <ArtifactCard key={i} artifact={a} dataset={dataset} projectId={projectId} />)}
+              {t.actions?.map((a, i) => (
+                <ArtifactCard key={i} artifact={a} dataset={dataset} projectId={projectId} />
+              ))}
             </div>
           ))}
         </div>

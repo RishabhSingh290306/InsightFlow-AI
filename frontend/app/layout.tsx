@@ -19,7 +19,7 @@ const firaCode = Fira_Code({
 
 export const metadata: Metadata = {
   title: "InsightFlow AI",
-  description: "An AI-powered Data Analyst Operating System.",
+  description: "A modern data analysis workspace.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

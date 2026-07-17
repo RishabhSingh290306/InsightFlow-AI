@@ -52,7 +52,7 @@ export default function RegisterPage() {
           <span className="text-sm font-semibold tracking-tight">InsightFlow AI</span>
         </div>
         <CardTitle className="text-xl">Create your account</CardTitle>
-        <CardDescription>Start analyzing data with an AI analyst OS.</CardDescription>
+        <CardDescription>Start analyzing data from one workspace.</CardDescription>
       </CardHeader>
       <form onSubmit={onSubmit}>
         <CardContent className="flex flex-col gap-4">

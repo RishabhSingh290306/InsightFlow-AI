@@ -32,6 +32,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { GeneratingOverlay, useCycle } from "@/components/stage-progress";
 import { CleaningPanel } from "@/components/cleaning-panel";
 import { EdaPanel } from "@/components/eda-panel";
 import { SqlPanel } from "@/components/sql-panel";
@@ -92,6 +94,11 @@ export default function ProjectWorkspacePage() {
   const [editTitle, setEditTitle] = useState("");
   const [busyId, setBusyId] = useState<number | null>(null);
   const [confirmTarget, setConfirmTarget] = useState<ConfirmTarget>(null);
+
+  // Event-driven progress for long-running generation (see Task: perceived perf).
+  const [genKind, setGenKind] = useState<"report" | "dashboard">("dashboard");
+  const [genStages, setGenStages] = useState<string[]>([]);
+  const genActive = useCycle(genStages.length || 1, 850, generating);
 
   const loadNotebooks = useCallback(async () => {
     try {
@@ -219,6 +226,22 @@ export default function ProjectWorkspacePage() {
     scope: "dataset" | "project",
     datasetId?: number,
   ) {
+    setGenKind(kind);
+    setGenStages(
+      kind === "report"
+        ? [
+            "Gathering dataset context",
+            "Drafting the narrative",
+            "Adding charts & tables",
+            "Finalizing report",
+          ]
+        : [
+            "Understanding the workspace",
+            "Identifying KPIs",
+            "Building visualizations",
+            "Finalizing dashboard",
+          ],
+    );
     setError(null);
     setGenerating(true);
     try {
@@ -343,10 +366,19 @@ export default function ProjectWorkspacePage() {
             {project ? project.name : `Project #${params.id}`}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Upload datasets (CSV or Excel) and let AI profile them.
+            Upload datasets (CSV or Excel), then profile and explore them.
           </p>
         </div>
       </header>
+
+      {error && !loading && (
+        <div className="flex flex-col gap-3 rounded-lg border border-destructive/40 bg-destructive/10 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-destructive">{error}</p>
+          <Button variant="outline" size="sm" onClick={() => void load()}>
+            Retry
+          </Button>
+        </div>
+      )}
 
       <section className="grid gap-6 lg:grid-cols-[320px_1fr]">
         <Card>
@@ -390,7 +422,7 @@ export default function ProjectWorkspacePage() {
               const isOpen = expanded.has(d.id);
               const isAnalyzing = analyzing.has(d.id);
               return (
-                <Card key={d.id}>
+                <Card key={d.id} className="card-hover animate-slide-up">
                   <CardHeader>
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex flex-col gap-1">
@@ -525,7 +557,7 @@ export default function ProjectWorkspacePage() {
               const isEditing = editingId === n.id;
               const isBusy = busyId === n.id;
               return (
-                <Card key={n.id}>
+                <Card key={n.id} className="card-hover animate-slide-up">
                   <CardContent className="flex flex-wrap items-center justify-between gap-3 py-3">
                     <div className="flex min-w-0 flex-1 flex-col gap-1">
                       {isEditing ? (
@@ -606,6 +638,15 @@ export default function ProjectWorkspacePage() {
           notebookId={chatId}
           onNotebookCreated={(id) => { setChatId(id); void loadNotebooks(); }}
           onClose={closeChat}
+        />
+      )}
+
+      {generating && genStages.length > 0 && (
+        <GeneratingOverlay
+          title={genKind === "report" ? "Generating report" : "Generating dashboard"}
+          description="This runs in the background — you'll be taken there when it's ready."
+          stages={genStages}
+          activeIndex={genActive}
         />
       )}
 
@@ -732,7 +773,7 @@ function UnderstandingView({
 
   return (
     <div className="flex flex-col gap-3">
-      <h3 className="text-sm font-semibold">AI Insights</h3>
+      <h3 className="text-sm font-semibold">Insights</h3>
       <p className="text-sm">{understanding.dataset_description}</p>
       <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
         <span>Domain: {understanding.business_domain_guess}</span>
