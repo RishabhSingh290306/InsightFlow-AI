@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Github } from "lucide-react";
+import { Github, Loader2 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Ripple } from "@/components/auth/ripple";
 
 function GoogleIcon() {
   return (
@@ -28,34 +28,92 @@ function GoogleIcon() {
   );
 }
 
+const buttonClass =
+  "group relative inline-flex h-11 w-full items-center justify-center gap-2.5 rounded-xl border border-border/80 bg-background/60 text-sm font-medium text-foreground transition-all duration-200 ease-out-expo hover:-translate-y-0.5 hover:border-primary/40 hover:bg-primary/5 hover:shadow-soft-md active:translate-y-0 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-60";
+
+function Spinner() {
+  return <Loader2 className="h-4 w-4 animate-spin" />;
+}
+
+/**
+ * Social sign-in entries. These are polished UI mockups only — no OAuth is
+ * wired up yet. Clicking shows a tasteful "coming soon" notice and a brief
+ * loading state, then settles. Both providers disable while one is in flight.
+ */
 export function SocialButtons() {
+  const [loadingProvider, setLoadingProvider] = useState<
+    null | "google" | "github"
+  >(null);
   const [notice, setNotice] = useState<string | null>(null);
+
+  function handle(provider: "google" | "github") {
+    if (loadingProvider) return;
+    setNotice(null);
+    setLoadingProvider(provider);
+    window.setTimeout(() => {
+      setLoadingProvider(null);
+      setNotice(
+        provider === "google"
+          ? "Google sign-in will be available in the production deployment."
+          : "GitHub sign-in will be available in the production deployment."
+      );
+    }, 900);
+  }
+
+  const busy = loadingProvider !== null;
 
   return (
     <div className="flex flex-col gap-2">
       <div className="grid grid-cols-2 gap-3">
-        <Button
-          variant="outline"
-          type="button"
-          leftIcon={<GoogleIcon />}
-          onClick={() => setNotice("Google sign-in is not configured in this demo.")}
-        >
-          Google
-        </Button>
-        <Button
-          variant="outline"
-          type="button"
-          leftIcon={<Github className="h-4 w-4" />}
-          onClick={() => setNotice("GitHub sign-in is not configured in this demo.")}
-        >
-          GitHub
-        </Button>
+        <Ripple className={busy ? "rounded-xl pointer-events-none" : "rounded-xl"}>
+          <button
+            type="button"
+            onClick={() => handle("google")}
+            disabled={busy}
+            className={buttonClass}
+          >
+            {loadingProvider === "google" ? (
+              <Spinner />
+            ) : (
+              <span className="transition-transform duration-200 group-hover:scale-110 group-hover:-rotate-6">
+                <GoogleIcon />
+              </span>
+            )}
+            <span className="transition-transform duration-200 group-hover:scale-[1.03]">
+              Google
+            </span>
+          </button>
+        </Ripple>
+
+        <Ripple className={busy ? "rounded-xl pointer-events-none" : "rounded-xl"}>
+          <button
+            type="button"
+            onClick={() => handle("github")}
+            disabled={busy}
+            className={buttonClass}
+          >
+            {loadingProvider === "github" ? (
+              <Spinner />
+            ) : (
+              <Github className="h-4 w-4 transition-transform duration-200 group-hover:scale-110 group-hover:-rotate-6" />
+            )}
+            <span className="transition-transform duration-200 group-hover:scale-[1.03]">
+              GitHub
+            </span>
+          </button>
+        </Ripple>
       </div>
-      {notice && (
-        <p className="text-center text-2xs text-muted-foreground" role="status">
-          {notice}
-        </p>
-      )}
+
+      <p
+        className={
+          "min-h-[1rem] text-center text-2xs text-muted-foreground transition-all duration-300 ease-out-expo " +
+          (notice ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0")
+        }
+        role="status"
+        aria-live="polite"
+      >
+        {notice}
+      </p>
     </div>
   );
 }

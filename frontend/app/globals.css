@@ -361,6 +361,30 @@
   .text-balance {
     text-wrap: balance;
   }
+  /* Ripple emitted by the auth buttons on press. */
+  .animate-ripple {
+    animation: ripple 600ms ease-out forwards;
+  }
+  /* Looping "new insight" badge inside the auth illustration — appears and
+     fades on a gentle cycle. Base element stays visible (so reduced-motion
+     users still see it). */
+  .animate-insight-pulse {
+    animation: insight-pulse 4.6s ease-in-out infinite;
+  }
+  /* Faint structural grid used behind the auth form for depth (5–10%). */
+  .bg-grid {
+    background-image:
+      linear-gradient(to right, hsl(var(--border) / 0.6) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(var(--border) / 0.6) 1px, transparent 1px);
+    background-size: 30px 30px;
+  }
+  /* Faint film grain for premium auth backgrounds. */
+  .auth-noise {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 160px 160px;
+    opacity: 0.035;
+    mix-blend-mode: soft-light;
+  }
 }
 
 @keyframes fade-in {
@@ -401,6 +425,16 @@
 @keyframes float-soft {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-8px); }
+}
+@keyframes ripple {
+  from { transform: scale(0); opacity: 0.5; }
+  to { transform: scale(1); opacity: 0; }
+}
+@keyframes insight-pulse {
+  0% { opacity: 0; transform: translateY(5px) scale(0.96); }
+  12% { opacity: 1; transform: translateY(0) scale(1); }
+  82% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-3px) scale(0.98); }
 }
 
 /* Respect users who prefer reduced motion. */
