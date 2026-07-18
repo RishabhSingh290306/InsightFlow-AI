@@ -29,6 +29,10 @@ openpyxl==3.1.5  # Excel engine for pandas.read_excel
 # HTTP client (OpenRouter, OAuth token exchange)
 httpx==0.27.2
 
+# Managed file storage (Supabase Storage — swap point, see app/core/storage.py).
+# Only needed when STORAGE_BACKEND=supabase. ~= allows any 2.x patch.
+supabase~=2.10
+
 # Tests
 pytest==8.3.2
 

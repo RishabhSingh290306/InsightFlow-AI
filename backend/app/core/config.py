@@ -37,8 +37,10 @@ class Settings(BaseSettings):
     # PII). Off by default in every environment — enable explicitly if needed.
     DB_ECHO: bool = False
 
-    # File storage — local disk for now. The storage adapter in
+    # File storage — local disk by default. The storage adapter in
     # `app/core/storage.py` is the single swap point for Supabase Storage / S3.
+    # Set STORAGE_BACKEND=supabase to use Supabase Storage (see SUPABASE_* below).
+    STORAGE_BACKEND: str = "local"
     DATA_DIR: str = "./data"
     MAX_UPLOAD_MB: int = 50
 

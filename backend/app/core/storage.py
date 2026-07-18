@@ -68,12 +68,63 @@ class LocalStorageAdapter(StorageAdapter):
         return (self.root / storage_path).read_bytes()
 
 
+class SupabaseStorageAdapter(StorageAdapter):
+    """Stores files in a Supabase Storage bucket (the documented swap point).
+
+    The Supabase client is imported lazily so the local backend keeps working
+    without the `supabase` package installed (STORAGE_BACKEND=local). Use the
+    **service-role** key (not the anon key) so server-side uploads bypass RLS.
+    """
+
+    def __init__(self, url: str, key: str, bucket: str) -> None:
+        from supabase import create_client
+
+        self._client = create_client(url, key)
+        self.bucket = bucket
+
+    def _from(self):
+        return self._client.storage.from_(self.bucket)
+
+    def save(self, project_id: int, original_filename: str, content: bytes) -> tuple[str, str]:
+        ext = Path(original_filename).suffix.lower() or ""
+        filename = f"{uuid.uuid4().hex}{ext}"
+        storage_path = f"{project_id}/{filename}"
+        self._from().upload(
+            storage_path,
+            content,
+            file_options={
+                "content-type": "application/octet-stream",
+                "upsert": "true",
+            },
+        )
+        return storage_path, filename
+
+    def delete(self, storage_path: str) -> None:
+        # remove() tolerates missing objects (returns []), so no try/except needed.
+        self._from().remove([storage_path])
+
+    def read(self, storage_path: str) -> bytes:
+        return self._from().download(storage_path)
+
+
 _storage: StorageAdapter | None = None
 
 
 def get_storage() -> StorageAdapter:
-    """Return the process-wide storage adapter (local disk for now)."""
+    """Return the process-wide storage adapter.
+
+    Selected by STORAGE_BACKEND ("local" -> LocalStorageAdapter, the default;
+    "supabase" -> SupabaseStorageAdapter). This is the single construction point
+    — no route or model code needs to know which backend is in use.
+    """
     global _storage
     if _storage is None:
-        _storage = LocalStorageAdapter(Path(settings.DATA_DIR))
+        if settings.STORAGE_BACKEND == "supabase":
+            _storage = SupabaseStorageAdapter(
+                url=settings.SUPABASE_URL,
+                key=settings.SUPABASE_KEY,
+                bucket=settings.SUPABASE_BUCKET,
+            )
+        else:
+            _storage = LocalStorageAdapter(Path(settings.DATA_DIR))
     return _storage
