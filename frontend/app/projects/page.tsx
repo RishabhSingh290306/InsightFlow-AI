@@ -6,6 +6,7 @@ import { Plus } from "lucide-react";
 
 import { authApi, datasetsApi, dashboardsApi, projectsApi, reportsApi } from "@/lib/api";
 import { clearToken, getToken } from "@/lib/auth";
+import { getLastOpenedMap } from "@/lib/recent";
 import type { ProjectRead } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,6 +56,7 @@ export default function ProjectsPage() {
   const [lastProject, setLastProject] = useState<{ id: number; name: string } | null>(
     null
   );
+  const [lastOpened, setLastOpened] = useState<Record<number, number>>({});
 
   useEffect(() => {
     if (!getToken()) {
@@ -62,6 +64,7 @@ export default function ProjectsPage() {
       return;
     }
     void load();
+    setLastOpened(getLastOpenedMap());
   }, [router]);
 
   async function load() {
@@ -269,6 +272,7 @@ export default function ProjectsPage() {
                 <RecentProjects
                   projects={projects}
                   datasetCounts={datasetCounts}
+                  lastOpened={lastOpened}
                   onCreate={() => setModalOpen(true)}
                   onOpen={(id) => router.push(`/projects/${id}`)}
                   onRequestDelete={requestDelete}

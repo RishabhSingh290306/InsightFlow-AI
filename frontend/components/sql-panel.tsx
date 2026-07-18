@@ -123,7 +123,8 @@ export function SqlPanel({ dataset, onClose }: { dataset: DatasetRead; onClose: 
   }
 
   async function generateNext(q: string, parentPersistedId: number | null) {
-    if (!q.trim()) return;
+    if (!q.trim() || generating) return;
+    setGenerating(true);
     const turnId = ++TURN_SEQ;
     const newTurn: Turn = {
       id: turnId,
@@ -160,6 +161,8 @@ export function SqlPanel({ dataset, onClose }: { dataset: DatasetRead; onClose: 
             : t,
         ),
       );
+    } finally {
+      setGenerating(false);
     }
   }
 
@@ -421,8 +424,10 @@ export function SqlPanel({ dataset, onClose }: { dataset: DatasetRead; onClose: 
                           {t.result.followup_questions.map((q, i) => (
                             <button
                               key={i}
+                              type="button"
                               onClick={() => onFollowup(t.id, q)}
-                              className="rounded-full border border-border bg-background px-3 py-1 text-xs text-foreground transition-colors duration-160ms hover:border-primary/30 hover:bg-primary/5"
+                              disabled={generating}
+                              className="rounded-full border border-border bg-background px-3 py-1 text-xs text-foreground transition-colors duration-160ms hover:border-primary/30 hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-border disabled:hover:bg-background"
                             >
                               {q}
                             </button>

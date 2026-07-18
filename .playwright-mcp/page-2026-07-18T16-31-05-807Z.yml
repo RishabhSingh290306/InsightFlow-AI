@@ -1,0 +1,15 @@
+- main [ref=e2]:
+  - generic [ref=e4]:
+    - link [ref=e5] [cursor=pointer]:
+      - /url: /
+    - generic [ref=e9]:
+      - button "Notifications" [ref=e12] [cursor=pointer]
+      - button "Account menu" [ref=e18] [cursor=pointer]:
+        - generic [ref=e19]: TH
+        - generic [ref=e20]: there
+  - generic [ref=e49]:
+    - paragraph [ref=e50]: © 2026 InsightFlow. Built for people who work with data.
+    - generic [ref=e51]:
+      - generic [ref=e52] [cursor=pointer]: Privacy
+      - generic [ref=e53] [cursor=pointer]: Terms
+      - generic [ref=e54] [cursor=pointer]: Docs

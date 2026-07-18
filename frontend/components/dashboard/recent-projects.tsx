@@ -6,6 +6,7 @@ import type { ProjectRead } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { timeAgo } from "@/components/dashboard/activity-timeline";
 
 const ACCENTS = [
   "bg-primary/10 text-primary",
@@ -30,12 +31,14 @@ function formatDate(iso: string) {
 export function RecentProjects({
   projects,
   datasetCounts,
+  lastOpened = {},
   onCreate,
   onOpen,
   onRequestDelete,
 }: {
   projects: ProjectRead[];
   datasetCounts: Record<number, number>;
+  lastOpened?: Record<number, number>;
   onCreate: () => void;
   onOpen: (id: number) => void;
   onRequestDelete: (project: ProjectRead) => void;
@@ -88,6 +91,15 @@ export function RecentProjects({
                 className="card-hover group relative block w-full overflow-hidden rounded-2xl border border-border/70 bg-card p-5 text-left shadow-soft-sm animate-stagger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 style={{ ["--delay" as string]: `${i * 60}ms` } as React.CSSProperties}
               >
+                {/* Gradient wash + hairline for a styled, non-flat surface */}
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/[0.05] to-transparent"
+                />
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/25 to-transparent"
+                />
                 <div
                   aria-hidden
                   className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-primary/5 blur-2xl transition-opacity duration-220 group-hover:opacity-100"
@@ -106,46 +118,52 @@ export function RecentProjects({
                   <Trash2 className="h-4 w-4" />
                 </button>
 
-                <div className="flex items-start gap-3">
-                  <span
-                    className={`flex h-11 w-11 items-center justify-center rounded-2xl ${Accent}`}
-                  >
-                    <Icon className="h-5 w-5" />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 pr-9">
-                      <h3 className="truncate text-base font-semibold tracking-tight">
-                        {p.name}
-                      </h3>
-                      <Badge variant={p.is_active ? "success" : "muted"} dot size="sm">
-                        {p.is_active ? "Active" : "Archived"}
-                      </Badge>
+                <div className="relative">
+                  <div className="flex items-start gap-3">
+                    <span
+                      className={`flex h-11 w-11 items-center justify-center rounded-2xl ${Accent}`}
+                    >
+                      <Icon className="h-5 w-5" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 pr-9">
+                        <h3 className="truncate text-base font-semibold tracking-tight">
+                          {p.name}
+                        </h3>
+                        <Badge variant={p.is_active ? "success" : "muted"} dot size="sm">
+                          {p.is_active ? "Active" : "Archived"}
+                        </Badge>
+                      </div>
                     </div>
                   </div>
+
+                  <p className="mt-3 line-clamp-2 min-h-[2.25rem] text-sm text-muted-foreground">
+                    {p.description || "No description"}
+                  </p>
+
+                  <dl className="mt-4 grid grid-cols-3 gap-2 border-t border-border/60 pt-4 text-xs">
+                    <div>
+                      <dt className="text-muted-foreground">Datasets</dt>
+                      <dd className="mt-0.5 font-semibold tabular-nums text-foreground">
+                        {count}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-muted-foreground">Last opened</dt>
+                      <dd className="mt-0.5 font-semibold text-foreground">
+                        {lastOpened[p.id]
+                          ? timeAgo(new Date(lastOpened[p.id]).toISOString())
+                          : "Not yet"}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-muted-foreground">Created</dt>
+                      <dd className="mt-0.5 font-semibold tabular-nums text-foreground">
+                        {formatDate(p.created_at)}
+                      </dd>
+                    </div>
+                  </dl>
                 </div>
-
-                <p className="mt-3 line-clamp-2 min-h-[2.25rem] text-sm text-muted-foreground">
-                  {p.description || "No description"}
-                </p>
-
-                <dl className="mt-4 grid grid-cols-3 gap-2 border-t border-border/60 pt-4 text-xs">
-                  <div>
-                    <dt className="text-muted-foreground">Datasets</dt>
-                    <dd className="mt-0.5 font-semibold tabular-nums text-foreground">
-                      {count}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-muted-foreground">Last opened</dt>
-                    <dd className="mt-0.5 font-semibold text-foreground">Not yet</dd>
-                  </div>
-                  <div>
-                    <dt className="text-muted-foreground">Created</dt>
-                    <dd className="mt-0.5 font-semibold tabular-nums text-foreground">
-                      {formatDate(p.created_at)}
-                    </dd>
-                  </div>
-                </dl>
               </div>
             );
           })}

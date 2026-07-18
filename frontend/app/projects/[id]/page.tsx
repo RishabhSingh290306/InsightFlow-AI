@@ -23,6 +23,7 @@ import {
 
 import { dashboardsApi, datasetsApi, notebooksApi, projectsApi, reportsApi } from "@/lib/api";
 import { clearToken, getToken } from "@/lib/auth";
+import { recordProjectOpened } from "@/lib/recent";
 import type { DatasetRead, DatasetProfile, DatasetUnderstanding, NotebookRead, ProjectRead } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import {
@@ -122,6 +123,7 @@ export default function ProjectWorkspacePage() {
       ]);
       setProject(proj);
       setDatasets(ds);
+      recordProjectOpened(projectId);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load workspace");
     } finally {
