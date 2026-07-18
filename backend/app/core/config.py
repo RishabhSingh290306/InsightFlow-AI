@@ -49,10 +49,20 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_SECRET: str = ""
     FRONTEND_URL: str = "http://localhost:3000"
 
+    # LLM provider gateway — the app talks to exactly ONE LLM via
+    # `app/services/llm.py`. This switches which provider that gateway uses
+    # without touching any caller. "openrouter" (default) or "gemini".
+    LLM_PROVIDER: str = "openrouter"
+
     # OpenRouter (provider-agnostic AI access)
     OPENROUTER_API_KEY: str = ""
     OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
     OPENROUTER_MODEL: str = "openai/gpt-4o-mini"  # default; override via env
+
+    # Gemini (Google AI Studio) — used when LLM_PROVIDER=gemini.
+    GEMINI_API_KEY: str = ""
+    GEMINI_BASE_URL: str = "https://generativelanguage.googleapis.com/v1beta"
+    GEMINI_MODEL: str = "gemini-flash-latest"  # free-tier Flash; override via env
 
     # Supabase (only used if we switch to Supabase as the backend)
     SUPABASE_URL: str = ""

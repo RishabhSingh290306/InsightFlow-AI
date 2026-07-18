@@ -1,8 +1,12 @@
 import Link from "next/link";
 import {
+  ArrowDown,
   ArrowRight,
   BarChart3,
   Database,
+  Github,
+  Linkedin,
+  Mail,
   MessageSquareText,
   Sparkles,
   Table2,
@@ -11,6 +15,10 @@ import {
 } from "lucide-react";
 
 import { ProductPreview } from "@/components/marketing/product-preview";
+import { HeroBackground } from "@/components/marketing/hero-background";
+import { Reveal } from "@/components/marketing/reveal";
+import { SpotlightCard } from "@/components/marketing/spotlight-card";
+import { FloatingNotifications } from "@/components/marketing/floating-notifications";
 import HeroActions from "@/components/hero-actions";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,6 +27,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
+export const metadata = {
+  title: "InsightFlow — Your calm data workspace",
+  description:
+    "Upload data, understand it, and build reports your team can trust. InsightFlow turns every dataset into clear analysis and shareable reports — with you approving each step.",
+};
 
 const FEATURES = [
   {
@@ -33,7 +47,7 @@ const FEATURES = [
   },
   {
     icon: BarChart3,
-    title: "EDA & visualizations",
+    title: "Visual exploration",
     desc: "Summaries, distributions, and chart recommendations tailored to your dataset.",
   },
   {
@@ -74,34 +88,43 @@ const WORKFLOW = [
   },
 ];
 
+const NAV = [
+  { label: "Product", href: "#product" },
+  { label: "Workflow", href: "#workflow" },
+  { label: "Capabilities", href: "#capabilities" },
+];
+
 export default function HomePage() {
   return (
     <main className="bg-canvas relative flex min-h-screen flex-col overflow-hidden">
       {/* Top nav */}
       <header className="sticky top-0 z-40 border-b border-border/60 bg-background/70 backdrop-blur-md">
-        <div className="container flex h-16 items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 text-sm font-semibold tracking-tight">
+        <div className="container flex h-16 items-center justify-between gap-4">
+          <Link
+            href="/"
+            className="flex items-center gap-2 text-sm font-semibold tracking-tight"
+          >
             <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
               <Sparkles className="h-4 w-4" />
             </span>
             InsightFlow
           </Link>
-          <nav className="hidden items-center gap-1 md:flex">
-            {["Product", "Workflow", "Capabilities"].map((item) => (
+          <nav className="hidden items-center gap-1 md:flex" aria-label="Primary">
+            {NAV.map((item) => (
               <a
-                key={item}
-                href={`#${item.toLowerCase()}`}
-                className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors duration-160ms hover:bg-accent hover:text-accent-foreground"
+                key={item.label}
+                href={item.href}
+                className="relative rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors duration-160ms after:absolute after:bottom-1.5 after:left-1/2 after:h-px after:w-0 after:-translate-x-1/2 after:bg-primary after:transition-[width] after:duration-200 hover:bg-accent hover:text-accent-foreground hover:after:w-6"
               >
-                {item}
+                {item.label}
               </a>
             ))}
           </nav>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" asChild>
+            <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
               <Link href="/login">Sign in</Link>
             </Button>
-            <Button size="sm" asChild>
+            <Button variant="cta" size="sm" asChild>
               <Link href="/register">Get started</Link>
             </Button>
           </div>
@@ -109,30 +132,40 @@ export default function HomePage() {
       </header>
 
       {/* Hero */}
-      <section className="container flex flex-col items-center gap-7 px-6 pb-8 pt-16 text-center sm:pt-24">
+      <section className="relative container flex flex-col items-center gap-7 px-6 pb-10 pt-16 text-center sm:pt-24">
+        <HeroBackground />
+        <FloatingNotifications />
+
         <span className="animate-fade-in inline-flex items-center gap-2 rounded-full border bg-card/70 px-3 py-1 text-xs font-medium text-muted-foreground shadow-soft-sm">
           <Sparkles className="h-3.5 w-3.5 text-primary" />
-          A modern data analysis workspace
+          Your calm data workspace
         </span>
 
         <h1 className="animate-slide-up max-w-3xl text-balance text-4xl font-bold leading-[1.08] tracking-tight sm:text-5xl lg:text-6xl">
-          The fastest way to understand, analyze, and{" "}
-          <span className="text-primary">visualize</span> your data.
+          Upload your data. Understand it.{" "}
+          <span className="text-primary">Build reports.</span>
         </h1>
 
         <p className="animate-slide-up max-w-2xl text-balance text-lg text-muted-foreground [animation-delay:80ms]">
-          Upload a dataset, explore it with natural language, generate SQL, build
-          dashboards, clean data, and create reports — all from one calm, focused
-          workspace.
+          InsightFlow turns every dataset into clear analysis and reports your
+          team can trust — with you approving each step along the way.
         </p>
 
         <div className="animate-slide-up flex flex-col items-center gap-3 [animation-delay:160ms] sm:flex-row">
           <HeroActions />
         </div>
+
+        <a
+          href="#workflow"
+          className="animate-fade-in group mt-1 inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors duration-160ms hover:text-foreground [animation-delay:240ms]"
+        >
+          See how it works
+          <ArrowDown className="h-4 w-4 transition-transform duration-200 group-hover:translate-y-0.5" />
+        </a>
       </section>
 
       {/* Product preview */}
-      <section className="container px-6 pb-20 pt-4">
+      <section id="product" className="container px-6 pb-20 pt-4">
         <div className="animate-scale-in">
           <ProductPreview />
         </div>
@@ -140,39 +173,43 @@ export default function HomePage() {
 
       {/* Workflow */}
       <section id="workflow" className="container px-6 pb-16">
-        <div className="mx-auto mb-10 flex max-w-2xl flex-col items-center gap-2 text-center">
+        <Reveal className="mx-auto mb-10 flex max-w-2xl flex-col items-center gap-2 text-center">
           <span className="text-2xs font-semibold uppercase tracking-widest text-primary">
             Workflow
           </span>
           <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
             From raw file to shared insight
           </h2>
-        </div>
+        </Reveal>
         <div className="grid gap-4 sm:grid-cols-3">
           {WORKFLOW.map(({ icon: Icon, step, title, desc }, i) => (
-            <div
+            <Reveal
               key={title}
-              className="card-hover group flex animate-stagger flex-col gap-3 rounded-2xl border border-border bg-card p-6 shadow-soft-sm"
-              style={{ animationDelay: `${i * 80}ms` } as React.CSSProperties}
+              delay={i * 90}
+              className="h-full"
             >
-              <div className="flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors duration-220ms group-hover:bg-primary/15">
-                  <Icon className="h-5 w-5" />
-                </span>
-                <span className="text-xs font-semibold tracking-widest text-muted-foreground">
-                  {step}
-                </span>
-              </div>
-              <h3 className="text-base font-semibold">{title}</h3>
-              <p className="text-sm text-muted-foreground">{desc}</p>
-            </div>
+              <SpotlightCard className="h-full">
+                <div className="card-hover group flex h-full flex-col gap-3 rounded-2xl border border-border bg-card p-6 shadow-soft-sm">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary transition-[background-color,transform] duration-220ms group-hover:scale-105 group-hover:bg-primary/15">
+                      <Icon className="h-5 w-5" />
+                    </span>
+                    <span className="text-xs font-semibold tracking-widest text-muted-foreground">
+                      {step}
+                    </span>
+                  </div>
+                  <h3 className="text-base font-semibold">{title}</h3>
+                  <p className="text-sm text-muted-foreground">{desc}</p>
+                </div>
+              </SpotlightCard>
+            </Reveal>
           ))}
         </div>
       </section>
 
       {/* Features */}
       <section id="capabilities" className="container flex flex-col gap-10 px-6 pb-24">
-        <div className="mx-auto flex max-w-2xl flex-col items-center gap-2 text-center">
+        <Reveal className="mx-auto flex max-w-2xl flex-col items-center gap-2 text-center">
           <span className="text-2xs font-semibold uppercase tracking-widest text-primary">
             Capabilities
           </span>
@@ -183,30 +220,30 @@ export default function HomePage() {
             One workspace for profiling, exploration, cleaning, and delivery — with
             humans approving every step.
           </p>
-        </div>
+        </Reveal>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {FEATURES.map(({ icon: Icon, title, desc }, i) => (
-            <Card
-              key={title}
-              className="card-hover group animate-stagger border bg-card shadow-soft-sm"
-              style={{ animationDelay: `${i * 60}ms` } as React.CSSProperties}
-            >
-              <CardHeader>
-                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors duration-220ms group-hover:bg-primary/15">
-                  <Icon className="h-5 w-5" />
-                </span>
-                <CardTitle className="pt-1 text-lg">{title}</CardTitle>
-                <p className="text-sm leading-relaxed text-muted-foreground">{desc}</p>
-              </CardHeader>
-            </Card>
+            <Reveal key={title} delay={(i % 3) * 80} className="h-full">
+              <SpotlightCard className="h-full">
+                <Card className="card-hover group flex h-full flex-col border bg-card shadow-soft-sm">
+                  <CardHeader className="flex-1">
+                    <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary transition-[background-color,transform] duration-220ms group-hover:scale-105 group-hover:bg-primary/15">
+                      <Icon className="h-5 w-5" />
+                    </span>
+                    <CardTitle className="pt-1 text-lg">{title}</CardTitle>
+                    <p className="text-sm leading-relaxed text-muted-foreground">{desc}</p>
+                  </CardHeader>
+                </Card>
+              </SpotlightCard>
+            </Reveal>
           ))}
         </div>
       </section>
 
       {/* CTA */}
       <section className="container px-6 pb-24">
-        <div className="relative overflow-hidden rounded-3xl border border-border bg-card p-10 text-center shadow-soft-lg sm:p-16">
+        <Reveal className="relative overflow-hidden rounded-3xl border border-border bg-card p-10 text-center shadow-soft-lg sm:p-16">
           <div
             aria-hidden
             className="absolute inset-0 -z-10 gradient-mesh opacity-60"
@@ -215,31 +252,85 @@ export default function HomePage() {
             Ready to explore your first dataset?
           </h2>
           <p className="mx-auto mt-3 max-w-md text-muted-foreground">
-            Create a workspace, upload a file, and let InsightFlow do the heavy lifting.
+            Create a workspace, upload a file, and let InsightFlow handle the
+            heavy lifting.
           </p>
           <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <HeroActions primaryLabel="Get started free" />
           </div>
-        </div>
+        </Reveal>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border/60">
-        <div className="container flex flex-col items-center justify-between gap-4 py-8 text-sm text-muted-foreground sm:flex-row">
-          <div className="flex items-center gap-2 font-semibold text-foreground">
-            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
-              <Sparkles className="h-3.5 w-3.5" />
-            </span>
-            InsightFlow
-          </div>
-          <p>© {new Date().getFullYear()} InsightFlow. Built for people who work with data.</p>
-          <div className="flex items-center gap-4">
-            <Link href="/login" className="hover:text-foreground">
-              Sign in
+      <footer className="mt-auto border-t border-border/60">
+        <div className="container grid gap-10 px-6 py-12 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr]">
+          <div className="flex flex-col gap-3">
+            <Link href="/" className="flex items-center gap-2 text-sm font-semibold tracking-tight">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                <Sparkles className="h-4 w-4" />
+              </span>
+              InsightFlow
             </Link>
-            <Link href="/register" className="hover:text-foreground">
+            <p className="max-w-xs text-sm text-muted-foreground">
+              The calm workspace where every dataset becomes clear analysis and
+              reports your team can trust.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <p className="text-2xs font-semibold uppercase tracking-widest text-muted-foreground">
+              Product
+            </p>
+            <Link href="#product" className="text-sm text-muted-foreground transition-colors duration-160ms hover:text-foreground">
+              Overview
+            </Link>
+            <Link href="#workflow" className="text-sm text-muted-foreground transition-colors duration-160ms hover:text-foreground">
+              Workflow
+            </Link>
+            <Link href="#capabilities" className="text-sm text-muted-foreground transition-colors duration-160ms hover:text-foreground">
+              Capabilities
+            </Link>
+            <Link href="/register" className="text-sm text-muted-foreground transition-colors duration-160ms hover:text-foreground">
               Get started
             </Link>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <p className="text-2xs font-semibold uppercase tracking-widest text-muted-foreground">
+              Connect
+            </p>
+            <a
+              href="https://github.com/RishabhSingh290306"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors duration-160ms hover:text-foreground"
+            >
+              <Github className="h-4 w-4" />
+              GitHub
+            </a>
+            <a
+              href="https://www.linkedin.com/in/rishabhsingh290306/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors duration-160ms hover:text-foreground"
+            >
+              <Linkedin className="h-4 w-4" />
+              LinkedIn
+            </a>
+            <a
+              href="mailto:rs290306@gmail.com"
+              className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors duration-160ms hover:text-foreground"
+            >
+              <Mail className="h-4 w-4" />
+              Email
+            </a>
+          </div>
+        </div>
+
+        <div className="border-t border-border/60">
+          <div className="container flex flex-col items-center justify-between gap-3 px-6 py-6 text-xs text-muted-foreground sm:flex-row">
+            <p>© {new Date().getFullYear()} InsightFlow. All rights reserved.</p>
+            <p>Designed &amp; Developed by Rishabh Singh</p>
           </div>
         </div>
       </footer>

@@ -1,0 +1,158 @@
+- main [ref=e2]:
+  - generic [ref=e4]:
+    - link [ref=e5] [cursor=pointer]:
+      - /url: /
+    - navigation "Primary" [ref=e9]:
+      - link "Product" [ref=e10] [cursor=pointer]:
+        - /url: "#product"
+      - link "Workflow" [ref=e11] [cursor=pointer]:
+        - /url: "#workflow"
+      - link "Capabilities" [ref=e12] [cursor=pointer]:
+        - /url: "#capabilities"
+    - generic [ref=e13]:
+      - link "Sign in" [ref=e14] [cursor=pointer]:
+        - /url: /login
+      - link "Get started" [ref=e15] [cursor=pointer]:
+        - /url: /register
+  - generic [ref=e16]:
+    - generic [ref=e17]: Your calm data workspace
+    - heading "Upload your data. Understand it. Build reports." [level=1] [ref=e20]
+    - paragraph [ref=e21]: InsightFlow turns every dataset into clear analysis and reports your team can trust — with you approving each step along the way.
+    - generic [ref=e23]:
+      - link "Get started" [ref=e24] [cursor=pointer]:
+        - /url: /register
+      - link "Sign in" [ref=e25] [cursor=pointer]:
+        - /url: /login
+    - link "See how it works" [ref=e26] [cursor=pointer]:
+      - /url: "#workflow"
+  - generic [ref=e31]:
+    - generic:
+      - generic:
+        - generic:
+          - paragraph: Insight found
+          - paragraph: Revenue up 18% QoQ
+    - generic:
+      - generic:
+        - generic:
+          - paragraph: SQL ready
+          - paragraph: Reviewed by you
+    - generic [ref=e33]:
+      - generic [ref=e34]: insightflow.ai/workspace/q3-sales
+      - generic [ref=e39]:
+        - complementary [ref=e40]:
+          - generic [ref=e41]: InsightFlow
+          - generic [ref=e45]: Datasets
+          - generic [ref=e50]: SQL Workspace
+          - generic [ref=e53]: Dashboards
+          - generic [ref=e56]: Assistant
+          - generic [ref=e59]: Reports
+        - generic [ref=e63]:
+          - generic [ref=e64]:
+            - generic [ref=e65]:
+              - paragraph [ref=e66]: Rows analyzed
+              - paragraph [ref=e67]: 1.2M
+              - paragraph [ref=e68]: +12% this week
+            - generic [ref=e69]:
+              - paragraph [ref=e70]: Queries run
+              - paragraph [ref=e71]: "348"
+              - paragraph [ref=e72]: +8% this week
+            - generic [ref=e73]:
+              - paragraph [ref=e74]: Reports shared
+              - paragraph [ref=e75]: "27"
+              - paragraph [ref=e76]: +4% this week
+          - generic [ref=e77]:
+            - generic [ref=e79]:
+              - paragraph [ref=e80]: Revenue by region
+              - generic [ref=e81]: Live
+            - paragraph [ref=e96]: Growth trend
+          - generic [ref=e100]:
+            - generic [ref=e101]: Recent datasets
+            - generic [ref=e106]:
+              - generic [ref=e107]:
+                - generic [ref=e108]: Q3_sales.csv
+                - generic [ref=e109]: 48,210 rows
+                - generic [ref=e110]: Ready
+              - generic [ref=e111]:
+                - generic [ref=e112]: users_export.xlsx
+                - generic [ref=e113]: 12,904 rows
+                - generic [ref=e114]: Cleaning
+              - generic [ref=e115]:
+                - generic [ref=e116]: campaigns.csv
+                - generic [ref=e117]: 8,331 rows
+                - generic [ref=e118]: Ready
+  - generic [ref=e119]:
+    - generic [ref=e120]:
+      - generic [ref=e121]: Workflow
+      - heading "From raw file to shared insight" [level=2] [ref=e122]
+    - generic [ref=e123]:
+      - generic [ref=e125]:
+        - generic [ref=e126]: "01"
+        - heading "Upload" [level=3] [ref=e132]
+        - paragraph [ref=e133]: Bring any CSV or Excel file into a workspace in seconds.
+      - generic [ref=e135]:
+        - generic [ref=e136]: "02"
+        - heading "Explore" [level=3] [ref=e141]
+        - paragraph [ref=e142]: Ask questions in plain language and get SQL, charts, and answers.
+      - generic [ref=e144]:
+        - generic [ref=e145]: "03"
+        - heading "Deliver" [level=3] [ref=e150]
+        - paragraph [ref=e151]: Build dashboards and reports to share with your team.
+  - generic [ref=e152]:
+    - generic [ref=e153]:
+      - generic [ref=e154]: Capabilities
+      - heading "Everything you need to go from raw data to insight" [level=2] [ref=e155]
+      - paragraph [ref=e156]: One workspace for profiling, exploration, cleaning, and delivery — with humans approving every step.
+    - generic [ref=e157]:
+      - generic [ref=e160]:
+        - heading "Dataset overview" [level=3] [ref=e166]
+        - paragraph [ref=e167]: Auto-detect column types, quality issues, and likely targets the moment you upload.
+      - generic [ref=e170]:
+        - heading "Human-in-the-loop cleaning" [level=3] [ref=e175]
+        - paragraph [ref=e176]: Review, approve, or tweak each cleaning step before it ever touches your data.
+      - generic [ref=e179]:
+        - heading "Visual exploration" [level=3] [ref=e183]
+        - paragraph [ref=e184]: Summaries, distributions, and chart recommendations tailored to your dataset.
+      - generic [ref=e187]:
+        - heading "Ask in plain language" [level=3] [ref=e191]
+        - paragraph [ref=e192]: Explore data conversationally — get SQL, charts, and clear answers in return.
+      - generic [ref=e195]:
+        - heading "SQL workspace" [level=3] [ref=e199]
+        - paragraph [ref=e200]: Generate, review, and run SQL you can read and edit. Follow-ups continue the thread.
+      - generic [ref=e203]:
+        - heading "Dashboards & reports" [level=3] [ref=e207]
+        - paragraph [ref=e208]: Turn analysis into shareable dashboards and reports your whole team can use.
+  - generic [ref=e210]:
+    - heading "Ready to explore your first dataset?" [level=2] [ref=e212]
+    - paragraph [ref=e213]: Create a workspace, upload a file, and let InsightFlow handle the heavy lifting.
+    - generic [ref=e215]:
+      - link "Get started free" [ref=e216] [cursor=pointer]:
+        - /url: /register
+      - link "Sign in" [ref=e217] [cursor=pointer]:
+        - /url: /login
+  - generic [ref=e218]:
+    - generic [ref=e219]:
+      - generic [ref=e220]:
+        - link [ref=e221] [cursor=pointer]:
+          - /url: /
+        - paragraph [ref=e225]: The calm workspace where every dataset becomes clear analysis and reports your team can trust.
+      - generic [ref=e226]:
+        - paragraph [ref=e227]: Product
+        - link "Overview" [ref=e228] [cursor=pointer]:
+          - /url: "#product"
+        - link "Workflow" [ref=e229] [cursor=pointer]:
+          - /url: "#workflow"
+        - link "Capabilities" [ref=e230] [cursor=pointer]:
+          - /url: "#capabilities"
+        - link "Get started" [ref=e231] [cursor=pointer]:
+          - /url: /register
+      - generic [ref=e232]:
+        - paragraph [ref=e233]: Connect
+        - link "GitHub" [ref=e234] [cursor=pointer]:
+          - /url: https://github.com/RishabhSingh290306
+        - link "LinkedIn" [ref=e238] [cursor=pointer]:
+          - /url: https://www.linkedin.com/in/rishabhsingh290306/
+        - link "Email" [ref=e243] [cursor=pointer]:
+          - /url: mailto:rs290306@gmail.com
+    - generic [ref=e248]:
+      - paragraph [ref=e249]: © 2026 InsightFlow. All rights reserved.
+      - paragraph [ref=e250]: Designed & Developed by Rishabh Singh

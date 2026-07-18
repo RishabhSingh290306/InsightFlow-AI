@@ -160,6 +160,35 @@ const config: Config = {
           "0%, 100%": { opacity: "1" },
           "50%": { opacity: "0.5" },
         },
+        "float": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-12px)" },
+        },
+        "float-slow": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-22px)" },
+        },
+        "blob": {
+          "0%, 100%": { transform: "translate3d(0,0,0) scale(1)" },
+          "33%": { transform: "translate3d(4%,-6%,0) scale(1.12)" },
+          "66%": { transform: "translate3d(-5%,4%,0) scale(0.94)" },
+        },
+        "bars-rise": {
+          from: { transform: "scaleY(0)" },
+          to: { transform: "scaleY(1)" },
+        },
+        "glow-pulse": {
+          "0%, 100%": { opacity: "0.45" },
+          "50%": { opacity: "0.9" },
+        },
+        "mesh-drift": {
+          "0%, 100%": { transform: "translate3d(0,0,0) rotate(0deg) scale(1)" },
+          "50%": { transform: "translate3d(2%,-3%,0) rotate(4deg) scale(1.06)" },
+        },
+        "float-soft": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-8px)" },
+        },
       },
       animation: {
         "fade-in": "fade-in 0.45s ease-out both",
@@ -171,6 +200,13 @@ const config: Config = {
         "caret-blink": "caret-blink 1.05s steps(2, start) infinite",
         "shimmer": "shimmer 1.6s infinite",
         "pulse-soft": "pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        "float": "float 7s ease-in-out infinite",
+        "float-slow": "float-slow 11s ease-in-out infinite",
+        "blob": "blob 24s ease-in-out infinite",
+        "bars-rise": "bars-rise 0.9s cubic-bezier(0.16, 1, 0.3, 1) both",
+        "glow-pulse": "glow-pulse 4.5s ease-in-out infinite",
+        "mesh-drift": "mesh-drift 26s ease-in-out infinite",
+        "float-soft": "float-soft 9s ease-in-out infinite",
       },
     },
   },

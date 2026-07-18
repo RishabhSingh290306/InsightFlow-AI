@@ -23,11 +23,11 @@ export default function HeroActions({
   if (authed) {
     return (
       <div className="flex flex-wrap items-center justify-center gap-3">
-        <Button onClick={() => router.push("/projects")} size="lg">
+        <Button variant="cta" className="sheen" onClick={() => router.push("/projects")} size="lg">
           Open workspace
           <ArrowRight className="h-4 w-4" />
         </Button>
-        <Button variant="outline" size="lg" asChild>
+        <Button variant="ctaOutline" size="lg" asChild>
           <Link href="/login">Account</Link>
         </Button>
       </div>
@@ -36,10 +36,10 @@ export default function HeroActions({
 
   return (
     <div className="flex flex-wrap items-center justify-center gap-3">
-      <Button asChild size="lg">
+      <Button variant="cta" className="sheen" asChild size="lg">
         <Link href="/register">{primaryLabel}</Link>
       </Button>
-      <Button variant="outline" size="lg" asChild>
+      <Button variant="ctaOutline" size="lg" asChild>
         <Link href="/login">Sign in</Link>
       </Button>
     </div>

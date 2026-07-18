@@ -23,6 +23,11 @@ const buttonVariants = cva(
         ghost:
           "hover:bg-accent hover:text-accent-foreground active:scale-[0.98] shadow-soft-sm",
         link: "text-primary underline-offset-4 hover:underline active:scale-[0.98] shadow-none",
+        /* Premium marketing CTA — tactile gradient, soft glow, hover lift,
+           active press. Additive: does not change any existing variant. */
+        cta: "relative overflow-hidden text-primary-foreground shadow-[0_8px_24px_-8px_hsl(var(--primary)/0.5)] bg-[linear-gradient(135deg,hsl(var(--primary)),hsl(var(--primary-deep)))] hover:shadow-[0_16px_38px_-10px_hsl(var(--primary)/0.6)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] transition-all duration-200",
+        ctaOutline:
+          "border border-border/80 bg-background/60 text-foreground hover:bg-primary/5 hover:border-primary/40 hover:text-primary active:scale-[0.98] shadow-soft-sm hover:shadow-soft-md transition-all duration-200",
       },
       size: {
         default: "h-10 px-5 py-2.5",
