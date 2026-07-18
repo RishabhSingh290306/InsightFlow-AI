@@ -29,9 +29,12 @@ export function ChatPanel({ projectId, dataset, notebookId, onNotebookCreated, o
   const [genError, setGenError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     inputRef.current?.focus();
+    // Cancel any in-flight stream if the panel unmounts (close/navigate).
+    return () => abortRef.current?.abort();
   }, []);
 
   function pushAssistantToken(text: string) {
@@ -66,6 +69,8 @@ export function ChatPanel({ projectId, dataset, notebookId, onNotebookCreated, o
     setInput("");
     setStreaming(true);
     setTurns((p) => [...p, { id: crypto.randomUUID(), role: "user", content, actions: [] }]);
+    const controller = new AbortController();
+    abortRef.current = controller;
     try {
       await chatApi.message(
         { notebook_id: notebookId, project_id: projectId, dataset_id: dataset?.id ?? null, content },
@@ -90,9 +95,11 @@ export function ChatPanel({ projectId, dataset, notebookId, onNotebookCreated, o
             });
           }
         },
+        controller.signal,
       );
     } finally {
       setStreaming(false);
+      abortRef.current = null;
     }
   }
 

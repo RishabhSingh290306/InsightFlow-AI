@@ -9,15 +9,20 @@ from __future__ import annotations
 import io
 
 import pandas as pd
-from fastapi import APIRouter, File, HTTPException, status, UploadFile
+from fastapi import APIRouter, File, HTTPException, Query, status, UploadFile
 from sqlmodel import select
+from sqlalchemy.exc import IntegrityError
 
 from app.api.deps import CurrentUser, SessionDep
 from app.core.config import settings
 from app.core.storage import get_storage
 from app.db import Repository
+from app.models.dashboard import Dashboard
 from app.models.dataset import Dataset
+from app.models.notebook import Notebook
 from app.models.project import Project
+from app.models.report import Report
+from app.models.sql_query import SqlQuery
 from app.schemas.dataset import DatasetRead
 from app.services.dataset_profiling import profile_dataset
 from app.services.dataset_understanding import understand_dataset
@@ -78,8 +83,17 @@ async def upload_dataset(
             detail="Unsupported file type. Upload a CSV or Excel (.xlsx/.xls) file.",
         )
 
-    content = await file.read()
     max_bytes = settings.MAX_UPLOAD_MB * 1024 * 1024
+    # Reject oversized uploads *before* materializing the whole file in memory.
+    # `file.size` reflects the part's Content-Length when the client sends one
+    # (the normal case, including attack tooling), so this caps RAM up front.
+    # A defensive re-check after the read covers clients that omit the header.
+    if file.size is not None and file.size > max_bytes:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"File exceeds the {settings.MAX_UPLOAD_MB} MB limit.",
+        )
+    content = await file.read()
     if len(content) > max_bytes:
         raise HTTPException(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
@@ -114,26 +128,46 @@ async def upload_dataset(
         column_count=cols,
         version=version,
     )
-    created = Repository(Dataset, session).create(dataset)
-    # The upload is the root of its own lineage: root_id points at itself,
-    # parent_id stays NULL. Derived versions (cleaning/SQL/etc.) set these to
-    # link back along the chain instead.
-    created.root_id = created.id
-    session.add(created)
-    session.commit()
-    session.refresh(created)
+    try:
+        created = Repository(Dataset, session).create(dataset)
+        # The upload is the root of its own lineage: root_id points at itself,
+        # parent_id stays NULL. Set atomically in the same transaction so a
+        # partially-written row (root_id=NULL) can never be observed.
+        created.root_id = created.id
+        session.add(created)
+        session.commit()
+        session.refresh(created)
+    except IntegrityError:
+        # Concurrent re-upload of the same file raced on the version number
+        # (UniqueConstraint project_id+name_stem+version). Roll back the DB row
+        # and remove the orphaned storage file so we never leave a dangling blob.
+        session.rollback()
+        try:
+            storage.delete(storage_path)
+        except Exception:
+            pass
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="A dataset with this name and version already exists.",
+        )
     return created
 
 
 @router.get("/projects/{project_id}", response_model=list[DatasetRead])
 def list_datasets(
-    project_id: int, session: SessionDep, current_user: CurrentUser
+    project_id: int,
+    session: SessionDep,
+    current_user: CurrentUser,
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
 ) -> list[Dataset]:
     _ensure_project_owner(project_id, session, current_user)
     stmt = (
         select(Dataset)
         .where(Dataset.project_id == project_id)
         .order_by(Dataset.created_at.desc())
+        .offset(offset)
+        .limit(limit)
     )
     return list(session.exec(stmt).all())
 
@@ -165,8 +199,31 @@ def dataset_lineage(
 @router.delete("/{dataset_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_dataset(dataset_id: int, session: SessionDep, current_user: CurrentUser):
     dataset = _get_owned(dataset_id, session, current_user)
-    get_storage().delete(dataset.storage_path)
-    Repository(Dataset, session).delete(dataset)
+    # Delete the whole lineage (the upload + every derived cleaning version),
+    # not just this row — children reference it via parent_id/root_id.
+    root = dataset.root_id or dataset.id
+    lineage = list(session.exec(select(Dataset).where(Dataset.root_id == root)).all())
+    lineage_ids = [d.id for d in lineage]
+
+    # Remove artifacts that reference any lineage dataset (RESTRICT FKs).
+    for model in (Report, Dashboard, Notebook, SqlQuery):
+        for obj in session.exec(
+            select(model).where(model.dataset_id.in_(lineage_ids))
+        ).all():
+            session.delete(obj)
+
+    # Highest version first so the self-referential FKs never block the delete.
+    for ds in sorted(lineage, key=lambda d: d.version or 0, reverse=True):
+        session.delete(ds)
+    session.commit()
+
+    # Best-effort storage cleanup after commit.
+    storage = get_storage()
+    for ds in lineage:
+        try:
+            storage.delete(ds.storage_path)
+        except Exception:
+            pass
 
 
 @router.post("/{dataset_id}/understand", response_model=DatasetRead)

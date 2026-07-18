@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class UserCreate(BaseModel):
     email: EmailStr
-    password: str
-    full_name: str = ""
+    password: str = Field(min_length=8, max_length=128)
+    full_name: str = Field(default="", max_length=200)
 
 
 class UserRead(BaseModel):

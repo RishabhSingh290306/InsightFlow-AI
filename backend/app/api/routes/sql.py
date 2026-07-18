@@ -138,6 +138,8 @@ def history(
     project_id: int = Query(...),
     dataset_id: int | None = None,
     q: str | None = None,
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
 ) -> list[SqlQueryRecord]:
     stmt = select(SqlQuery).where(
         SqlQuery.project_id == project_id, SqlQuery.owner_id == current_user.id
@@ -149,7 +151,7 @@ def history(
         stmt = stmt.where(
             (SqlQuery.business_question.ilike(like)) | (SqlQuery.sql.ilike(like))
         )
-    stmt = stmt.order_by(SqlQuery.executed_at.desc())
+    stmt = stmt.order_by(SqlQuery.executed_at.desc()).offset(offset).limit(limit)
     return session.exec(stmt).all()
 
 

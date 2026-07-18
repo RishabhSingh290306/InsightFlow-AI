@@ -34,7 +34,7 @@ async def propose_charts(
     candidates = list(candidates)
     try:
         user_prompt = (
-            "Profile:\n" + json.dumps(profile.model_dump(mode="json"), indent=2)
+            "Profile:\n" + json.dumps(profile.model_dump(mode="json", exclude={"preview"}), indent=2)
             + "\nCandidates (id, type, source columns):\n"
             + json.dumps(
                 [{"id": c.id, "chart_type": c.chart_type, "columns": c.metadata.get("columns")}

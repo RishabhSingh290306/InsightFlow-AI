@@ -30,7 +30,7 @@ _SYSTEM = (
 async def understand_dataset(profile: DatasetProfile) -> DatasetUnderstanding:
     user_prompt = (
         "Here is the structured profile of the dataset:\n"
-        + json.dumps(profile.model_dump(mode="json"), indent=2)
+        + json.dumps(profile.model_dump(mode="json", exclude={"preview"}), indent=2)
     )
     try:
         data = await complete_json(_SYSTEM, user_prompt)

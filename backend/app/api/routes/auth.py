@@ -12,11 +12,14 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import select
 
 from app.api.deps import CurrentUser, SessionDep
+from app.core.log import get_logger
 from app.core.security import create_access_token, hash_password, verify_password
 from app.db import Repository
 from app.models.user import User
 from app.schemas.auth import Token
 from app.schemas.user import UserCreate, UserRead
+
+logger = get_logger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -41,6 +44,8 @@ def login(
 ) -> Token:
     user = session.exec(select(User).where(User.email == form_data.username)).first()
     if not user or not verify_password(form_data.password, user.hashed_password):
+        # Generic message (no user-enumeration); log the attempt for monitoring.
+        logger.warning("Failed login attempt email=%s", form_data.username)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",

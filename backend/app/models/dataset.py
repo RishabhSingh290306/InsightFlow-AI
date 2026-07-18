@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from sqlalchemy import Column, JSON
+from sqlalchemy import Column, JSON, UniqueConstraint
 from sqlmodel import Field, SQLModel
 
 
@@ -27,10 +27,15 @@ def _now() -> datetime:
 
 class Dataset(SQLModel, table=True):
     __tablename__ = "datasets"
+    __table_args__ = (
+        # One version per (project, name stem) group — prevents two concurrent
+        # uploads of the same file creating duplicate version numbers.
+        UniqueConstraint("project_id", "name_stem", "version", name="uq_dataset_version"),
+    )
 
     id: int | None = Field(default=None, primary_key=True)
-    project_id: int = Field(index=True, foreign_key="projects.id")
-    owner_id: int = Field(index=True, foreign_key="users.id")
+    project_id: int = Field(index=True, foreign_key="projects.id", ondelete="CASCADE")
+    owner_id: int = Field(index=True, foreign_key="users.id", ondelete="CASCADE")
     filename: str  # stored name, e.g. "<uuid>.csv"
     original_filename: str
     name_stem: str = Field(index=True)  # for version grouping
@@ -45,8 +50,8 @@ class Dataset(SQLModel, table=True):
     # Version lineage (Git-like). Uploads are roots: parent_id=NULL, root_id=self,
     # origin="upload". Derived versions (cleaning/SQL/etc.) set parent_id/root_id to
     # point back along the chain and origin to their transformation type.
-    parent_id: int | None = Field(default=None, index=True, foreign_key="datasets.id")
-    root_id: int | None = Field(default=None, index=True, foreign_key="datasets.id")
+    parent_id: int | None = Field(default=None, index=True, foreign_key="datasets.id", ondelete="CASCADE")
+    root_id: int | None = Field(default=None, index=True, foreign_key="datasets.id", ondelete="CASCADE")
     origin: str = "upload"  # "upload" | "cleaning" | future: "sql","feature_eng","manual"
     recipe: dict | None = Field(default=None, sa_column=Column(JSON))
     # Stage 1 facts (deterministic profiling) — single source of truth for

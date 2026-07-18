@@ -16,7 +16,7 @@ class Project(SQLModel, table=True):
     __tablename__ = "projects"
 
     id: int | None = Field(default=None, primary_key=True)
-    owner_id: int = Field(index=True, foreign_key="users.id")
+    owner_id: int = Field(index=True, foreign_key="users.id", ondelete="CASCADE")
     name: str = Field(index=True)
     description: str = Field(default="")
     is_active: bool = Field(default=True)

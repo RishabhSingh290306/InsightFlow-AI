@@ -150,6 +150,9 @@ def apply_cleaning(
         buf = io.BytesIO()
         new_df.to_excel(buf, index=False)
         content = buf.getvalue()
+    # Write the file FIRST. The DB row + profile are created only after the file
+    # exists; any failure below deletes this file so we never leave an orphan on
+    # disk (the original upload is never mutated).
     storage_path, filename = storage.save(dataset.project_id, dataset.original_filename, content)
 
     recipe = {
@@ -183,10 +186,16 @@ def apply_cleaning(
         origin="cleaning",
         recipe=recipe,
     )
-    # Re-profile the new version (deterministic; always succeeds) before
-    # committing, so a profiling failure leaves no partial version.
-    child.profile = profile_dataset(
-        storage, storage_path, dataset.original_filename, dataset.file_format
-    ).model_dump(mode="json")
-    child.status = "profiled"
-    return Repository(Dataset, session).create(child)
+    # Re-profile the new version (deterministic) and persist it atomically. If
+    # profiling, commit, or row creation fails, roll back the file we just wrote
+    # so no orphan is left on disk.
+    try:
+        child.profile = profile_dataset(
+            storage, storage_path, dataset.original_filename, dataset.file_format
+        ).model_dump(mode="json")
+        child.status = "profiled"
+        created = Repository(Dataset, session).create(child)
+    except Exception:
+        storage.delete(storage_path)
+        raise
+    return created

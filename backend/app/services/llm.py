@@ -107,10 +107,7 @@ async def _openrouter_complete_stream(
 async def _gemini_complete_json(
     system_prompt: str, user_prompt: str, model: str
 ) -> dict:
-    url = (
-        f"{settings.GEMINI_BASE_URL}/models/{model}:generateContent"
-        f"?key={settings.GEMINI_API_KEY}"
-    )
+    url = f"{settings.GEMINI_BASE_URL}/models/{model}:generateContent"
     payload = {
         "systemInstruction": {"parts": [{"text": system_prompt}]},
         "contents": [{"role": "user", "parts": [{"text": user_prompt}]}],
@@ -121,7 +118,12 @@ async def _gemini_complete_json(
     }
     async with httpx.AsyncClient(timeout=90.0) as client:
         resp = await client.post(
-            url, headers={"Content-Type": "application/json"}, json=payload
+            url,
+            headers={
+                "Content-Type": "application/json",
+                "x-goog-api-key": settings.GEMINI_API_KEY,
+            },
+            json=payload,
         )
         resp.raise_for_status()
         data = resp.json()
@@ -135,10 +137,7 @@ async def _gemini_complete_json(
 async def _gemini_complete_stream(
     system_prompt: str, user_prompt: str, model: str
 ) -> AsyncGenerator[str, None]:
-    url = (
-        f"{settings.GEMINI_BASE_URL}/models/{model}:streamGenerateContent"
-        f"?alt=sse&key={settings.GEMINI_API_KEY}"
-    )
+    url = f"{settings.GEMINI_BASE_URL}/models/{model}:streamGenerateContent?alt=sse"
     payload = {
         "systemInstruction": {"parts": [{"text": system_prompt}]},
         "contents": [{"role": "user", "parts": [{"text": user_prompt}]}],
@@ -146,7 +145,13 @@ async def _gemini_complete_stream(
     }
     async with httpx.AsyncClient(timeout=90.0) as client:
         async with client.stream(
-            "POST", url, headers={"Content-Type": "application/json"}, json=payload
+            "POST",
+            url,
+            headers={
+                "Content-Type": "application/json",
+                "x-goog-api-key": settings.GEMINI_API_KEY,
+            },
+            json=payload,
         ) as resp:
             resp.raise_for_status()
             async for line in resp.aiter_lines():

@@ -25,9 +25,11 @@ from sqlmodel import Session, create_engine
 from app.core.config import settings
 
 # `pool_pre_ping` keeps connections healthy across idle periods (Docker/Compose).
+# `echo` is OFF by default (it logs bound parameter values, i.e. possible PII);
+# enable explicitly via DB_ECHO only when debugging.
 engine = create_engine(
     settings.DATABASE_URL,
-    echo=settings.ENVIRONMENT == "development",
+    echo=settings.DB_ECHO,
     pool_pre_ping=True,
 )
 

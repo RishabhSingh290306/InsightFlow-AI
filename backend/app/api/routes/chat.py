@@ -24,6 +24,7 @@ from fastapi.responses import StreamingResponse
 from sqlmodel import select
 
 from app.api.deps import CurrentUser, SessionDep
+from app.core.log import get_logger
 from app.models.dataset import Dataset
 from app.models.notebook import Notebook
 from app.models.project import Project
@@ -42,6 +43,8 @@ from app.services.chat.executor import run_action
 from app.services.chat.orchestrator import plan_turn, stream_narrative
 
 router = APIRouter(prefix="/chat", tags=["chat"])
+
+logger = get_logger(__name__)
 
 _AVAILABLE_ACTIONS = ["sql", "chart", "cleaning", "dashboard", "report"]
 
@@ -125,7 +128,16 @@ async def chat_message(body: ChatMessageRequest, session: SessionDep, current_us
                 yield _sse("artifact", {"artifact": artifact.model_dump(mode="json")})
         except Exception as e:  # never 5xx the stream
             ai_available = False
-            yield _sse("error", {"message": str(e), "ai_available": False})
+            # Log the real exception server-side; only send a generic message to
+            # the client so internal details (file paths, stack frames) don't leak.
+            logger.exception(
+                "Chat turn failed user=%s project=%s dataset=%s",
+                current_user.id, project.id, dataset.id if dataset else None,
+            )
+            yield _sse("error", {
+                "message": "Something went wrong while generating a response.",
+                "ai_available": False,
+            })
 
         assistant_turn = ChatTurn(
             id=secrets.token_hex(8), role="assistant",
@@ -149,11 +161,19 @@ async def chat_message(body: ChatMessageRequest, session: SessionDep, current_us
 
 
 @router.get("/notebooks", response_model=list[NotebookRead])
-def list_notebooks(session: SessionDep, current_user: CurrentUser, project_id: int = Query(...)) -> list[NotebookRead]:
+def list_notebooks(
+    session: SessionDep,
+    current_user: CurrentUser,
+    project_id: int = Query(...),
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+) -> list[NotebookRead]:
     stmt = (
         select(Notebook)
         .where(Notebook.project_id == project_id, Notebook.owner_id == current_user.id)
         .order_by(Notebook.created_at.desc())
+        .offset(offset)
+        .limit(limit)
     )
     return list(session.exec(stmt).all())
 

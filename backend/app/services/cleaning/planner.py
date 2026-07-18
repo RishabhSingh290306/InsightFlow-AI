@@ -40,7 +40,7 @@ def _user_prompt(profile: DatasetProfile, understanding: DatasetUnderstanding | 
         json.dumps(cat, indent=2),
         "",
         "Dataset profile (columns that exist are in 'column_names'):",
-        json.dumps(profile.model_dump(mode="json"), indent=2),
+        json.dumps(profile.model_dump(mode="json", exclude={"preview"}), indent=2),
     ]
     if understanding is not None:
         parts += [

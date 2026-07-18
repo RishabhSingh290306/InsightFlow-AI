@@ -46,7 +46,7 @@ def build_chat_context(
         scope="dataset" if dataset else "project",
         project_id=project.id,
         dataset_id=dataset.id if dataset else None,
-        profile=profile.model_dump(mode="json") if profile else None,
+        profile=profile.model_dump(mode="json", exclude={"preview"}) if profile else None,
         understanding=understanding.model_dump(mode="json") if understanding else None,
         eda=dataset.eda if dataset else None,
         project_summary=project_summary,

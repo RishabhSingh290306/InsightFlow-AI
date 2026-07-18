@@ -11,8 +11,20 @@ debugging can trace each operation without changing the engine architecture.
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
+
+# The set of operations discoverable through the registry
+# (app/services/cleaning/registry.py). Kept in sync with that list.
+CleaningOpName = Literal[
+    "handle_missing_values",
+    "remove_duplicates",
+    "convert_types",
+    "rename_columns",
+    "drop_columns",
+]
+OpStatus = Literal["success", "skipped", "failed"]
 
 
 def _utcnow_iso() -> str:
@@ -24,7 +36,7 @@ class CleaningOperation(BaseModel):
 
     model_config = ConfigDict(extra="ignore")
 
-    op: str  # registry key, e.g. "handle_missing_values"
+    op: CleaningOpName  # registry key, e.g. "handle_missing_values"
     params: dict = {}
     explanation: str | None = None
     confidence: float = 1.0
@@ -45,7 +57,7 @@ class OperationImpact(BaseModel):
     # Lightweight execution metadata (assigned by the engine around each call).
     operation_id: str | None = None
     duration_ms: float = 0.0
-    status: str = "success"
+    status: OpStatus = "success"
     timestamp: str = _utcnow_iso()
 
 

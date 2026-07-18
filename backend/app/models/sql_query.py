@@ -20,10 +20,10 @@ class SqlQuery(SQLModel, table=True):
     __tablename__ = "sql_queries"
 
     id: int | None = Field(default=None, primary_key=True)
-    project_id: int = Field(index=True, foreign_key="projects.id")
-    dataset_id: int = Field(index=True, foreign_key="datasets.id")
-    owner_id: int = Field(index=True, foreign_key="users.id")
-    parent_query_id: int | None = Field(default=None, foreign_key="sql_queries.id", index=True)
+    project_id: int = Field(index=True, foreign_key="projects.id", ondelete="CASCADE")
+    dataset_id: int = Field(index=True, foreign_key="datasets.id", ondelete="CASCADE")
+    owner_id: int = Field(index=True, foreign_key="users.id", ondelete="CASCADE")
+    parent_query_id: int | None = Field(default=None, foreign_key="sql_queries.id", index=True, ondelete="CASCADE")
     business_question: str = Field(sa_column=Column(Text))
     sql: str = Field(sa_column=Column(Text))
     edited: bool = False

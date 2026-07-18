@@ -1,6 +1,6 @@
 "use client";
 
-import { getToken } from "@/lib/auth";
+import { clearToken, getToken, handleUnauthorized } from "@/lib/auth";
 import type {
   ChartSpec,
   CleaningOperation,
@@ -46,6 +46,9 @@ const BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL ??
   (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000");
 
+// Hard timeout so a hung backend can never leave the UI in a perpetual spinner.
+const DEFAULT_TIMEOUT_MS = 60_000;
+
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -56,34 +59,113 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+/** Coerce FastAPI's error `detail` (string or list of {loc,msg,type}) to a string. */
+function normalizeDetail(body: unknown, fallback: string): string {
+  const detail = (body as { detail?: unknown } | null)?.detail;
+  if (detail == null) return fallback;
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail)) {
+    const msgs = detail
+      .map((e) => {
+        const loc = Array.isArray((e as { loc?: unknown }).loc)
+          ? ((e as { loc: unknown[] }).loc).filter((p) => p !== "body").join(".")
+          : "";
+        const msg = (e as { msg?: string }).msg ?? "invalid";
+        return loc ? `${loc}: ${msg}` : msg;
+      })
+      .filter(Boolean);
+    return msgs.length ? msgs.join("; ") : fallback;
+  }
+  return fallback;
+}
+
+function linkSignals(timeoutMs: number, external?: AbortSignal): {
+  signal: AbortSignal;
+  timedOut: () => boolean;
+  cleanup: () => void;
+} {
+  const controller = new AbortController();
+  let timedOut = false;
+  const timer = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, timeoutMs);
+
+  const onExternalAbort = () => controller.abort();
+  if (external) {
+    if (typeof AbortSignal.any === "function") {
+      return {
+        signal: AbortSignal.any([external, controller.signal]),
+        timedOut: () => timedOut,
+        cleanup: () => clearTimeout(timer),
+      };
+    }
+    external.addEventListener("abort", onExternalAbort);
+  }
+  return {
+    signal: controller.signal,
+    timedOut: () => timedOut,
+    cleanup: () => {
+      clearTimeout(timer);
+      if (external) external.removeEventListener("abort", onExternalAbort);
+    },
+  };
+}
+
+interface RequestOptions extends RequestInit {
+  /** Skip the global 401 → login redirect (used by the login call itself). */
+  suppressUnauthorized?: boolean;
+  /** Override the default request timeout (ms). */
+  timeoutMs?: number;
+}
+
+async function request<T>(path: string, init: RequestOptions = {}): Promise<T> {
+  const { suppressUnauthorized, timeoutMs, ...rest } = init;
   const token = getToken();
-  const headers = new Headers(init.headers);
-  headers.set("Content-Type", "application/json");
+  const headers = new Headers(rest.headers);
+  if (!headers.has("Content-Type")) headers.set("Content-Type", "application/json");
   if (token) headers.set("Authorization", `Bearer ${token}`);
 
-  const res = await fetch(`${BASE}${path}`, { ...init, headers });
-  if (!res.ok) {
-    let detail = res.statusText;
-    try {
-      const body = await res.json();
-      detail = body.detail ?? detail;
-    } catch {
-      /* non-JSON error body */
+  const { signal, timedOut, cleanup } = linkSignals(
+    timeoutMs ?? DEFAULT_TIMEOUT_MS,
+    rest.signal,
+  );
+
+  try {
+    const res = await fetch(`${BASE}${path}`, { ...rest, headers, signal });
+    if (res.status === 401 && !suppressUnauthorized) {
+      handleUnauthorized();
+      throw new ApiError(401, "Session expired. Please sign in again.");
     }
-    throw new ApiError(res.status, detail);
+    if (!res.ok) {
+      let detail = res.statusText;
+      try {
+        const body = await res.json();
+        detail = normalizeDetail(body, detail);
+      } catch {
+        /* non-JSON error body */
+      }
+      throw new ApiError(res.status, detail);
+    }
+    if (res.status === 204) return undefined as T;
+    return res.json() as Promise<T>;
+  } catch (err) {
+    if (err instanceof DOMException && err.name === "AbortError" && timedOut()) {
+      throw new ApiError(0, "Request timed out. Please try again.");
+    }
+    throw err;
+  } finally {
+    cleanup();
   }
-  if (res.status === 204) return undefined as T;
-  return res.json() as Promise<T>;
 }
 
 export const api = {
-  get: <T>(path: string) => request<T>(path),
-  post: <T>(path: string, body?: unknown) =>
-    request<T>(path, { method: "POST", body: body ? JSON.stringify(body) : undefined }),
-  patch: <T>(path: string, body?: unknown) =>
-    request<T>(path, { method: "PATCH", body: body ? JSON.stringify(body) : undefined }),
-  delete: <T>(path: string) => request<T>(path, { method: "DELETE" }),
+  get: <T>(path: string, opts?: RequestOptions) => request<T>(path, opts),
+  post: <T>(path: string, body?: unknown, opts?: RequestOptions) =>
+    request<T>(path, { ...opts, method: "POST", body: body ? JSON.stringify(body) : undefined }),
+  patch: <T>(path: string, body?: unknown, opts?: RequestOptions) =>
+    request<T>(path, { ...opts, method: "PATCH", body: body ? JSON.stringify(body) : undefined }),
+  delete: <T>(path: string, opts?: RequestOptions) => request<T>(path, { ...opts, method: "DELETE" }),
 };
 
 /**
@@ -100,22 +182,13 @@ export const authApi = {
     });
   },
   async login(email: string, password: string): Promise<Token> {
-    const res = await fetch(`${BASE}/api/v1/auth/login`, {
+    const form = new URLSearchParams({ username: email, password });
+    return request<Token>("/api/v1/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({ username: email, password }),
+      body: form.toString(),
+      suppressUnauthorized: true,
     });
-    if (!res.ok) {
-      let detail = res.statusText;
-      try {
-        const body = await res.json();
-        detail = body.detail ?? detail;
-      } catch {
-        /* non-JSON error body */
-      }
-      throw new ApiError(res.status, detail);
-    }
-    return res.json() as Promise<Token>;
   },
   me(): Promise<UserRead> {
     return request<UserRead>("/api/v1/auth/me");
@@ -149,22 +222,11 @@ export const datasetsApi = {
     const token = getToken();
     const form = new FormData();
     form.append("file", file);
-    const res = await fetch(`${BASE}/api/v1/datasets/projects/${projectId}`, {
+    return request<DatasetRead>(`/api/v1/datasets/projects/${projectId}`, {
       method: "POST",
       headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       body: form,
     });
-    if (!res.ok) {
-      let detail = res.statusText;
-      try {
-        const body = await res.json();
-        detail = body.detail ?? detail;
-      } catch {
-        /* non-JSON error body */
-      }
-      throw new ApiError(res.status, detail);
-    }
-    return res.json() as Promise<DatasetRead>;
   },
   remove(id: number): Promise<void> {
     return request<void>(`/api/v1/datasets/${id}`, { method: "DELETE" });
@@ -268,9 +330,14 @@ export const reportsApi = {
     return request<void>(`/api/v1/reports/${id}`, { method: "DELETE" });
   },
   async exportMarkdown(id: number): Promise<void> {
+    const token = getToken();
     const res = await fetch(`${BASE}/api/v1/reports/${id}/export?format=markdown`, {
-      headers: { Authorization: `Bearer ${getToken() ?? ""}` },
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
     });
+    if (res.status === 401) {
+      handleUnauthorized();
+      throw new ApiError(401, "Session expired. Please sign in again.");
+    }
     if (!res.ok) throw new ApiError(res.status, "Export failed");
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
@@ -344,6 +411,10 @@ export const chatApi = {
       body: JSON.stringify(req),
       signal,
     });
+    if (res.status === 401) {
+      handleUnauthorized();
+      throw new ApiError(401, "Session expired. Please sign in again.");
+    }
     if (!res.ok || !res.body) {
       throw new ApiError(res.status, `Chat failed (${res.status})`);
     }

@@ -1,32 +1,18 @@
 "use client";
 
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  Line,
-  LineChart,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Scatter,
-  ScatterChart,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import dynamic from "next/dynamic";
 import type { ChartSpec } from "@/lib/types";
+import { CHART_ACCENT } from "@/components/chart-renderer-inner";
 
-const ACCENT = "hsl(var(--primary))";
-const PALETTE = [
-  "hsl(var(--primary))",
-  "hsl(0 72% 51%)",
-  "hsl(142 71% 45%)",
-  "hsl(38 92% 50%)",
-  "hsl(280 65% 60%)",
-  "hsl(199 89% 48%)",
-];
+// recharts is heavy and only needed for actual charts; load it on demand so the
+// initial bundle (and pages that show no charts) stay lean.
+const ChartRendererInner = dynamic(
+  () => import("@/components/chart-renderer-inner").then((m) => m.ChartRendererInner),
+  {
+    ssr: false,
+    loading: () => <div className="h-[220px] w-full animate-pulse rounded-lg bg-card-muted/40" />,
+  },
+);
 
 type Box = { label: string; min: number; q1: number; median: number; q3: number; max: number };
 
@@ -43,19 +29,19 @@ function BoxPlot({ data }: { data: Record<string, unknown>[] }) {
           <div key={i} className="flex items-center gap-2 text-xs">
             <span className="w-24 truncate text-muted-foreground">{r.label}</span>
             <svg viewBox="0 0 100 40" className="h-10 flex-1" preserveAspectRatio="none">
-              <line x1={50} y1={y(r.min)} x2={50} y2={y(r.max)} stroke={ACCENT} />
-              <line x1={0} y1={y(r.min)} x2={100} y2={y(r.min)} stroke={ACCENT} />
-              <line x1={0} y1={y(r.max)} x2={100} y2={y(r.max)} stroke={ACCENT} />
+              <line x1={50} y1={y(r.min)} x2={50} y2={y(r.max)} stroke={CHART_ACCENT} />
+              <line x1={0} y1={y(r.min)} x2={100} y2={y(r.min)} stroke={CHART_ACCENT} />
+              <line x1={0} y1={y(r.max)} x2={100} y2={y(r.max)} stroke={CHART_ACCENT} />
               <rect
                 x={0}
                 y={y(r.q3)}
                 width={100}
                 height={Math.max(1, y(r.q1) - y(r.q3))}
-                fill={ACCENT}
+                fill={CHART_ACCENT}
                 fillOpacity={0.3}
-                stroke={ACCENT}
+                stroke={CHART_ACCENT}
               />
-              <line x1={0} y1={y(r.median)} x2={100} y2={y(r.median)} stroke={ACCENT} strokeWidth={2} />
+              <line x1={0} y1={y(r.median)} x2={100} y2={y(r.median)} stroke={CHART_ACCENT} strokeWidth={2} />
             </svg>
           </div>
         );
@@ -98,79 +84,18 @@ function Heatmap({ data, columns }: { data: Record<string, unknown>[]; columns: 
   );
 }
 
+function normalizeType(spec: ChartSpec): string {
+  return typeof spec.chart_type === "string"
+    ? spec.chart_type.toLowerCase().replace(/\s*chart$/, "").trim()
+    : String(spec.chart_type);
+}
+
 export function ChartRenderer({ spec }: { spec: ChartSpec }) {
-  const color = ACCENT;
-  const chartType =
-    typeof spec.chart_type === "string"
-      ? spec.chart_type.toLowerCase().replace(/\s*chart$/, "").trim()
-      : spec.chart_type;
-  switch (chartType) {
-    case "histogram":
-    case "bar":
-      return (
-        <ResponsiveContainer width="100%" height={220}>
-          <BarChart data={spec.data as Record<string, unknown>[]}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey={chartType === "histogram" ? "bin" : "category"} />
-            <YAxis />
-            <Tooltip />
-            <Bar dataKey="count" fill={color} />
-          </BarChart>
-        </ResponsiveContainer>
-      );
-    case "line":
-      return (
-        <ResponsiveContainer width="100%" height={220}>
-          <LineChart data={spec.data as Record<string, unknown>[]}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="x" />
-            <YAxis />
-            <Tooltip />
-            <Line dataKey="y" stroke={color} dot={false} />
-          </LineChart>
-        </ResponsiveContainer>
-      );
-    case "scatter":
-      return (
-        <ResponsiveContainer width="100%" height={220}>
-          <ScatterChart>
-            <CartesianGrid />
-            <XAxis dataKey="x" type="number" />
-            <YAxis dataKey="y" type="number" />
-            <Tooltip />
-            <Scatter data={spec.data as Record<string, unknown>[]} fill={color} />
-          </ScatterChart>
-        </ResponsiveContainer>
-      );
-    case "pie":
-      return (
-        <ResponsiveContainer width="100%" height={220}>
-          <PieChart>
-            <Pie
-              data={spec.data as Record<string, unknown>[]}
-              dataKey="value"
-              nameKey="category"
-              outerRadius={80}
-              label
-            >
-              {(spec.data as Record<string, unknown>[]).map((_, i) => (
-                <Cell key={i} fill={PALETTE[i % PALETTE.length]} />
-              ))}
-            </Pie>
-            <Tooltip />
-          </PieChart>
-        </ResponsiveContainer>
-      );
-    case "box":
-      return <BoxPlot data={spec.data} />;
-    case "heatmap":
-      return (
-        <Heatmap
-          data={spec.data}
-          columns={(spec.metadata.columns as string[]) ?? []}
-        />
-      );
-    default:
-      return <p className="text-sm text-muted-foreground">Unsupported chart type: {spec.chart_type}</p>;
+  const chartType = normalizeType(spec);
+  // Lightweight SVG charts don't need recharts — render directly.
+  if (chartType === "box") return <BoxPlot data={spec.data} />;
+  if (chartType === "heatmap") {
+    return <Heatmap data={spec.data} columns={(spec.metadata.columns as string[]) ?? []} />;
   }
+  return <ChartRendererInner spec={spec} />;
 }

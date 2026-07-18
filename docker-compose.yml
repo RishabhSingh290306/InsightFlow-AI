@@ -52,10 +52,18 @@ services:
       - ./backend/app:/app/app
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        # Server-side backend URL baked into the image at build time. The
+        # browser talks to the frontend's own origin; Next proxies /api to this
+        # internal address. Never expose a container hostname to the browser.
+        INTERNAL_API_URL: http://backend:8000
     environment:
-      # Talk to the backend directly (browser -> backend container port).
-      NEXT_PUBLIC_API_BASE_URL: http://localhost:8000
+      # No NEXT_PUBLIC_API_BASE_URL → client uses same-origin (/api) and Next
+      # proxies to INTERNAL_API_URL (set above). Avoids leaking backend:8000 to
+      # the browser and avoids cross-origin/CORS issues.
+      NODE_ENV: production
     ports:
       - "3000:3000"
     depends_on:

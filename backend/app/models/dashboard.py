@@ -21,10 +21,10 @@ class Dashboard(SQLModel, table=True):
     __tablename__ = "dashboards"
 
     id: int | None = Field(default=None, primary_key=True)
-    project_id: int = Field(index=True, foreign_key="projects.id")
-    owner_id: int = Field(index=True, foreign_key="users.id")
+    project_id: int = Field(index=True, foreign_key="projects.id", ondelete="CASCADE")
+    owner_id: int = Field(index=True, foreign_key="users.id", ondelete="CASCADE")
     scope: str = "dataset"  # "dataset" | "project"
-    dataset_id: int | None = Field(default=None, index=True, foreign_key="datasets.id")
+    dataset_id: int | None = Field(default=None, index=True, foreign_key="datasets.id", ondelete="CASCADE")
     dataset_version_id: int | None = Field(default=None)
     title: str
     spec: dict | None = Field(default=None, sa_column=Column(JSON))

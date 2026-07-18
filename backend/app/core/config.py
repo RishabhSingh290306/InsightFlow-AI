@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -29,7 +30,12 @@ class Settings(BaseSettings):
 
     # Database — currently a Postgres connection string. The data-access layer
     # in `app/core/database.py` is the single swap point for Supabase later.
-    DATABASE_URL: str = "postgresql://postgres:password@localhost:5432/insightflow"
+    # The default is a *non-credential placeholder*; production REQUIRES an
+    # explicit DATABASE_URL (enforced in `_validate_production`).
+    DATABASE_URL: str = "postgresql://postgres:CHANGE_ME@localhost:5432/insightflow"
+    # SQL echo logs every statement WITH its bound parameter values (possible
+    # PII). Off by default in every environment — enable explicitly if needed.
+    DB_ECHO: bool = False
 
     # File storage — local disk for now. The storage adapter in
     # `app/core/storage.py` is the single swap point for Supabase Storage / S3.
@@ -72,6 +78,26 @@ class Settings(BaseSettings):
     @property
     def cors_origins(self) -> list[str]:
         return [o.strip() for o in self.BACKEND_CORS_ORIGINS.split(",") if o.strip()]
+
+    @model_validator(mode="after")
+    def _validate_production(self) -> "Settings":
+        """Fail fast in production if secrets/connection are still defaults.
+
+        A default JWT secret lets anyone forge tokens (full account takeover),
+        and a default DATABASE_URL means no real database was wired up. Dev and
+        test environments are intentionally exempt so local runs work OOTB.
+        """
+        if self.ENVIRONMENT.lower() != "production":
+            return self
+        if not self.SECRET_KEY or self.SECRET_KEY == "change-me-in-production":
+            raise ValueError(
+                "SECRET_KEY must be set to a strong, non-default value in production."
+            )
+        if len(self.SECRET_KEY) < 32:
+            raise ValueError("SECRET_KEY must be at least 32 characters in production.")
+        if self.DATABASE_URL == "postgresql://postgres:CHANGE_ME@localhost:5432/insightflow":
+            raise ValueError("DATABASE_URL must be set explicitly in production.")
+        return self
 
 
 @lru_cache
