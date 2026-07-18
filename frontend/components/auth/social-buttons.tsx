@@ -54,8 +54,8 @@ export function SocialButtons() {
       setLoadingProvider(null);
       setNotice(
         provider === "google"
-          ? "Google sign-in will be available in the production deployment."
-          : "GitHub sign-in will be available in the production deployment."
+          ? "Google sign-in will be added in the final production release."
+          : "GitHub sign-in will be added in the final production release."
       );
     }, 900);
   }

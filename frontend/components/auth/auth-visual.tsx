@@ -82,7 +82,7 @@ const FLOATERS: Floater[] = [
     title: "Insight found",
     sub: "Revenue +18% QoQ",
     tint: "bg-primary/10 text-primary",
-    cls: "right-4 bottom-14",
+    cls: "right-5 bottom-20",
     delay: "[animation-delay:-7s]",
     duration: "6s",
     rotate: "1.5deg",
@@ -94,7 +94,7 @@ const FLOATERS: Floater[] = [
     title: "Report generated",
     sub: "Shared with 6",
     tint: "bg-secondary/40 text-secondary-foreground",
-    cls: "left-3 bottom-5",
+    cls: "left-3 bottom-24",
     delay: "[animation-delay:-3s]",
     duration: "7.6s",
     rotate: "-1deg",
@@ -122,7 +122,7 @@ function WorkspaceCard({ beat, extra }: { beat: number; extra: number }) {
 
   return (
     <Tilt className="rounded-3xl">
-      <div className="glow-accent overflow-hidden rounded-3xl border border-border/80 bg-card/95 shadow-soft-xl backdrop-blur-sm">
+      <div className="glow-accent overflow-hidden rounded-3xl border border-border/80 bg-card/95 shadow-[0_28px_70px_-22px_rgba(20,40,25,0.22)] backdrop-blur-md">
         {/* Window chrome */}
         <div className="flex items-center gap-2 border-b border-border bg-muted/30 px-4 py-3">
           <span className="h-3 w-3 rounded-full bg-destructive/40" />
@@ -228,7 +228,7 @@ function WorkspaceCard({ beat, extra }: { beat: number; extra: number }) {
 
 function FullVisual({ beat, extra }: { beat: number; extra: number }) {
   return (
-    <div className="relative mx-auto w-full max-w-xl">
+    <div className="relative mx-auto w-full max-w-[42rem]">
       {/* Localized ambient glow behind the preview */}
       <div
         aria-hidden
@@ -245,7 +245,7 @@ function FullVisual({ beat, extra }: { beat: number; extra: number }) {
         >
           <Parallax strength={f.strength}>
             <div
-              className={`float-card rounded-2xl border border-border/70 bg-card/90 px-3 py-2 shadow-soft-lg backdrop-blur-sm animate-float ${f.delay}`}
+              className={`float-card rounded-2xl border border-border/60 bg-card/80 px-3 py-2 shadow-[0_20px_44px_-16px_rgba(20,40,25,0.30)] backdrop-blur-xl transition-transform duration-300 hover:-translate-y-1 animate-float-tiny ${f.delay}`}
               style={{ animationDuration: f.duration }}
             >
               <div className="flex items-center gap-2">

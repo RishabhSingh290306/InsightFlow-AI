@@ -30,7 +30,7 @@ const REGISTER_TITLES = [
 ];
 
 const inputClass =
-  "focus-visible:shadow-[0_0_20px_-6px_hsl(var(--primary)/0.4)] focus-visible:ring-2 focus-visible:ring-primary/30 !h-11";
+  "focus-visible:shadow-[0_0_0_4px_hsl(var(--primary)/0.12)] focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/50 !h-11";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -66,7 +66,7 @@ export default function RegisterPage() {
         <AuthVisual compact />
       </div>
 
-      <Card size="sm" className="w-full max-w-[32rem] rounded-3xl border border-border/70 bg-card/90 shadow-soft-xl backdrop-blur-xl animate-slide-up [animation-delay:120ms]">
+      <Card size="sm" className="w-full max-w-[32rem] rounded-3xl border border-border/80 bg-card/85 shadow-[0_32px_80px_-24px_rgba(20,40,25,0.28),0_10px_30px_-16px_rgba(20,40,25,0.18)] ring-1 ring-inset ring-white/30 backdrop-blur-2xl animate-slide-up [animation-delay:480ms]">
         <CardHeader className="gap-1">
           {/* Brand — shown on mobile where the side panel is hidden */}
           <div className="mb-2 flex items-center gap-2 text-primary lg:hidden">

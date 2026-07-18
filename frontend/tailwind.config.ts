@@ -168,6 +168,10 @@ const config: Config = {
           "0%, 100%": { transform: "translateY(0)" },
           "50%": { transform: "translateY(-22px)" },
         },
+        "float-tiny": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-6px)" },
+        },
         "blob": {
           "0%, 100%": { transform: "translate3d(0,0,0) scale(1)" },
           "33%": { transform: "translate3d(4%,-6%,0) scale(1.12)" },
@@ -202,6 +206,7 @@ const config: Config = {
         "pulse-soft": "pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
         "float": "float 7s ease-in-out infinite",
         "float-slow": "float-slow 11s ease-in-out infinite",
+        "float-tiny": "float-tiny 9s ease-in-out infinite",
         "blob": "blob 24s ease-in-out infinite",
         "bars-rise": "bars-rise 0.9s cubic-bezier(0.16, 1, 0.3, 1) both",
         "glow-pulse": "glow-pulse 4.5s ease-in-out infinite",
