@@ -3,13 +3,13 @@
 import Link from "next/link";
 import { Bell, ChevronDown, LogOut, Settings, Sparkles, User } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import {
   Dropdown,
   DropdownItem,
   DropdownLabel,
   DropdownSeparator,
 } from "@/components/ui/dropdown";
+import { timeAgo, type ActivityItem } from "@/components/dashboard/activity-timeline";
 
 function initialsOf(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -21,10 +21,13 @@ function initialsOf(name: string) {
 export function DashboardHeader({
   userName,
   onSignOut,
+  notifications,
 }: {
   userName: string;
   onSignOut: () => void;
+  notifications: ActivityItem[];
 }) {
+  const hasNotifications = notifications.length > 0;
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/70 backdrop-blur-md">
       <div className="container mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
@@ -40,18 +43,58 @@ export function DashboardHeader({
 
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Notifications */}
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Notifications"
-            className="relative text-muted-foreground hover:text-foreground"
+          <Dropdown
+            align="right"
+            trigger={
+              <button
+                type="button"
+                aria-label="Notifications"
+                className="relative flex h-10 w-10 items-center justify-center rounded-xl text-muted-foreground transition-colors duration-200 hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <Bell className="h-4 w-4" />
+                {hasNotifications && (
+                  <span className="absolute right-2.5 top-2.5 flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary/60" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
+                  </span>
+                )}
+              </button>
+            }
           >
-            <Bell className="h-4 w-4" />
-            <span className="absolute right-2 top-2 flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary/60" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
-            </span>
-          </Button>
+            <div className="w-72 p-1">
+              <div className="flex items-center justify-between px-2 py-1.5">
+                <span className="text-2xs font-semibold uppercase tracking-widest text-muted-foreground">
+                  Notifications
+                </span>
+                {hasNotifications && (
+                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-2xs font-medium text-primary">
+                    {notifications.length}
+                  </span>
+                )}
+              </div>
+              <DropdownSeparator />
+              {!hasNotifications ? (
+                <p className="px-2 py-6 text-center text-sm text-muted-foreground">
+                  You&apos;re all caught up.
+                </p>
+              ) : (
+                <ul className="max-h-72 overflow-y-auto">
+                  {notifications.slice(0, 6).map((n) => (
+                    <li
+                      key={n.key}
+                      className="flex items-start gap-2 rounded-lg px-2 py-2 transition-colors hover:bg-accent"
+                    >
+                      <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                      <div className="min-w-0">
+                        <p className="truncate text-sm text-foreground">{n.label}</p>
+                        <p className="text-2xs text-muted-foreground">{timeAgo(n.time)}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </Dropdown>
 
           {/* User menu */}
           <Dropdown

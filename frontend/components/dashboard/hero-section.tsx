@@ -47,7 +47,7 @@ export function HeroSection({
           Welcome back to InsightFlow. Ready to uncover insights from your data
           today?
         </p>
-        <p className="mt-2 inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-3 py-1 text-sm font-medium text-primary-foreground/90">
+        <p className="mt-2 inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-3 py-1 text-sm font-medium text-foreground">
           <span className="h-1.5 w-1.5 rounded-full bg-primary" />
           {line}
         </p>

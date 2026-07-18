@@ -40,19 +40,11 @@ export function RecentProjects({
 }) {
   return (
     <section>
-      <div className="mb-4 flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold tracking-tight">Recent Projects</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Pick up where you left off.
-          </p>
-        </div>
-        {projects.length > 0 && (
-          <Button variant="ghost" size="sm" onClick={onCreate}>
-            <Plus className="h-4 w-4" />
-            New
-          </Button>
-        )}
+      <div className="mb-4">
+        <h2 className="text-lg font-semibold tracking-tight">Recent Projects</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Pick up where you left off.
+        </p>
       </div>
 
       {projects.length === 0 ? (

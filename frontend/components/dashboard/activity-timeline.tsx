@@ -27,7 +27,7 @@ const META: Record<
   project: { icon: FolderKanban, tint: "bg-secondary/40 text-secondary-foreground" },
 };
 
-function timeAgo(iso: string) {
+export function timeAgo(iso: string) {
   const then = new Date(iso).getTime();
   if (Number.isNaN(then)) return "";
   const diff = Date.now() - then;

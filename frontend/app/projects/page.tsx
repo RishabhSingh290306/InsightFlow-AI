@@ -200,7 +200,11 @@ export default function ProjectsPage() {
         className="pointer-events-none fixed -right-24 top-1/3 -z-10 h-96 w-96 rounded-full bg-lavender/10 blur-3xl"
       />
 
-      <DashboardHeader userName={userName} onSignOut={logout} />
+      <DashboardHeader
+        userName={userName}
+        onSignOut={logout}
+        notifications={activities}
+      />
 
       <div className="container mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 sm:py-10">
         {error && !loading && (
@@ -241,6 +245,26 @@ export default function ProjectsPage() {
           </>
         )}
       </div>
+
+      <footer className="border-t border-border/60 py-6">
+        <div className="container mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 text-xs text-muted-foreground sm:flex-row sm:px-6">
+          <p>
+            © {new Date().getFullYear()} InsightFlow. Built for people who work
+            with data.
+          </p>
+          <div className="flex items-center gap-5">
+            <span className="cursor-pointer transition-colors hover:text-foreground">
+              Privacy
+            </span>
+            <span className="cursor-pointer transition-colors hover:text-foreground">
+              Terms
+            </span>
+            <span className="cursor-pointer transition-colors hover:text-foreground">
+              Docs
+            </span>
+          </div>
+        </div>
+      </footer>
 
       {/* Creation modal */}
       <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
