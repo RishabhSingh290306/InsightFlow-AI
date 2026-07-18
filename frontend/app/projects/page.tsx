@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Modal, ModalBody, ModalFooter, ModalHeader } from "@/components/ui/modal";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   ActivityTimeline,
@@ -22,10 +23,6 @@ import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 import { HeroSection } from "@/components/dashboard/hero-section";
 import { RecentProjects } from "@/components/dashboard/recent-projects";
 import { StatsCards, type DashboardStats } from "@/components/dashboard/stats-cards";
-
-function byNewest(a: { created_at: string }, b: { created_at: string }) {
-  return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-}
 
 function byNewestTime(a: ActivityItem, b: ActivityItem) {
   return new Date(b.time).getTime() - new Date(a.time).getTime();
@@ -52,6 +49,12 @@ export default function ProjectsPage() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [creating, setCreating] = useState(false);
+
+  // Delete confirmation + the project the user last worked in
+  const [deleteTarget, setDeleteTarget] = useState<ProjectRead | null>(null);
+  const [lastProject, setLastProject] = useState<{ id: number; name: string } | null>(
+    null
+  );
 
   useEffect(() => {
     if (!getToken()) {
@@ -94,6 +97,7 @@ export default function ProjectsPage() {
       let reports = 0;
       const counts: Record<number, number> = {};
       const feed: ActivityItem[] = [];
+      const lastActive: Record<number, number> = {};
 
       loaded.forEach((p, i) => {
         const [ds, db, rp] = settled[i];
@@ -136,7 +140,30 @@ export default function ProjectsPage() {
           label: `Project "${p.name}" created`,
           time: p.created_at,
         });
+
+        // Latest activity (creation or any upload/dashboard/report) for this
+        // project — used to pick the project the user last worked in.
+        const times = [
+          p.created_at,
+          ...dsVal.map((d) => d.created_at),
+          ...dbVal.map((d) => d.created_at),
+          ...rpVal.map((r) => r.created_at),
+        ];
+        lastActive[p.id] = Math.max(...times.map((t) => new Date(t).getTime()));
       });
+
+      // The "last project" the user worked in = the one with the most recent
+      // activity, not merely the newest created.
+      let lastId: number | null = null;
+      let lastTime = -1;
+      for (const [id, t] of Object.entries(lastActive)) {
+        if (t > lastTime) {
+          lastTime = t;
+          lastId = Number(id);
+        }
+      }
+      const lp = lastId != null ? loaded.find((p) => p.id === lastId) : undefined;
+      setLastProject(lp ? { id: lp.id, name: lp.name } : null);
 
       setStats({ projects: loaded.length, datasets, analyses, reports });
       setDatasetCounts(counts);
@@ -171,13 +198,22 @@ export default function ProjectsPage() {
     router.replace("/login");
   }
 
-  const lastProject =
-    projects.length > 0
-      ? (() => {
-          const newest = [...projects].sort(byNewest)[0];
-          return { id: newest.id, name: newest.name };
-        })()
-      : null;
+  function requestDelete(p: ProjectRead) {
+    setDeleteTarget(p);
+  }
+
+  async function confirmDelete() {
+    if (!deleteTarget) return;
+    setError(null);
+    try {
+      await projectsApi.remove(deleteTarget.id);
+      setDeleteTarget(null);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete project");
+      setDeleteTarget(null);
+    }
+  }
 
   return (
     <main className="relative min-h-screen">
@@ -235,6 +271,7 @@ export default function ProjectsPage() {
                   datasetCounts={datasetCounts}
                   onCreate={() => setModalOpen(true)}
                   onOpen={(id) => router.push(`/projects/${id}`)}
+                  onRequestDelete={requestDelete}
                 />
                 <ActivityTimeline activities={activities} />
               </div>
@@ -307,6 +344,20 @@ export default function ProjectsPage() {
           </ModalFooter>
         </form>
       </Modal>
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        destructive
+        title="Delete project"
+        description={
+          deleteTarget
+            ? `Are you sure you want to delete "${deleteTarget.name}"? This action cannot be undone.`
+            : undefined
+        }
+        confirmLabel="Delete"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </main>
   );
 }

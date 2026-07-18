@@ -510,123 +510,125 @@ export default function ProjectWorkspacePage() {
                 return (
                   <Card
                     key={d.id}
-                    className="card-hover group relative overflow-hidden border bg-card shadow-soft-sm"
+                    className="card-hover group relative border bg-card shadow-soft-sm"
                   >
                     <div
                       aria-hidden
-                      className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-primary/5 blur-2xl"
+                      className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full bg-primary/5 blur-2xl"
                     />
-                    <CardHeader>
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex min-w-0 flex-col gap-1.5">
-                          <CardTitle className="flex flex-wrap items-center gap-2 text-lg">
+                    <CardHeader className="flex flex-col gap-2 space-y-0 p-4 sm:p-5">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex min-w-0 flex-col gap-1">
+                          <div className="flex flex-wrap items-center gap-2">
                             <Database className="h-4 w-4 shrink-0 text-primary" />
-                            <span className="break-all">{d.original_filename}</span>
-                            <Badge variant="muted">v{d.version}</Badge>
+                            <span className="truncate font-semibold tracking-tight">
+                              {d.original_filename}
+                            </span>
+                            <Badge variant="muted" className="shrink-0">
+                              v{d.version}
+                            </Badge>
                             <DatasetStatusBadge status={d.status} />
-                          </CardTitle>
-                          <CardDescription>
+                          </div>
+                          <p className="truncate text-xs text-muted-foreground">
                             {d.file_format.toUpperCase()} · {formatSize(d.file_size)}
                             {d.row_count !== null && d.column_count !== null
                               ? ` · ${d.row_count} rows × ${d.column_count} cols`
                               : " · metadata pending"}
-                          </CardDescription>
+                          </p>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          aria-label="Delete dataset"
-                          className="text-muted-foreground hover:text-destructive"
-                          onClick={() =>
-                            setConfirmTarget({ kind: "dataset", id: d.id, name: d.original_filename })
-                          }
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-2 pt-1">
-                        <Button
-                          size="sm"
-                          onClick={() => onAnalyze(d.id)}
-                          disabled={isAnalyzing}
-                        >
-                          <Sparkles className="h-4 w-4" />
-                          {isAnalyzing ? "Analyzing…" : d.understanding ? "Re-analyze" : "Analyze"}
-                        </Button>
-                        {(d.profile || d.understanding) && (
-                          <Button size="sm" variant="ghost" onClick={() => toggleExpanded(d.id)}>
-                            <ChevronDown
-                              className={`h-4 w-4 transition-transform duration-220ms ${isOpen ? "rotate-180" : ""}`}
-                            />
-                            {isOpen ? "Hide" : "View analysis"}
+                        <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
+                          <Button size="sm" onClick={() => onAnalyze(d.id)} disabled={isAnalyzing}>
+                            <Sparkles className="h-4 w-4" />
+                            <span className="hidden sm:inline">
+                              {isAnalyzing ? "Analyzing…" : d.understanding ? "Re-analyze" : "Analyze"}
+                            </span>
                           </Button>
-                        )}
-                        <Button size="sm" variant="ghost" onClick={() => onShowHistory(d.id)}>
-                          <History className="h-4 w-4" />
-                          History
-                        </Button>
-                        {d.profile && (
-                          <ActionMenu label="Actions">
-                            {(close) => (
-                              <>
-                                <MenuItem
-                                  icon={<Sparkles className="h-4 w-4" />}
-                                  onSelect={() => {
-                                    close();
-                                    setCleaningId(d.id);
-                                  }}
-                                >
-                                  Clean
-                                </MenuItem>
-                                <MenuItem
-                                  icon={<BarChart3 className="h-4 w-4" />}
-                                  onSelect={() => {
-                                    close();
-                                    setEdaId(d.id);
-                                  }}
-                                >
-                                  EDA
-                                </MenuItem>
-                                <MenuItem
-                                  icon={<TableIcon className="h-4 w-4" />}
-                                  onSelect={() => {
-                                    close();
-                                    setSqlId(d.id);
-                                  }}
-                                >
-                                  SQL
-                                </MenuItem>
-                                <MenuItem
-                                  icon={<FileText className="h-4 w-4" />}
-                                  onSelect={() => {
-                                    close();
-                                    void generateReportOrDashboard("report", "dataset", d.id);
-                                  }}
-                                >
-                                  Report
-                                </MenuItem>
-                                <MenuItem
-                                  icon={<LayoutDashboard className="h-4 w-4" />}
-                                  onSelect={() => {
-                                    close();
-                                    void generateReportOrDashboard("dashboard", "dataset", d.id);
-                                  }}
-                                >
-                                  Dashboard
-                                </MenuItem>
-                                <MenuItem
-                                  icon={<MessageSquare className="h-4 w-4" />}
-                                  onSelect={() => {
-                                    close();
-                                    openDatasetChat(d);
-                                  }}
-                                >
-                                  Chat
-                                </MenuItem>
-                              </>
-                            )}
-                          </ActionMenu>
-                        )}
+                          {(d.profile || d.understanding) && (
+                            <Button size="sm" variant="ghost" onClick={() => toggleExpanded(d.id)}>
+                              <ChevronDown
+                                className={`h-4 w-4 transition-transform duration-220ms ${isOpen ? "rotate-180" : ""}`}
+                              />
+                              {isOpen ? "Hide analysis" : "View analysis"}
+                            </Button>
+                          )}
+                          <Button size="sm" variant="ghost" onClick={() => onShowHistory(d.id)}>
+                            <History className="h-4 w-4" />
+                            History
+                          </Button>
+                          {d.profile && (
+                            <ActionMenu label="Actions">
+                              {(close) => (
+                                <>
+                                  <MenuItem
+                                    icon={<Sparkles className="h-4 w-4" />}
+                                    onSelect={() => {
+                                      close();
+                                      setCleaningId(d.id);
+                                    }}
+                                  >
+                                    Clean
+                                  </MenuItem>
+                                  <MenuItem
+                                    icon={<BarChart3 className="h-4 w-4" />}
+                                    onSelect={() => {
+                                      close();
+                                      setEdaId(d.id);
+                                    }}
+                                  >
+                                    EDA
+                                  </MenuItem>
+                                  <MenuItem
+                                    icon={<TableIcon className="h-4 w-4" />}
+                                    onSelect={() => {
+                                      close();
+                                      setSqlId(d.id);
+                                    }}
+                                  >
+                                    SQL
+                                  </MenuItem>
+                                  <MenuItem
+                                    icon={<FileText className="h-4 w-4" />}
+                                    onSelect={() => {
+                                      close();
+                                      void generateReportOrDashboard("report", "dataset", d.id);
+                                    }}
+                                  >
+                                    Report
+                                  </MenuItem>
+                                  <MenuItem
+                                    icon={<LayoutDashboard className="h-4 w-4" />}
+                                    onSelect={() => {
+                                      close();
+                                      void generateReportOrDashboard("dashboard", "dataset", d.id);
+                                    }}
+                                  >
+                                    Dashboard
+                                  </MenuItem>
+                                  <MenuItem
+                                    icon={<MessageSquare className="h-4 w-4" />}
+                                    onSelect={() => {
+                                      close();
+                                      openDatasetChat(d);
+                                    }}
+                                  >
+                                    Chat
+                                  </MenuItem>
+                                </>
+                              )}
+                            </ActionMenu>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label="Delete dataset"
+                            className="text-muted-foreground hover:text-destructive"
+                            onClick={() =>
+                              setConfirmTarget({ kind: "dataset", id: d.id, name: d.original_filename })
+                            }
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     </CardHeader>
                     {isOpen && (d.profile || d.understanding) && (

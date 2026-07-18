@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, Database, Plus } from "lucide-react";
+import { BarChart3, Database, Plus, Trash2 } from "lucide-react";
 
 import type { ProjectRead } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
@@ -32,11 +32,13 @@ export function RecentProjects({
   datasetCounts,
   onCreate,
   onOpen,
+  onRequestDelete,
 }: {
   projects: ProjectRead[];
   datasetCounts: Record<number, number>;
   onCreate: () => void;
   onOpen: (id: number) => void;
+  onRequestDelete: (project: ProjectRead) => void;
 }) {
   return (
     <section>
@@ -71,10 +73,17 @@ export function RecentProjects({
             const Icon = ICONS[i % ICONS.length];
             const count = datasetCounts[p.id] ?? 0;
             return (
-              <button
+              <div
                 key={p.id}
-                type="button"
+                role="button"
+                tabIndex={0}
                 onClick={() => onOpen(p.id)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    onOpen(p.id);
+                  }
+                }}
                 aria-label={`Open ${p.name}`}
                 className="card-hover group relative block w-full overflow-hidden rounded-2xl border border-border/70 bg-card p-5 text-left shadow-soft-sm animate-stagger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 style={{ ["--delay" as string]: `${i * 60}ms` } as React.CSSProperties}
@@ -83,21 +92,39 @@ export function RecentProjects({
                   aria-hidden
                   className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-primary/5 blur-2xl transition-opacity duration-220 group-hover:opacity-100"
                 />
-                <div className="flex items-start justify-between gap-3">
+
+                {/* Delete */}
+                <button
+                  type="button"
+                  aria-label={`Delete ${p.name}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRequestDelete(p);
+                  }}
+                  className="absolute right-3 top-3 z-20 flex h-8 w-8 items-center justify-center rounded-lg text-destructive/70 transition-colors duration-160 hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+
+                <div className="flex items-start gap-3">
                   <span
                     className={`flex h-11 w-11 items-center justify-center rounded-2xl ${Accent}`}
                   >
                     <Icon className="h-5 w-5" />
                   </span>
-                  <Badge variant={p.is_active ? "success" : "muted"} dot size="sm">
-                    {p.is_active ? "Active" : "Archived"}
-                  </Badge>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 pr-9">
+                      <h3 className="truncate text-base font-semibold tracking-tight">
+                        {p.name}
+                      </h3>
+                      <Badge variant={p.is_active ? "success" : "muted"} dot size="sm">
+                        {p.is_active ? "Active" : "Archived"}
+                      </Badge>
+                    </div>
+                  </div>
                 </div>
 
-                <h3 className="mt-4 truncate text-base font-semibold tracking-tight">
-                  {p.name}
-                </h3>
-                <p className="mt-1 line-clamp-2 min-h-[2.25rem] text-sm text-muted-foreground">
+                <p className="mt-3 line-clamp-2 min-h-[2.25rem] text-sm text-muted-foreground">
                   {p.description || "No description"}
                 </p>
 
@@ -119,7 +146,7 @@ export function RecentProjects({
                     </dd>
                   </div>
                 </dl>
-              </button>
+              </div>
             );
           })}
         </div>
