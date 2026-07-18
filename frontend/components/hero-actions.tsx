@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { getToken } from "@/lib/auth";
@@ -25,7 +24,6 @@ export default function HeroActions({
       <div className="flex flex-wrap items-center justify-center gap-3">
         <Button variant="cta" className="sheen" onClick={() => router.push("/projects")} size="lg">
           Open workspace
-          <ArrowRight className="h-4 w-4" />
         </Button>
         <Button variant="ctaOutline" size="lg" asChild>
           <Link href="/login">Account</Link>

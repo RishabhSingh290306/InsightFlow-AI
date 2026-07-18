@@ -1,7 +1,6 @@
 import Link from "next/link";
 import {
   ArrowDown,
-  ArrowRight,
   BarChart3,
   Database,
   Github,
@@ -19,6 +18,8 @@ import { HeroBackground } from "@/components/marketing/hero-background";
 import { Reveal } from "@/components/marketing/reveal";
 import { SpotlightCard } from "@/components/marketing/spotlight-card";
 import { FloatingNotifications } from "@/components/marketing/floating-notifications";
+import { LandingNav } from "@/components/marketing/landing-nav";
+import { ScrollLink } from "@/components/marketing/scroll-link";
 import HeroActions from "@/components/hero-actions";
 import { Button } from "@/components/ui/button";
 import {
@@ -88,17 +89,14 @@ const WORKFLOW = [
   },
 ];
 
-const NAV = [
-  { label: "Product", href: "#product" },
-  { label: "Workflow", href: "#workflow" },
-  { label: "Capabilities", href: "#capabilities" },
-];
-
 export default function HomePage() {
   return (
     <main className="bg-canvas relative flex min-h-screen flex-col overflow-hidden">
       {/* Top nav */}
-      <header className="sticky top-0 z-40 border-b border-border/60 bg-background/70 backdrop-blur-md">
+      <header
+        data-site-header
+        className="sticky top-0 z-40 border-b border-border/60 bg-background/70 backdrop-blur-md"
+      >
         <div className="container flex h-16 items-center justify-between gap-4">
           <Link
             href="/"
@@ -109,17 +107,7 @@ export default function HomePage() {
             </span>
             InsightFlow
           </Link>
-          <nav className="hidden items-center gap-1 md:flex" aria-label="Primary">
-            {NAV.map((item) => (
-              <a
-                key={item.label}
-                href={item.href}
-                className="relative rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors duration-160ms after:absolute after:bottom-1.5 after:left-1/2 after:h-px after:w-0 after:-translate-x-1/2 after:bg-primary after:transition-[width] after:duration-200 hover:bg-accent hover:text-accent-foreground hover:after:w-6"
-              >
-                {item.label}
-              </a>
-            ))}
-          </nav>
+          <LandingNav />
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
               <Link href="/login">Sign in</Link>
@@ -155,24 +143,24 @@ export default function HomePage() {
           <HeroActions />
         </div>
 
-        <a
+        <ScrollLink
           href="#workflow"
           className="animate-fade-in group mt-1 inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors duration-160ms hover:text-foreground [animation-delay:240ms]"
         >
           See how it works
           <ArrowDown className="h-4 w-4 transition-transform duration-200 group-hover:translate-y-0.5" />
-        </a>
+        </ScrollLink>
       </section>
 
       {/* Product preview */}
-      <section id="product" className="container px-6 pb-20 pt-4">
-        <div className="animate-scale-in">
+      <section id="product" className="container scroll-mt-20 px-6 pb-20 pt-4">
+        <Reveal>
           <ProductPreview />
-        </div>
+        </Reveal>
       </section>
 
       {/* Workflow */}
-      <section id="workflow" className="container px-6 pb-16">
+      <section id="workflow" className="container scroll-mt-20 px-6 pb-16">
         <Reveal className="mx-auto mb-10 flex max-w-2xl flex-col items-center gap-2 text-center">
           <span className="text-2xs font-semibold uppercase tracking-widest text-primary">
             Workflow
@@ -208,7 +196,7 @@ export default function HomePage() {
       </section>
 
       {/* Features */}
-      <section id="capabilities" className="container flex flex-col gap-10 px-6 pb-24">
+      <section id="capabilities" className="container scroll-mt-20 flex flex-col gap-10 px-6 pb-24">
         <Reveal className="mx-auto flex max-w-2xl flex-col items-center gap-2 text-center">
           <span className="text-2xs font-semibold uppercase tracking-widest text-primary">
             Capabilities
