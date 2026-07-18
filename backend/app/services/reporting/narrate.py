@@ -38,7 +38,7 @@ async def narrate_report(facts: dict) -> tuple[dict, bool]:
             "recommendations": [str(r) for r in (data.get("recommendations") or []) if str(r).strip()],
         }, True
     except Exception:
-        return _fallback_narrative(facts), False
+        return _fallback_narrative(facts)
 
 
 def _fallback_narrative(facts: dict) -> tuple[dict, bool]:

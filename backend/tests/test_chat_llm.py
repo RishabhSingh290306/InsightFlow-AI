@@ -1,13 +1,12 @@
 import asyncio
-import os
 
 import pytest
 
 from app.services.llm import complete_stream
 
 
-def test_complete_stream_yields_text(monkeypatch):
-    # Stub httpx.AsyncClient to return an SSE stream without touching the network.
+def _stub_client(monkeypatch):
+    """Patch httpx.AsyncClient with a fake that yields OpenRouter-format SSE."""
     class _Resp:
         def __init__(self): self.status_code = 200
         def raise_for_status(self): pass
@@ -26,6 +25,13 @@ def test_complete_stream_yields_text(monkeypatch):
         async def post(self, *a, **k): return _Resp()
 
     monkeypatch.setattr("app.services.llm.httpx.AsyncClient", _Client)
+
+
+def test_complete_stream_yields_text(monkeypatch):
+    # These tests exercise the OpenRouter (OpenAI-compatible) backend, so force
+    # the provider regardless of what LLM_PROVIDER is set to in the environment.
+    monkeypatch.setattr("app.services.llm._provider", lambda: "openrouter")
+    _stub_client(monkeypatch)
     monkeypatch.setattr("app.services.llm.settings.OPENROUTER_API_KEY", "x")
 
     async def run():
@@ -35,9 +41,12 @@ def test_complete_stream_yields_text(monkeypatch):
 
 
 def test_complete_stream_raises_without_key(monkeypatch):
+    monkeypatch.setattr("app.services.llm._provider", lambda: "openrouter")
+    _stub_client(monkeypatch)
     monkeypatch.setattr("app.services.llm.settings.OPENROUTER_API_KEY", "")
+
+    async def run():
+        async for _ in complete_stream("s", "u"):
+            pass
     with pytest.raises(RuntimeError):
-        async def run():
-            async for _ in complete_stream("s", "u"):
-                pass
         asyncio.run(run())
