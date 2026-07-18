@@ -2,56 +2,33 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import {
-  Database,
-  FolderKanban,
-  LayoutGrid,
-  LineChart,
-  LogOut,
-  Plus,
-  Sparkles,
-} from "lucide-react";
+import { Plus } from "lucide-react";
 
-import { projectsApi } from "@/lib/api";
+import { authApi, datasetsApi, dashboardsApi, projectsApi, reportsApi } from "@/lib/api";
 import { clearToken, getToken } from "@/lib/auth";
 import type { ProjectRead } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { EmptyState } from "@/components/ui/empty-state";
 import { Modal, ModalBody, ModalFooter, ModalHeader } from "@/components/ui/modal";
-import { StatusIndicator } from "@/components/ui/status-indicator";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  ActivityTimeline,
+  type ActivityItem,
+  type ActivityType,
+} from "@/components/dashboard/activity-timeline";
+import { AITipCard } from "@/components/dashboard/ai-tip-card";
+import { DashboardHeader } from "@/components/dashboard/dashboard-header";
+import { HeroSection } from "@/components/dashboard/hero-section";
+import { RecentProjects } from "@/components/dashboard/recent-projects";
+import { StatsCards, type DashboardStats } from "@/components/dashboard/stats-cards";
 
-const ACCENTS = [
-  "bg-primary/10 text-primary",
-  "bg-lavender/15 text-lavender-foreground",
-  "bg-secondary/40 text-secondary-foreground",
-  "bg-warning/10 text-warning",
-  "bg-success/10 text-success",
-];
+function byNewest(a: { created_at: string }, b: { created_at: string }) {
+  return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+}
 
-const ICONS = [Database, FolderKanban, LayoutGrid, LineChart];
-
-function formatDate(iso: string) {
-  try {
-    return new Date(iso).toLocaleDateString(undefined, {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  } catch {
-    return "—";
-  }
+function byNewestTime(a: ActivityItem, b: ActivityItem) {
+  return new Date(b.time).getTime() - new Date(a.time).getTime();
 }
 
 export default function ProjectsPage() {
@@ -59,6 +36,16 @@ export default function ProjectsPage() {
   const [projects, setProjects] = useState<ProjectRead[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [userName, setUserName] = useState("there");
+  const [stats, setStats] = useState<DashboardStats>({
+    projects: 0,
+    datasets: 0,
+    analyses: 0,
+    reports: 0,
+  });
+  const [datasetCounts, setDatasetCounts] = useState<Record<number, number>>({});
+  const [activities, setActivities] = useState<ActivityItem[]>([]);
 
   // Creation modal state
   const [modalOpen, setModalOpen] = useState(false);
@@ -78,7 +65,82 @@ export default function ProjectsPage() {
     setLoading(true);
     setError(null);
     try {
-      setProjects(await projectsApi.list());
+      const [projectsRes, userRes] = await Promise.allSettled([
+        projectsApi.list(),
+        authApi.me(),
+      ]);
+      if (projectsRes.status !== "fulfilled") throw projectsRes.reason;
+      const loaded = projectsRes.value;
+      setProjects(loaded);
+      if (userRes.status === "fulfilled" && userRes.value.full_name) {
+        setUserName(userRes.value.full_name);
+      }
+
+      // Best-effort enrichment: pull real counts + build an activity feed from
+      // each project's datasets / dashboards / reports. Any failure is isolated
+      // so one broken endpoint never blanks the whole dashboard.
+      const settled = await Promise.all(
+        loaded.map((p) =>
+          Promise.allSettled([
+            datasetsApi.list(p.id),
+            dashboardsApi.list(p.id),
+            reportsApi.list(p.id),
+          ])
+        )
+      );
+
+      let datasets = 0;
+      let analyses = 0;
+      let reports = 0;
+      const counts: Record<number, number> = {};
+      const feed: ActivityItem[] = [];
+
+      loaded.forEach((p, i) => {
+        const [ds, db, rp] = settled[i];
+        const dsVal = ds.status === "fulfilled" ? ds.value : [];
+        const dbVal = db.status === "fulfilled" ? db.value : [];
+        const rpVal = rp.status === "fulfilled" ? rp.value : [];
+
+        counts[p.id] = dsVal.length;
+        datasets += dsVal.length;
+        analyses += dbVal.length;
+        reports += rpVal.length;
+
+        for (const d of dsVal) {
+          feed.push({
+            key: `ds-${d.id}`,
+            type: "dataset" as ActivityType,
+            label: `Dataset "${d.original_filename}" uploaded`,
+            time: d.created_at,
+          });
+        }
+        for (const d of dbVal) {
+          feed.push({
+            key: `db-${d.id}`,
+            type: "dashboard" as ActivityType,
+            label: `Dashboard "${d.title}" generated`,
+            time: d.created_at,
+          });
+        }
+        for (const r of rpVal) {
+          feed.push({
+            key: `rp-${r.id}`,
+            type: "report" as ActivityType,
+            label: `Report "${r.title}" exported`,
+            time: r.created_at,
+          });
+        }
+        feed.push({
+          key: `pj-${p.id}`,
+          type: "project" as ActivityType,
+          label: `Project "${p.name}" created`,
+          time: p.created_at,
+        });
+      });
+
+      setStats({ projects: loaded.length, datasets, analyses, reports });
+      setDatasetCounts(counts);
+      setActivities(feed.sort(byNewestTime).slice(0, 8));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load projects");
     } finally {
@@ -109,39 +171,40 @@ export default function ProjectsPage() {
     router.replace("/login");
   }
 
+  const lastProject =
+    projects.length > 0
+      ? (() => {
+          const newest = [...projects].sort(byNewest)[0];
+          return { id: newest.id, name: newest.name };
+        })()
+      : null;
+
   return (
-    <main className="bg-canvas min-h-screen">
-      <header className="sticky top-0 z-40 border-b border-border/60 bg-background/70 backdrop-blur-md">
-        <div className="container flex h-16 items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 text-sm font-semibold tracking-tight">
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <Sparkles className="h-4 w-4" />
-            </span>
-            InsightFlow
-          </Link>
-          <Button variant="ghost" size="sm" onClick={logout}>
-            <LogOut className="h-4 w-4" />
-            Sign out
-          </Button>
-        </div>
-      </header>
+    <main className="relative min-h-screen">
+      {/* Premium ambient background — very light green-to-white gradient, a faint
+          structural grid, and a soft green glow. Kept subtle on purpose. */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 -z-10 bg-gradient-to-b from-[#F7FBF8] via-white to-white"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 -z-10 bg-grid opacity-[0.04]"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none fixed -left-24 -top-24 -z-10 h-96 w-96 rounded-full bg-primary/10 blur-3xl"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none fixed -right-24 top-1/3 -z-10 h-96 w-96 rounded-full bg-lavender/10 blur-3xl"
+      />
 
-      <div className="container flex flex-col gap-8 py-10">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Projects</h1>
-            <p className="mt-1 text-muted-foreground">
-              Your data analysis workspaces.
-            </p>
-          </div>
-          <Button onClick={() => setModalOpen(true)}>
-            <Plus className="h-4 w-4" />
-            New project
-          </Button>
-        </div>
+      <DashboardHeader userName={userName} onSignOut={logout} />
 
+      <div className="container mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 sm:py-10">
         {error && !loading && (
-          <div className="flex flex-col gap-3 rounded-xl border border-destructive/40 bg-destructive/10 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 rounded-2xl border border-destructive/40 bg-destructive/10 p-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-destructive">{error}</p>
             <Button variant="outline" size="sm" onClick={() => void load()}>
               Retry
@@ -150,78 +213,32 @@ export default function ProjectsPage() {
         )}
 
         {loading ? (
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <Card key={i} className="border bg-card shadow-soft-sm">
-                <CardHeader>
-                  <Skeleton variant="circle" className="h-12 w-12" />
-                  <Skeleton variant="title" className="mt-3 w-40" />
-                  <Skeleton variant="text" className="w-56" />
-                </CardHeader>
-                <CardContent className="flex items-center justify-between">
-                  <Skeleton variant="text" className="w-24" />
-                  <Skeleton variant="button" className="w-32" />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : projects.length === 0 ? (
-          <Card className="border border-dashed border-border bg-card/50">
-            <EmptyState
-              icon={<Database className="h-7 w-7" />}
-              iconTone="primary"
-              title="No projects yet"
-              description="Create a workspace to start uploading datasets and exploring your data."
-              action={
-                <Button onClick={() => setModalOpen(true)}>
-                  <Plus className="h-4 w-4" />
-                  New project
-                </Button>
-              }
-            />
-          </Card>
+          <DashboardSkeleton />
         ) : (
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {projects.map((p, i) => {
-              const Accent = ACCENTS[i % ACCENTS.length];
-              const Icon = ICONS[i % ICONS.length];
-              return (
-                <Card
-                  key={p.id}
-                  className="card-hover group relative overflow-hidden border bg-card shadow-soft-sm"
-                >
-                  <div
-                    aria-hidden
-                    className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-primary/5 blur-2xl transition-opacity duration-220ms group-hover:opacity-100"
-                  />
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <span
-                        className={`flex h-12 w-12 items-center justify-center rounded-2xl ${Accent}`}
-                      >
-                        <Icon className="h-5 w-5" />
-                      </span>
-                      <Badge variant={p.is_active ? "success" : "muted"} dot>
-                        {p.is_active ? "Active" : "Archived"}
-                      </Badge>
-                    </div>
-                    <CardTitle className="mt-4 truncate text-lg">{p.name}</CardTitle>
-                    <CardDescription className="line-clamp-2">
-                      {p.description || "No description"}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="flex items-center justify-between">
-                    <StatusIndicator status="neutral" size="sm">
-                      Created {formatDate(p.created_at)}
-                    </StatusIndicator>
-                    <Button asChild size="sm" variant="ghost">
-                      <Link href={`/projects/${p.id}`}>Open →</Link>
-                    </Button>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+          <>
+            <HeroSection
+              userName={userName}
+              onNewProject={() => setModalOpen(true)}
+              lastProject={lastProject}
+            />
+
+            <StatsCards stats={stats} />
+
+            <div className="grid gap-6 xl:grid-cols-3">
+              <div className="space-y-6 xl:col-span-2">
+                <RecentProjects
+                  projects={projects}
+                  datasetCounts={datasetCounts}
+                  onCreate={() => setModalOpen(true)}
+                  onOpen={(id) => router.push(`/projects/${id}`)}
+                />
+                <ActivityTimeline activities={activities} />
+              </div>
+              <div className="space-y-6">
+                <AITipCard />
+              </div>
+            </div>
+          </>
         )}
       </div>
 
@@ -267,5 +284,44 @@ export default function ProjectsPage() {
         </form>
       </Modal>
     </main>
+  );
+}
+
+function DashboardSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="space-y-3">
+          <Skeleton variant="title" className="h-9 w-72" />
+          <Skeleton variant="text" className="w-80" />
+          <Skeleton variant="text" className="w-56" />
+        </div>
+        <div className="flex gap-3">
+          <Skeleton variant="button" className="h-12 w-36 rounded-2xl" />
+          <Skeleton variant="button" className="h-12 w-48 rounded-2xl" />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} variant="card" className="h-28 rounded-2xl" />
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} variant="card" className="h-32 rounded-2xl" />
+        ))}
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 xl:col-span-2">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <Skeleton key={i} variant="card" className="h-56 rounded-2xl" />
+          ))}
+        </div>
+        <Skeleton variant="card" className="h-56 rounded-2xl" />
+      </div>
+    </div>
   );
 }
