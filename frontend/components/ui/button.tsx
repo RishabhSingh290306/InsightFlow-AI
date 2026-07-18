@@ -114,7 +114,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           </svg>
         )}
         {!loading && leftIcon && <span className="flex items-center">{leftIcon}</span>}
-        <span>{children}</span>
+        <span className="inline-flex items-center gap-2">{children}</span>
         {!loading && rightIcon && <span className="flex items-center">{rightIcon}</span>}
       </button>
     );

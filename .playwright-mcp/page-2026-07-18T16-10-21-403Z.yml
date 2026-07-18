@@ -1,0 +1,36 @@
+- main [ref=f1e2]:
+  - generic [ref=f1e4]:
+    - generic [ref=f1e5]:
+      - link "Projects" [ref=f1e6] [cursor=pointer]:
+        - /url: /projects
+      - generic [ref=f1e7]: /
+      - generic [ref=f1e8]: "Project #1"
+    - generic [ref=f1e9]:
+      - button [ref=f1e10] [cursor=pointer]
+      - button [ref=f1e12] [cursor=pointer]
+      - button [ref=f1e14] [cursor=pointer]
+      - button "Sign out" [ref=f1e16] [cursor=pointer]
+  - generic [ref=f1e18]:
+    - generic [ref=f1e19]:
+      - 'heading "Project #1" [level=1] [ref=f1e20]'
+      - paragraph [ref=f1e21]: 0 datasets · 0 analyzed · upload, profile, and explore your data.
+    - generic [ref=f1e23]:
+      - generic [ref=f1e24]:
+        - generic [ref=f1e31]:
+          - heading "Upload dataset" [level=3] [ref=f1e32]
+          - paragraph [ref=f1e33]: CSV or Excel
+        - generic [ref=f1e35]:
+          - generic [ref=f1e36] [cursor=pointer]:
+            - generic [ref=f1e41]: Drop a file or click to browse
+            - generic [ref=f1e42]: .csv, .xlsx, .xls
+          - button "Drop a file or click to browse .csv, .xlsx, .xls" [ref=f1e43]
+          - button "Upload" [disabled]
+      - generic [ref=f1e44]:
+        - heading "Workspace" [level=3] [ref=f1e46]
+        - generic [ref=f1e47]:
+          - button [ref=f1e48] [cursor=pointer]
+          - button [ref=f1e50] [cursor=pointer]
+          - button [ref=f1e52] [cursor=pointer]
+    - generic [ref=f1e77]:
+      - heading "Notebooks" [level=2] [ref=f1e81]
+      - paragraph [ref=f1e82]: No notebooks yet — use the Chat button above or on a dataset to start one.
