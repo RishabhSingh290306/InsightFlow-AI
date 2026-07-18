@@ -1,0 +1,180 @@
+- generic [ref=e1]:
+  - status [ref=e26]:
+    - generic [ref=e31]:
+      - text: Static route
+      - button "Hide static indicator" [ref=e32] [cursor=pointer]
+  - alert [ref=e36]
+  - main [ref=e344]:
+    - link "Project" [ref=e346] [cursor=pointer]:
+      - /url: /projects/46
+    - generic [ref=e349]:
+      - generic [ref=e350]:
+        - textbox "Report title" [ref=e351]: "Report — Project #46"
+        - button "Save" [ref=e352] [cursor=pointer]
+        - button "Download PDF" [ref=e353] [cursor=pointer]
+        - button "Download Markdown" [ref=e358] [cursor=pointer]
+        - button "Copy Share Link" [ref=e362] [cursor=pointer]
+        - button "Delete" [ref=e366] [cursor=pointer]
+        - button "Add Section" [ref=e370] [cursor=pointer]
+      - generic [ref=e372]:
+        - generic [ref=e373]:
+          - generic [ref=e374]:
+            - textbox "Section title" [ref=e375]: Cover
+            - button [disabled]
+            - button [ref=e376] [cursor=pointer]
+            - button [ref=e379] [cursor=pointer]
+          - textbox [ref=e383]: "Scope: project"
+          - textbox [ref=e384]: "Source: Project #46"
+        - generic [ref=e385]:
+          - generic [ref=e386]:
+            - textbox "Section title" [ref=e387]: Executive Summary
+            - button [ref=e388] [cursor=pointer]
+            - button [ref=e391] [cursor=pointer]
+            - button [ref=e394] [cursor=pointer]
+          - textbox [ref=e398]: The analysis of the dataset reveals several quality issues, including missing values and duplicate entries. Given the small size of the dataset, these issues could significantly impact the reliability of any insights derived from it.
+        - generic [ref=e399]:
+          - generic [ref=e400]:
+            - textbox "Section title" [ref=e401]: Dataset Overview — sample.csv
+            - button [ref=e402] [cursor=pointer]
+            - button [ref=e405] [cursor=pointer]
+            - button [ref=e408] [cursor=pointer]
+          - textbox [ref=e412]: 11 rows × 6 columns.
+          - textbox [ref=e413]: "Potential target column: region"
+          - textbox [ref=e414]: This dataset contains sales order information including order IDs, regions, products sold, revenue generated, quantities sold, and order dates.
+          - paragraph [ref=e415]: table block (read-only in editor)
+        - generic [ref=e416]:
+          - generic [ref=e417]:
+            - textbox "Section title" [ref=e418]: Data Quality — sample.csv
+            - button [ref=e419] [cursor=pointer]
+            - button [ref=e422] [cursor=pointer]
+            - button [ref=e425] [cursor=pointer]
+          - textbox [ref=e429]: "Null cells: 4.55%"
+          - textbox [ref=e430]: "Duplicate rows: 1"
+          - textbox [ref=e431]: • 'region' has 1 missing values (9.1%). • 'revenue' has 2 missing values (18.2%). • 1 duplicate rows detected.
+        - generic [ref=e432]:
+          - generic [ref=e433]:
+            - textbox "Section title" [ref=e434]: Cleaning Summary
+            - button [ref=e435] [cursor=pointer]
+            - button [ref=e438] [cursor=pointer]
+            - button [ref=e441] [cursor=pointer]
+          - textbox [ref=e445]: No cleaning applied — original upload.
+        - generic [ref=e446]:
+          - generic [ref=e447]:
+            - textbox "Section title" [ref=e448]: Exploratory Data Analysis
+            - button [ref=e449] [cursor=pointer]
+            - button [ref=e452] [cursor=pointer]
+            - button [ref=e455] [cursor=pointer]
+          - textbox [ref=e459]: No charts were accepted.
+        - generic [ref=e460]:
+          - generic [ref=e461]:
+            - textbox "Section title" [ref=e462]: SQL Analysis
+            - button [ref=e463] [cursor=pointer]
+            - button [ref=e466] [cursor=pointer]
+            - button [ref=e469] [cursor=pointer]
+          - textbox [ref=e473]: No SQL queries executed.
+        - generic [ref=e474]:
+          - generic [ref=e475]:
+            - textbox "Section title" [ref=e476]: Business Insights
+            - button [ref=e477] [cursor=pointer]
+            - button [ref=e480] [cursor=pointer]
+            - button [ref=e483] [cursor=pointer]
+          - textbox [ref=e487]: • There are missing values in key columns which may affect analysis. • The dataset is small with only 11 rows, which may limit the insights. • Revenue varies significantly across different orders.
+        - generic [ref=e488]:
+          - generic [ref=e489]:
+            - textbox "Section title" [ref=e490]: Recommendations
+            - button [ref=e491] [cursor=pointer]
+            - button [ref=e494] [cursor=pointer]
+            - button [ref=e497] [cursor=pointer]
+          - textbox [ref=e501]: • Impute or remove rows with missing 'region' and 'revenue' values. • Remove duplicate rows to ensure data integrity.
+        - generic [ref=e502]:
+          - generic [ref=e503]:
+            - textbox "Section title" [ref=e504]: Appendix — Version Lineage
+            - button [ref=e505] [cursor=pointer]
+            - button [disabled]
+            - button [ref=e508] [cursor=pointer]
+          - paragraph [ref=e512]: lineage block (read-only in editor)
+      - generic [ref=e514]:
+        - generic [ref=e515]:
+          - heading "Cover" [level=2] [ref=e516]
+          - generic [ref=e517]:
+            - paragraph [ref=e518]: "Scope: project"
+            - paragraph [ref=e519]: "Source: Project #46"
+        - generic [ref=e520]:
+          - heading "Executive Summary" [level=2] [ref=e521]
+          - paragraph [ref=e523]: The analysis of the dataset reveals several quality issues, including missing values and duplicate entries. Given the small size of the dataset, these issues could significantly impact the reliability of any insights derived from it.
+        - generic [ref=e524]:
+          - heading "Dataset Overview — sample.csv" [level=2] [ref=e525]
+          - generic [ref=e526]:
+            - paragraph [ref=e527]: 11 rows × 6 columns.
+            - paragraph [ref=e528]: "Potential target column: region"
+            - paragraph [ref=e529]: This dataset contains sales order information including order IDs, regions, products sold, revenue generated, quantities sold, and order dates.
+            - table [ref=e531]:
+              - rowgroup [ref=e532]:
+                - row [ref=e533]:
+                  - columnheader "Column" [ref=e534]
+                  - columnheader "Type" [ref=e535]
+                  - columnheader "Missing" [ref=e536]
+                  - columnheader "Unique" [ref=e537]
+              - rowgroup [ref=e538]:
+                - row [ref=e539]:
+                  - cell "order_id" [ref=e540]
+                  - cell "numeric" [ref=e541]
+                  - cell "0" [ref=e542]
+                  - cell "10" [ref=e543]
+                - row [ref=e544]:
+                  - cell "region" [ref=e545]
+                  - cell "categorical" [ref=e546]
+                  - cell "1" [ref=e547]
+                  - cell "4" [ref=e548]
+                - row [ref=e549]:
+                  - cell "product" [ref=e550]
+                  - cell "categorical" [ref=e551]
+                  - cell "0" [ref=e552]
+                  - cell "3" [ref=e553]
+                - row [ref=e554]:
+                  - cell "revenue" [ref=e555]
+                  - cell "numeric" [ref=e556]
+                  - cell "2" [ref=e557]
+                  - cell "8" [ref=e558]
+                - row [ref=e559]:
+                  - cell "quantity" [ref=e560]
+                  - cell "numeric" [ref=e561]
+                  - cell "0" [ref=e562]
+                  - cell "5" [ref=e563]
+                - row [ref=e564]:
+                  - cell "order_date" [ref=e565]
+                  - cell "categorical" [ref=e566]
+                  - cell "0" [ref=e567]
+                  - cell "10" [ref=e568]
+        - generic [ref=e569]:
+          - heading "Data Quality — sample.csv" [level=2] [ref=e570]
+          - generic [ref=e571]:
+            - paragraph [ref=e572]: "Null cells: 4.55%"
+            - paragraph [ref=e573]: "Duplicate rows: 1"
+            - paragraph [ref=e574]: • 'region' has 1 missing values (9.1%). • 'revenue' has 2 missing values (18.2%). • 1 duplicate rows detected.
+        - generic [ref=e575]:
+          - heading "Cleaning Summary" [level=2] [ref=e576]
+          - paragraph [ref=e578]: No cleaning applied — original upload.
+        - generic [ref=e579]:
+          - heading "Exploratory Data Analysis" [level=2] [ref=e580]
+          - paragraph [ref=e582]: No charts were accepted.
+        - generic [ref=e583]:
+          - heading "SQL Analysis" [level=2] [ref=e584]
+          - paragraph [ref=e586]: No SQL queries executed.
+        - generic [ref=e587]:
+          - heading "Business Insights" [level=2] [ref=e588]
+          - paragraph [ref=e590]: • There are missing values in key columns which may affect analysis. • The dataset is small with only 11 rows, which may limit the insights. • Revenue varies significantly across different orders.
+        - generic [ref=e591]:
+          - heading "Recommendations" [level=2] [ref=e592]
+          - paragraph [ref=e594]: • Impute or remove rows with missing 'region' and 'revenue' values. • Remove duplicate rows to ensure data integrity.
+        - generic [ref=e595]:
+          - heading "Appendix — Version Lineage" [level=2] [ref=e596]
+          - list [ref=e598]:
+            - listitem [ref=e599]: v1 · upload · sample.csv
+      - dialog [ref=e600]:
+        - generic [ref=e601]:
+          - heading "Delete this report?" [level=2] [ref=e602]
+          - paragraph [ref=e603]: This permanently removes the report and its sections. This cannot be undone.
+          - generic [ref=e604]:
+            - button "Cancel" [active] [ref=e605] [cursor=pointer]
+            - button "Delete report" [ref=e606] [cursor=pointer]

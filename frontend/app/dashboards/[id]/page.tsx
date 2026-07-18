@@ -15,10 +15,10 @@ function DashboardSkeleton() {
   return (
     <div className="flex flex-col gap-6">
       <div className="no-print flex items-center gap-2">
-        <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-8 w-16" />
-        <Skeleton className="h-8 w-24" />
+        <Skeleton className="h-9 w-9" variant="circle" />
+        <Skeleton className="h-5 w-48" />
       </div>
+      <Skeleton className="h-10 w-full" />
       <Skeleton className="h-40 w-full" />
       <Skeleton className="h-72 w-full" />
     </div>
@@ -53,15 +53,28 @@ export default function DashboardPage() {
   if (!dashboard) return <main className="container py-10"><DashboardSkeleton /></main>;
 
   return (
-    <main className="container flex min-h-screen flex-col gap-6 py-10">
-      <header className="no-print mb-2 flex items-center justify-between">
-        <Button variant="ghost" size="sm" asChild>
-          <Link href={`/projects/${dashboard.project_id}`}>
-            <ArrowLeft className="h-4 w-4" /> Project
-          </Link>
-        </Button>
+    <main className="flex min-h-screen flex-col gap-8 pb-12">
+      <header className="no-print sticky top-0 z-40 border-b border-border/60 bg-background/70 backdrop-blur-md">
+        <div className="container flex h-16 items-center justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <Button variant="ghost" size="icon" asChild aria-label="Back to project">
+              <Link href={`/projects/${dashboard.project_id}`}>
+                <ArrowLeft className="h-4 w-4" />
+              </Link>
+            </Button>
+            <div className="flex min-w-0 items-center gap-2 text-sm">
+              <Link href="/projects" className="text-muted-foreground transition-colors duration-160ms hover:text-foreground">
+                Projects
+              </Link>
+              <span className="text-muted-foreground/50">/</span>
+              <span className="truncate font-medium text-foreground">{dashboard.title}</span>
+            </div>
+          </div>
+        </div>
       </header>
-      <DashboardEditor dashboard={dashboard} onDeleted={() => router.replace(`/projects/${dashboard.project_id}`)} />
+      <div className="container">
+        <DashboardEditor dashboard={dashboard} onDeleted={() => router.replace(`/projects/${dashboard.project_id}`)} />
+      </div>
     </main>
   );
 }

@@ -1,0 +1,70 @@
+- generic [active] [ref=f2e1]:
+  - main [ref=f2e2]:
+    - generic [ref=f2e3]:
+      - generic [ref=f2e4]:
+        - link "Projects" [ref=f2e5] [cursor=pointer]:
+          - /url: /projects
+        - generic [ref=f2e8]:
+          - button "Report" [ref=f2e9] [cursor=pointer]
+          - button "Dashboard" [ref=f2e13] [cursor=pointer]
+          - button "Chat" [ref=f2e19] [cursor=pointer]
+          - button "Sign out" [ref=f2e22] [cursor=pointer]
+      - generic [ref=f2e26]:
+        - heading "Verify Project" [level=1] [ref=f2e66]
+        - paragraph [ref=f2e28]: Upload datasets (CSV or Excel) and let AI profile them.
+    - generic [ref=f2e29]:
+      - generic [ref=f2e30]:
+        - generic [ref=f2e31]:
+          - generic [ref=f2e32]: Upload dataset
+          - generic [ref=f2e33]: CSV or Excel (.xlsx / .xls).
+        - generic [ref=f2e35]:
+          - button "Choose File" [ref=f2e36]
+          - button "Upload" [disabled]
+      - generic [ref=f2e68]:
+        - generic [ref=f2e69]:
+          - generic [ref=f2e70]:
+            - generic [ref=f2e71]:
+              - generic [ref=f2e72]: sample.csv
+              - generic [ref=f2e73]: v1
+              - generic [ref=f2e74]: understood
+            - generic [ref=f2e75]: CSV · 414 B · 11 rows × 6 cols
+          - button "Delete dataset" [ref=f2e77] [cursor=pointer]
+        - generic [ref=f2e81]:
+          - button "Re-analyze" [ref=f2e82] [cursor=pointer]
+          - button "View analysis" [ref=f2e85] [cursor=pointer]
+          - button "History" [ref=f2e88] [cursor=pointer]
+          - button "Actions" [ref=f2e94] [cursor=pointer]
+    - generic [ref=f2e60]:
+      - heading "Notebooks" [level=2] [ref=f2e64]
+      - generic [ref=f2e97]:
+        - generic [ref=f2e99]:
+          - generic [ref=f2e100]:
+            - link "What is the total revenue by region?" [ref=f2e101] [cursor=pointer]:
+              - /url: /notebooks/12
+            - generic [ref=f2e102]: "dataset · dataset #66"
+          - generic [ref=f2e103]:
+            - button "Rename notebook" [ref=f2e104] [cursor=pointer]
+            - button "Delete notebook" [ref=f2e108] [cursor=pointer]
+        - generic [ref=f2e113]:
+          - generic [ref=f2e114]:
+            - link "What is the total revenue by region?" [ref=f2e115] [cursor=pointer]:
+              - /url: /notebooks/11
+            - generic [ref=f2e116]: project
+          - generic [ref=f2e117]:
+            - button "Rename notebook" [ref=f2e118] [cursor=pointer]
+            - button "Delete notebook" [ref=f2e122] [cursor=pointer]
+    - dialog [ref=f2e138]:
+      - generic [ref=f2e139]:
+        - heading "Ask your data · project" [level=2] [ref=f2e140]:
+          - text: Ask your data
+          - generic [ref=f2e143]: · project
+        - button "Close" [ref=f2e144] [cursor=pointer]
+      - generic [ref=f2e148]: What is the total revenue by region?
+      - generic [ref=f2e150]:
+        - textbox "e.g. Why did revenue drop in Q3?" [disabled] [ref=f2e151]
+        - button "Send" [disabled]
+  - status [ref=f2e126]:
+    - generic [ref=f2e131]:
+      - text: Static route
+      - button "Hide static indicator" [ref=f2e132] [cursor=pointer]
+  - alert [ref=f2e136]

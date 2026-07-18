@@ -1,0 +1,41 @@
+- generic [ref=e1]:
+  - status [ref=e26]:
+    - generic [ref=e31]:
+      - text: Static route
+      - button "Hide static indicator" [ref=e32] [cursor=pointer]
+  - alert [ref=e36]
+  - main [ref=e75]:
+    - generic [ref=e76]:
+      - generic [ref=e77]:
+        - link "Projects" [ref=e78] [cursor=pointer]:
+          - /url: /projects
+        - generic [ref=e81]:
+          - button "Report" [ref=e82] [cursor=pointer]
+          - button "Dashboard" [ref=e86] [cursor=pointer]
+          - button "Chat" [ref=e92] [cursor=pointer]
+          - button "Sign out" [ref=e95] [cursor=pointer]
+      - generic [ref=e99]:
+        - heading "Polish Verify Project" [level=1] [ref=e100]
+        - paragraph [ref=e101]: Upload datasets (CSV or Excel) and let AI profile them.
+    - generic [ref=e102]:
+      - generic [ref=e103]:
+        - generic [ref=e104]:
+          - generic [ref=e105]: Upload dataset
+          - generic [ref=e106]: CSV or Excel (.xlsx / .xls).
+        - generic [ref=e108]:
+          - button "Choose File" [ref=e109]
+          - button "Upload" [disabled]
+      - paragraph [ref=e117]: No datasets yet. Upload one to get started.
+    - generic [ref=e118]:
+      - heading "Notebooks" [level=2] [ref=e122]
+      - paragraph [ref=e123]: No notebooks yet — use the Chat button above or on a dataset to start one.
+    - dialog [ref=e125]:
+      - generic [ref=e126]:
+        - heading "Ask your data · project" [level=2] [ref=e127]:
+          - text: Ask your data
+          - generic [ref=e130]: · project
+        - button "Close" [ref=e131] [cursor=pointer]
+      - paragraph [ref=e136]: Ask a question about this project.
+      - generic [ref=e137]:
+        - textbox "e.g. Why did revenue drop in Q3?" [active] [ref=e138]
+        - button "Send" [disabled]

@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SocialButtons } from "@/components/auth/social-buttons";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -42,17 +43,29 @@ export default function LoginPage() {
   }
 
   return (
-    <Card className="w-full max-w-sm">
-      <CardHeader>
-        <div className="mb-2 flex items-center gap-2 text-primary">
+    <Card className="w-full max-w-md border-0 bg-transparent shadow-none sm:border sm:border-border sm:bg-card sm:shadow-soft-sm">
+      <CardHeader className="gap-1">
+        {/* Brand — shown on mobile where the side panel is hidden */}
+        <div className="mb-2 flex items-center gap-2 text-primary lg:hidden">
           <Sparkles className="h-5 w-5" />
-          <span className="text-sm font-semibold tracking-tight">InsightFlow AI</span>
+          <span className="text-sm font-semibold tracking-tight">InsightFlow</span>
         </div>
-        <CardTitle className="text-xl">Welcome back</CardTitle>
+        <CardTitle className="text-2xl">Welcome back</CardTitle>
         <CardDescription>Sign in to your workspace to continue.</CardDescription>
       </CardHeader>
+
       <form onSubmit={onSubmit}>
         <CardContent className="flex flex-col gap-4">
+          <SocialButtons />
+
+          <div className="flex items-center gap-3 py-1">
+            <span className="h-px flex-1 bg-border" />
+            <span className="text-2xs font-medium uppercase tracking-wider text-muted-foreground">
+              or continue with email
+            </span>
+            <span className="h-px flex-1 bg-border" />
+          </div>
+
           <div className="flex flex-col gap-2">
             <Label htmlFor="email">Email</Label>
             <Input
@@ -66,7 +79,15 @@ export default function LoginPage() {
             />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="password">Password</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password">Password</Label>
+              <Link
+                href="/login"
+                className="text-2xs font-medium text-primary hover:underline"
+              >
+                Forgot?
+              </Link>
+            </div>
             <Input
               id="password"
               type="password"
@@ -80,8 +101,8 @@ export default function LoginPage() {
           {error && <p className="text-sm text-destructive">{error}</p>}
         </CardContent>
         <CardFooter className="flex flex-col gap-3">
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Signing in…" : "Sign in"}
+          <Button type="submit" className="w-full" loading={loading}>
+            Sign in
           </Button>
           <p className="text-sm text-muted-foreground">
             No account?{" "}

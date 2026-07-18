@@ -1,0 +1,54 @@
+- generic [active] [ref=e1]:
+  - status [ref=e26]:
+    - generic [ref=e31]:
+      - text: Static route
+      - button "Hide static indicator" [ref=e32] [cursor=pointer]
+  - alert [ref=e36]
+  - main [ref=e1019]:
+    - generic [ref=e1020]:
+      - generic [ref=e1021]:
+        - link "Projects" [ref=e1022] [cursor=pointer]:
+          - /url: /projects
+        - generic [ref=e1025]:
+          - button "Report" [ref=e1026] [cursor=pointer]
+          - button "Dashboard" [ref=e1030] [cursor=pointer]
+          - button "Chat" [ref=e1036] [cursor=pointer]
+          - button "Sign out" [ref=e1039] [cursor=pointer]
+      - generic [ref=e1043]:
+        - heading "Polish Verify Project" [level=1] [ref=e1044]
+        - paragraph [ref=e1045]: Upload datasets (CSV or Excel) and let AI profile them.
+    - generic [ref=e1046]:
+      - generic [ref=e1047]:
+        - generic [ref=e1048]:
+          - generic [ref=e1049]: Upload dataset
+          - generic [ref=e1050]: CSV or Excel (.xlsx / .xls).
+        - generic [ref=e1052]:
+          - button "Choose File" [ref=e1053]
+          - button "Upload" [disabled]
+      - generic [ref=e1056]:
+        - generic [ref=e1057]:
+          - generic [ref=e1058]:
+            - generic [ref=e1059]:
+              - generic [ref=e1060]: sample.csv
+              - generic [ref=e1061]: v1
+              - generic [ref=e1062]: understood
+            - generic [ref=e1063]: CSV · 414 B · 11 rows × 6 cols
+          - button "Delete dataset" [ref=e1065] [cursor=pointer]
+        - generic [ref=e1069]:
+          - button "Re-analyze" [ref=e1070] [cursor=pointer]
+          - button "View analysis" [ref=e1073] [cursor=pointer]
+          - button "History" [ref=e1076] [cursor=pointer]
+          - button "Actions" [ref=e1082] [cursor=pointer]
+    - generic [ref=e1085]:
+      - heading "Notebooks" [level=2] [ref=e1089]
+      - paragraph [ref=e1090]: No notebooks yet — use the Chat button above or on a dataset to start one.
+    - dialog [ref=e1092]:
+      - generic [ref=e1093]:
+        - heading "Ask your data · project" [level=2] [ref=e1094]:
+          - text: Ask your data
+          - generic [ref=e1097]: · project
+        - button "Close" [ref=e1098] [cursor=pointer]
+      - generic [ref=e1102]: Show me monthly revenue trends
+      - generic [ref=e1104]:
+        - textbox "e.g. Why did revenue drop in Q3?" [disabled] [ref=e1105]
+        - button "Send" [disabled]

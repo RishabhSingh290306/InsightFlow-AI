@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SocialButtons } from "@/components/auth/social-buttons";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -32,7 +33,6 @@ export default function RegisterPage() {
     setError(null);
     setLoading(true);
     try {
-      // Register returns the user (no token), so log in to get a session.
       await authApi.register({ email, password, full_name: fullName });
       const token = await authApi.login(email, password);
       setToken(token.access_token);
@@ -45,17 +45,28 @@ export default function RegisterPage() {
   }
 
   return (
-    <Card className="w-full max-w-sm">
-      <CardHeader>
-        <div className="mb-2 flex items-center gap-2 text-primary">
+    <Card className="w-full max-w-md border-0 bg-transparent shadow-none sm:border sm:border-border sm:bg-card sm:shadow-soft-sm">
+      <CardHeader className="gap-1">
+        <div className="mb-2 flex items-center gap-2 text-primary lg:hidden">
           <Sparkles className="h-5 w-5" />
-          <span className="text-sm font-semibold tracking-tight">InsightFlow AI</span>
+          <span className="text-sm font-semibold tracking-tight">InsightFlow</span>
         </div>
-        <CardTitle className="text-xl">Create your account</CardTitle>
+        <CardTitle className="text-2xl">Create your account</CardTitle>
         <CardDescription>Start analyzing data from one workspace.</CardDescription>
       </CardHeader>
+
       <form onSubmit={onSubmit}>
         <CardContent className="flex flex-col gap-4">
+          <SocialButtons />
+
+          <div className="flex items-center gap-3 py-1">
+            <span className="h-px flex-1 bg-border" />
+            <span className="text-2xs font-medium uppercase tracking-wider text-muted-foreground">
+              or continue with email
+            </span>
+            <span className="h-px flex-1 bg-border" />
+          </div>
+
           <div className="flex flex-col gap-2">
             <Label htmlFor="fullName">Full name</Label>
             <Input
@@ -95,8 +106,8 @@ export default function RegisterPage() {
           {error && <p className="text-sm text-destructive">{error}</p>}
         </CardContent>
         <CardFooter className="flex flex-col gap-3">
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Creating account…" : "Create account"}
+          <Button type="submit" className="w-full" loading={loading}>
+            Create account
           </Button>
           <p className="text-sm text-muted-foreground">
             Already have an account?{" "}

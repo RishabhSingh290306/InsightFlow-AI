@@ -1,0 +1,128 @@
+- generic [active] [ref=e1]:
+  - status [ref=e26]:
+    - generic [ref=e31]:
+      - text: Static route
+      - button "Hide static indicator" [ref=e32] [cursor=pointer]
+  - alert [ref=e36]
+  - main [ref=e679]:
+    - link "Project" [ref=e681] [cursor=pointer]:
+      - /url: /projects/46
+    - generic [ref=e684]:
+      - generic [ref=e685]:
+        - textbox "Dashboard title" [ref=e686]: "Dashboard — Project #46"
+        - button "Save" [ref=e687] [cursor=pointer]
+        - button "Regenerate" [ref=e692] [cursor=pointer]
+        - button "Delete" [ref=e698] [cursor=pointer]
+      - generic [ref=e702]:
+        - generic [ref=e703]: Widgets
+        - generic [ref=e704]:
+          - generic [ref=e705]: Project Metrics
+          - button "Move up" [disabled]
+          - button "Move down" [ref=e706] [cursor=pointer]
+          - button "Toggle visibility" [ref=e709] [cursor=pointer]
+        - generic [ref=e713]:
+          - generic [ref=e714]: Datasets
+          - button "Move up" [ref=e715] [cursor=pointer]
+          - button "Move down" [ref=e718] [cursor=pointer]
+          - button "Toggle visibility" [ref=e721] [cursor=pointer]
+        - generic [ref=e725]:
+          - generic [ref=e726]: Activity
+          - button "Move up" [ref=e727] [cursor=pointer]
+          - button "Move down" [ref=e730] [cursor=pointer]
+          - button "Toggle visibility" [ref=e733] [cursor=pointer]
+        - generic [ref=e737]:
+          - generic [ref=e738]: Recommended Next
+          - button "Move up" [ref=e739] [cursor=pointer]
+          - button "Move down" [disabled]
+          - button "Toggle visibility" [ref=e742] [cursor=pointer]
+        - generic [ref=e746]:
+          - generic [ref=e747]: Notes (per widget)
+          - generic [ref=e748]:
+            - generic [ref=e749]: Project Metrics
+            - textbox "Add a note for this widget…" [ref=e750]
+          - generic [ref=e751]:
+            - generic [ref=e752]: Datasets
+            - textbox "Add a note for this widget…" [ref=e753]
+          - generic [ref=e754]:
+            - generic [ref=e755]: Activity
+            - textbox "Add a note for this widget…" [ref=e756]
+          - generic [ref=e757]:
+            - generic [ref=e758]: Recommended Next
+            - textbox "Add a note for this widget…" [ref=e759]
+      - generic [ref=e761]:
+        - paragraph [ref=e762]: This dashboard provides a comprehensive overview of project performance and dataset insights, enabling informed decision-making and strategic planning. It highlights key project metrics, recent activities, and offers recommendations for future analyses based on dataset evaluations.
+        - generic [ref=e763]:
+          - generic [ref=e764]:
+            - generic [ref=e765]: Project Metrics
+            - generic [ref=e771]: "Aggregated metrics across all datasets in the project: counts, rows, and activity."
+          - generic [ref=e773]:
+            - generic [ref=e774]:
+              - generic [ref=e775]: Datasets
+              - generic [ref=e776]: "1"
+              - generic [ref=e777]: in this project
+            - generic [ref=e778]:
+              - generic [ref=e779]: Analyzed
+              - generic [ref=e780]: "1"
+              - generic [ref=e781]: profiled datasets
+            - generic [ref=e782]:
+              - generic [ref=e783]: With EDA
+              - generic [ref=e784]: "0"
+              - generic [ref=e785]: charts generated
+            - generic [ref=e786]:
+              - generic [ref=e787]: AI understood
+              - generic [ref=e788]: "1"
+              - generic [ref=e789]: interpreted
+            - generic [ref=e790]:
+              - generic [ref=e791]: Total rows
+              - generic [ref=e792]: "11"
+              - generic [ref=e793]: across datasets
+            - generic [ref=e794]:
+              - generic [ref=e795]: Total columns
+              - generic [ref=e796]: "6"
+              - generic [ref=e797]: across datasets
+            - generic [ref=e798]:
+              - generic [ref=e799]: SQL queries
+              - generic [ref=e800]: "0"
+              - generic [ref=e801]: questions asked
+            - generic [ref=e802]:
+              - generic [ref=e803]: Reports
+              - generic [ref=e804]: "0"
+              - generic [ref=e805]: documents
+        - generic [ref=e806]:
+          - generic [ref=e807]:
+            - generic [ref=e808]: Datasets
+            - generic [ref=e813]: Every dataset in the project with its analysis status and shape.
+          - generic [ref=e816]:
+            - generic [ref=e817]:
+              - generic "sample.csv" [ref=e818]
+              - generic [ref=e819]: understood
+            - generic [ref=e820]:
+              - generic [ref=e821]: 11 rows
+              - generic [ref=e822]: · 6 cols
+              - generic [ref=e823]: · v1
+            - generic [ref=e824]:
+              - generic [ref=e825]: profiled
+              - generic [ref=e826]: understood
+        - generic [ref=e827]:
+          - generic [ref=e828]:
+            - generic [ref=e829]: Activity
+            - generic [ref=e832]: A timeline of recent uploads, SQL questions, and report updates in the project.
+          - list [ref=e834]:
+            - listitem [ref=e835]:
+              - generic [ref=e836]: upload
+              - generic [ref=e837]: Uploaded sample.csv
+        - generic [ref=e838]:
+          - generic [ref=e839]:
+            - generic [ref=e840]: Recommended Next
+            - generic [ref=e844]: Suggested next analyses derived from each dataset's understanding and gaps.
+          - list [ref=e846]:
+            - listitem [ref=e847]:
+              - generic [ref=e851]: "sample.csv: Which region generates the highest revenue?question"
+            - listitem [ref=e852]:
+              - generic [ref=e856]: "sample.csv: What is the trend of sales over the recorded dates?question"
+            - listitem [ref=e857]:
+              - generic [ref=e861]: "sample.csv: How do different products perform in terms of quantity sold?question"
+            - listitem [ref=e862]:
+              - generic [ref=e866]: Generate recommended charts for sample.csv.eda
+            - listitem [ref=e867]:
+              - generic [ref=e871]: Ask a question with SQL on sample.csv.sql

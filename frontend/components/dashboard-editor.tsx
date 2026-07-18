@@ -6,6 +6,7 @@ import type { CatalogEntry, DashboardDetailRead, DashboardPatchRequest, Dashboar
 import { dashboardsApi } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { DashboardRenderer } from "@/components/dashboard-renderer";
 
@@ -169,13 +170,18 @@ export function DashboardEditor({
         {displayOrder.map((type, idx) => {
           const isHidden = hidden.includes(type);
           return (
-            <div key={type} className="flex items-center gap-2 rounded-md border p-2">
-              <span className="flex-1 truncate text-sm font-medium">
-                {byType[type]?.widget.title ?? type}
+            <div
+              key={type}
+              className={`flex items-center gap-2 rounded-xl border border-border bg-card p-3 transition-colors duration-160ms hover:border-primary/30 ${
+                isHidden ? "opacity-60" : ""
+              }`}
+            >
+              <span className="flex flex-1 items-center gap-2 truncate text-sm font-medium">
+                <span className="truncate">{byType[type]?.widget.title ?? type}</span>
                 {isHidden && (
-                  <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                  <Badge variant="muted" size="sm">
                     hidden
-                  </span>
+                  </Badge>
                 )}
               </span>
               <Button
@@ -208,7 +214,7 @@ export function DashboardEditor({
             <div key={type} className="flex flex-col gap-1">
               <label className="text-xs text-muted-foreground">{byType[type]?.widget.title ?? type}</label>
               <textarea
-                className="w-full rounded border p-2 text-sm"
+                className="w-full rounded-xl border border-input bg-background p-3 text-sm shadow-inner-soft transition-colors duration-160ms placeholder:text-muted-foreground focus-visible:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
                 rows={2}
                 value={notes[type] ?? ""}
                 placeholder="Add a note for this widget…"
@@ -219,7 +225,7 @@ export function DashboardEditor({
         </div>
       </div>
 
-      <div className="rounded-md border p-4">
+      <div className="rounded-2xl border border-border bg-card-muted/40 p-6">
         <DashboardRenderer view={previewView} />
       </div>
 

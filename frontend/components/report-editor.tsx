@@ -133,8 +133,8 @@ export function ReportEditor({ report, onDeleted }: { report: ReportRead; onDele
 
       <div className="no-print flex flex-col gap-4">
         {sections.map((sec, idx) => (
-          <div key={sec.id} className="rounded-md border p-3">
-            <div className="mb-2 flex items-center gap-2">
+          <div key={sec.id} className="rounded-xl border border-border bg-card p-4">
+            <div className="mb-3 flex items-center gap-2">
               <Input
                 className="h-8 flex-1 text-sm font-medium"
                 value={sec.title}
@@ -149,7 +149,7 @@ export function ReportEditor({ report, onDeleted }: { report: ReportRead; onDele
               b.kind === "prose" || b.kind === "custom_note" ? (
                 <textarea
                   key={i}
-                  className="mb-2 w-full rounded border p-2 text-sm"
+                  className="mb-2 w-full rounded-xl border border-input bg-background p-3 text-sm shadow-inner-soft transition-colors duration-160ms placeholder:text-muted-foreground focus-visible:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
                   rows={3}
                   value={b.text ?? ""}
                   onChange={(e) => updateBlockText(sec.id, i, e.target.value)}
@@ -164,7 +164,7 @@ export function ReportEditor({ report, onDeleted }: { report: ReportRead; onDele
         ))}
       </div>
 
-      <div className="rounded-md border p-4">
+      <div className="rounded-2xl border border-border bg-card-muted/40 p-6">
         <ReportRenderer sections={sections} />
       </div>
 

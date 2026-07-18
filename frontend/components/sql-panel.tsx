@@ -24,19 +24,16 @@ import type {
 } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { StageProgress } from "@/components/stage-progress";
 
 function ConfidenceBadge({ value }: { value: number }) {
   const pct = Math.round(value * 100);
-  const cls =
-    pct >= 80
-      ? "bg-primary/15 text-primary"
-      : pct >= 50
-        ? "bg-secondary text-secondary-foreground"
-        : "bg-destructive/15 text-destructive";
-  return (
-    <span className={`rounded px-1.5 py-0.5 text-xs font-medium ${cls}`}>{pct}% conf.</span>
-  );
+  const variant = pct >= 80 ? "lavender" : pct >= 50 ? "secondary" : "destructive";
+  return <Badge variant={variant} size="sm">{pct}% confidence</Badge>;
 }
 
 function buildChartSpec(viz: SqlVisualization, result: SqlResult): ChartSpec | null {
@@ -261,7 +258,7 @@ export function SqlPanel({ dataset, onClose }: { dataset: DatasetRead; onClose: 
         </CardHeader>
         <CardContent className="flex flex-1 flex-col gap-4 overflow-y-auto">
           {error && (
-            <div className="flex items-center gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+            <div className="flex items-center gap-2 rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
               <TriangleAlert className="h-4 w-4 shrink-0" /> {error}
             </div>
           )}
@@ -269,11 +266,11 @@ export function SqlPanel({ dataset, onClose }: { dataset: DatasetRead; onClose: 
           {/* Ask box (starts a new investigation turn) */}
           <div className="flex flex-col gap-2">
             <div className="flex gap-2">
-              <input
+              <Input
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
                 placeholder="e.g. What is the average score by region?"
-                className="flex-1 rounded-md border bg-background px-3 py-2 text-sm"
+                leftIcon={<BarChart3 className="h-4 w-4 text-muted-foreground" />}
                 onKeyDown={(e) => e.key === "Enter" && !generating && (void generateNext(question, null))}
               />
               <Button onClick={() => generateNext(question, null)} disabled={generating || !question.trim()}>
@@ -286,14 +283,17 @@ export function SqlPanel({ dataset, onClose }: { dataset: DatasetRead; onClose: 
           {/* Thread of turns */}
           <div className="flex flex-col gap-4">
             {turns.map((t) => (
-              <div key={t.id} className="flex flex-col gap-2 rounded-md border p-3">
+              <div
+                key={t.id}
+                className="flex animate-slide-up flex-col gap-3 rounded-2xl border border-border bg-card p-4 shadow-soft-sm"
+              >
                 <div className="flex items-center gap-2 text-sm font-medium">
                   <Sparkles className="h-4 w-4 text-primary" />
-                  {t.question}
+                  <span className="flex-1 break-words">{t.question}</span>
                   {t.parentQueryId !== null && (
-                    <span className="rounded bg-secondary px-1.5 py-0.5 text-xs text-secondary-foreground">
+                    <Badge variant="muted" size="sm">
                       follow-up
-                    </span>
+                    </Badge>
                   )}
                 </div>
 
@@ -312,7 +312,7 @@ export function SqlPanel({ dataset, onClose }: { dataset: DatasetRead; onClose: 
                   <>
                     {t.proposal.explanation && (
                       <p className="text-xs text-muted-foreground">
-                        <span className="font-medium">AI:</span> {t.proposal.explanation}{" "}
+                        {t.proposal.explanation}{" "}
                         <ConfidenceBadge value={t.proposal.confidence} />
                       </p>
                     )}
@@ -325,7 +325,7 @@ export function SqlPanel({ dataset, onClose }: { dataset: DatasetRead; onClose: 
                       }
                       rows={5}
                       spellCheck={false}
-                      className="min-h-0 min-w-0 w-full resize-y rounded-md border bg-muted/30 p-2 font-mono text-xs"
+                      className="min-h-0 min-w-0 w-full resize-y rounded-xl border border-input bg-card-muted/40 p-3 font-mono text-xs leading-relaxed shadow-inner-soft transition-colors duration-160ms focus-visible:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
                       placeholder="SELECT * FROM dataset LIMIT 10"
                     />
                     <Button
@@ -344,43 +344,44 @@ export function SqlPanel({ dataset, onClose }: { dataset: DatasetRead; onClose: 
                 )}
 
                 {t.running && (
-                  <div role="status" aria-live="polite" className="flex flex-col gap-2 rounded-md border border-primary/30 bg-primary/5 p-3">
+                  <div role="status" aria-live="polite" className="flex flex-col gap-2 rounded-xl border border-primary/30 bg-primary/5 p-3">
                     <span className="text-xs font-medium text-primary">Running query</span>
                     <StageProgress stages={SQL_RUN_STAGES} activeIndex={t.runStage} />
                   </div>
                 )}
 
                 {t.result && (
-                  <div className="flex flex-col gap-3 rounded-md border p-3">
+                  <div className="flex flex-col gap-3 rounded-xl border border-border bg-card-muted/40 p-3">
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
                       <span>
                         {t.result.row_count} rows · {t.result.duration_ms} ms
                         {t.result.truncated ? " · truncated" : ""}
                       </span>
+                      {t.persistedId !== null && <Badge variant="success" size="sm">saved</Badge>}
                     </div>
-                    <div className="max-h-64 overflow-auto rounded border">
-                      <table className="w-full border-collapse text-left text-xs">
-                        <thead className="bg-muted text-muted-foreground">
-                          <tr>
+                    <div className="max-h-72 overflow-auto rounded-lg border border-border">
+                      <Table className="text-xs">
+                        <TableHeader className="sticky top-0 z-10 bg-card-muted/80 backdrop-blur-sm">
+                          <TableRow>
                             {t.result.columns.map((c) => (
-                              <th key={c} className="max-w-[14rem] break-words px-2 py-1 font-medium align-top">
+                              <TableHead key={c} className="max-w-[14rem] break-words align-top">
                                 {c}
-                              </th>
+                              </TableHead>
                             ))}
-                          </tr>
-                        </thead>
-                        <tbody>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
                           {t.result.rows.map((row, i) => (
-                            <tr key={i} className="border-t">
+                            <TableRow key={i}>
                               {t.result!.columns.map((c) => (
-                                <td key={c} className="max-w-[14rem] break-words px-2 py-1 align-top">
+                                <TableCell key={c} className="max-w-[14rem] break-words align-top">
                                   {String(row[c] ?? "")}
-                                </td>
+                                </TableCell>
                               ))}
-                            </tr>
+                            </TableRow>
                           ))}
-                        </tbody>
-                      </table>
+                        </TableBody>
+                      </Table>
                     </div>
 
                     {(() => {
@@ -389,7 +390,7 @@ export function SqlPanel({ dataset, onClose }: { dataset: DatasetRead; onClose: 
                       const spec = buildChartSpec(viz, t.result!);
                       if (!spec) return null;
                       return (
-                        <div className="rounded-md border bg-muted/30 p-2">
+                        <div className="rounded-xl border border-border bg-card p-3">
                           <ChartRenderer spec={spec} />
                         </div>
                       );
@@ -421,7 +422,7 @@ export function SqlPanel({ dataset, onClose }: { dataset: DatasetRead; onClose: 
                             <button
                               key={i}
                               onClick={() => onFollowup(t.id, q)}
-                              className="rounded-full border px-3 py-1 text-xs hover:bg-secondary"
+                              className="rounded-full border border-border bg-background px-3 py-1 text-xs text-foreground transition-colors duration-160ms hover:border-primary/30 hover:bg-primary/5"
                             >
                               {q}
                             </button>
@@ -437,39 +438,47 @@ export function SqlPanel({ dataset, onClose }: { dataset: DatasetRead; onClose: 
 
           {/* History (threaded via parent_query_id) */}
           <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-3">
               <h3 className="text-sm font-semibold">History</h3>
-              <input
-                value={historyQ}
-                onChange={(e) => setHistoryQ(e.target.value)}
-                placeholder="Search…"
-                className="w-40 rounded-md border bg-background px-2 py-1 text-xs"
+              <div className="w-44">
+                <Input
+                  value={historyQ}
+                  onChange={(e) => setHistoryQ(e.target.value)}
+                  placeholder="Search…"
+                  inputSize="sm"
+                />
+              </div>
+            </div>
+            {filteredHistory.length === 0 ? (
+              <EmptyState
+                icon={<BarChart3 />}
+                iconTone="muted"
+                title={historyQ ? "No matching queries" : "No queries yet"}
+                description={historyQ ? "Try a different search term." : "Run a query and it will be saved here."}
               />
-            </div>
-            <div className="flex flex-col gap-1">
-              {filteredHistory.length === 0 && (
-                <p className="text-xs text-muted-foreground">No queries yet.</p>
-              )}
-              {filteredHistory.map((rec) => (
-                <div
-                  key={rec.id}
-                  className={`flex items-start justify-between gap-2 rounded-md border p-2 text-xs ${
-                    rec.parent_query_id !== null ? "ml-4 border-dashed" : ""
-                  }`}
-                >
-                  <div className="flex min-w-0 flex-1 flex-col gap-1">
-                    <span className="break-words font-medium">{rec.business_question || "(no question)"}</span>
-                    <code className="block truncate font-mono text-[10px] text-muted-foreground">{rec.sql}</code>
-                    <span className="text-muted-foreground">
-                      {rec.row_count} rows · {rec.edited ? "edited" : "as-generated"}
-                    </span>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {filteredHistory.map((rec) => (
+                  <div
+                    key={rec.id}
+                    className={`group flex items-start justify-between gap-2 rounded-xl border border-border bg-card p-3 text-xs transition-colors duration-160ms hover:border-primary/30 ${
+                      rec.parent_query_id !== null ? "ml-4 border-dashed" : ""
+                    }`}
+                  >
+                    <div className="flex min-w-0 flex-1 flex-col gap-1">
+                      <span className="break-words font-medium">{rec.business_question || "(no question)"}</span>
+                      <code className="block truncate font-mono text-[10px] text-muted-foreground">{rec.sql}</code>
+                      <span className="text-muted-foreground">
+                        {rec.row_count} rows · {rec.edited ? "edited" : "as-generated"}
+                      </span>
+                    </div>
+                    <Button variant="ghost" size="icon" aria-label="Delete query" onClick={() => onDelete(rec.id)} className="shrink-0 self-start opacity-0 transition-opacity duration-160ms group-hover:opacity-100 focus-visible:opacity-100">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
-                  <Button variant="ghost" size="icon" aria-label="Delete" onClick={() => onDelete(rec.id)} className="shrink-0 self-start">
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

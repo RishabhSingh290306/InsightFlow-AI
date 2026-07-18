@@ -1,0 +1,51 @@
+- generic [ref=e1]:
+  - status [ref=e26]:
+    - generic [ref=e31]:
+      - text: Static route
+      - button "Hide static indicator" [ref=e32] [cursor=pointer]
+  - alert [ref=e36]
+  - main [ref=e879]:
+    - generic [ref=e880]:
+      - generic [ref=e881]:
+        - link "Projects" [ref=e882] [cursor=pointer]:
+          - /url: /projects
+        - generic [ref=e885]:
+          - button "Report" [ref=e886] [cursor=pointer]
+          - button "Dashboard" [ref=e890] [cursor=pointer]
+          - button "Chat" [ref=e896] [cursor=pointer]
+          - button "Sign out" [ref=e899] [cursor=pointer]
+      - generic [ref=e903]:
+        - heading "Polish Verify Project" [level=1] [ref=e904]
+        - paragraph [ref=e905]: Upload datasets (CSV or Excel) and let AI profile them.
+    - generic [ref=e906]:
+      - generic [ref=e907]:
+        - generic [ref=e908]:
+          - generic [ref=e909]: Upload dataset
+          - generic [ref=e910]: CSV or Excel (.xlsx / .xls).
+        - generic [ref=e912]:
+          - button "Choose File" [ref=e913]
+          - button "Upload" [disabled]
+      - generic [ref=e916]:
+        - generic [ref=e917]:
+          - generic [ref=e918]:
+            - generic [ref=e919]:
+              - generic [ref=e920]: sample.csv
+              - generic [ref=e921]: v1
+              - generic [ref=e922]: understood
+            - generic [ref=e923]: CSV · 414 B · 11 rows × 6 cols
+          - button "Delete dataset" [ref=e925] [cursor=pointer]
+        - generic [ref=e929]:
+          - button "Re-analyze" [ref=e930] [cursor=pointer]
+          - button "View analysis" [ref=e933] [cursor=pointer]
+          - button "History" [ref=e936] [cursor=pointer]
+          - button "Actions" [ref=e942] [cursor=pointer]
+    - generic [ref=e945]:
+      - heading "Notebooks" [level=2] [ref=e949]
+      - generic [ref=e974]:
+        - generic [ref=e975]:
+          - link "What is the total revenue by region?" [active] [ref=e976] [cursor=pointer]:
+            - /url: /notebooks/9
+          - generic [ref=e977]: project
+        - generic [ref=e978]:
+          - button "Rename notebook" [ref=e979] [cursor=pointer]
+          - button "Delete notebook" [ref=e983] [cursor=pointer]

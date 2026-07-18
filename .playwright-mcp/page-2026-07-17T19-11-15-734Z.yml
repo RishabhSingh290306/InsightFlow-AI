@@ -1,0 +1,20 @@
+- generic [active] [ref=e1]:
+  - status [ref=e26]:
+    - generic [ref=e31]:
+      - text: Static route
+      - button "Hide static indicator" [ref=e32] [cursor=pointer]
+  - alert [ref=e36]
+  - main [ref=e1133]:
+    - generic [ref=e1134]:
+      - link "Project" [ref=e1135] [cursor=pointer]:
+        - /url: /projects/46
+      - generic [ref=e1138]:
+        - button "Copy share link" [ref=e1139] [cursor=pointer]
+        - button "Delete" [ref=e1140] [cursor=pointer]
+    - generic [ref=e1144]:
+      - textbox "Notebook title" [ref=e1145]: Revenue Trends v5
+      - button "Rename" [ref=e1151] [cursor=pointer]
+      - generic [ref=e1152]: Simulated rename failure
+    - generic [ref=e1146]:
+      - generic [ref=e1147]: Show me monthly revenue trends
+      - generic [ref=e1149]: I'll run a SQL query to aggregate the revenue by month from the dataset. This will help us analyze the monthly revenue trends for the project. Once I have the results, I'll share the insights with you.

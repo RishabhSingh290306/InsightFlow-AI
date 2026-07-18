@@ -1,0 +1,114 @@
+- generic [active] [ref=f1e1]:
+  - main [ref=f1e2]:
+    - generic [ref=f1e3]:
+      - generic [ref=f1e4]:
+        - link "Projects" [ref=f1e5] [cursor=pointer]:
+          - /url: /projects
+        - generic [ref=f1e8]:
+          - button "Report" [ref=f1e9] [cursor=pointer]
+          - button "Dashboard" [ref=f1e13] [cursor=pointer]
+          - button "Chat" [ref=f1e19] [cursor=pointer]
+          - button "Sign out" [ref=f1e22] [cursor=pointer]
+      - generic [ref=f1e26]:
+        - heading "Verify Project" [level=1] [ref=f1e66]
+        - paragraph [ref=f1e28]: Upload datasets (CSV or Excel) and let AI profile them.
+    - generic [ref=f1e29]:
+      - generic [ref=f1e30]:
+        - generic [ref=f1e31]:
+          - generic [ref=f1e32]: Upload dataset
+          - generic [ref=f1e33]: CSV or Excel (.xlsx / .xls).
+        - generic [ref=f1e35]:
+          - button "Choose File" [ref=f1e36]
+          - button "Upload" [disabled]
+      - generic [ref=f1e68]:
+        - generic [ref=f1e69]:
+          - generic [ref=f1e70]:
+            - generic [ref=f1e71]:
+              - generic [ref=f1e72]: sample.csv
+              - generic [ref=f1e73]: v1
+              - generic [ref=f1e74]: understood
+            - generic [ref=f1e75]: CSV · 414 B · 11 rows × 6 cols
+          - button "Delete dataset" [ref=f1e77] [cursor=pointer]
+        - generic [ref=f1e81]:
+          - button "Re-analyze" [ref=f1e82] [cursor=pointer]
+          - button "View analysis" [ref=f1e85] [cursor=pointer]
+          - button "History" [ref=f1e88] [cursor=pointer]
+          - button "Actions" [ref=f1e94] [cursor=pointer]
+    - generic [ref=f1e60]:
+      - heading "Notebooks" [level=2] [ref=f1e64]
+      - generic [ref=f1e129]:
+        - generic [ref=f1e196]:
+          - generic [ref=f1e197]:
+            - link "What is the total revenue by region?" [ref=f1e198] [cursor=pointer]:
+              - /url: /notebooks/12
+            - generic [ref=f1e199]: "dataset · dataset #66"
+          - generic [ref=f1e200]:
+            - button "Rename notebook" [ref=f1e201] [cursor=pointer]
+            - button "Delete notebook" [ref=f1e205] [cursor=pointer]
+        - generic [ref=f1e131]:
+          - generic [ref=f1e132]:
+            - link "What is the total revenue by region?" [ref=f1e133] [cursor=pointer]:
+              - /url: /notebooks/11
+            - generic [ref=f1e134]: project
+          - generic [ref=f1e135]:
+            - button "Rename notebook" [ref=f1e136] [cursor=pointer]
+            - button "Delete notebook" [ref=f1e140] [cursor=pointer]
+    - dialog [ref=f1e175]:
+      - generic [ref=f1e176]:
+        - heading "Ask your data · sample.csv" [level=2] [ref=f1e177]:
+          - text: Ask your data
+          - generic [ref=f1e180]: · sample.csv
+        - button "Close" [ref=f1e181] [cursor=pointer]
+      - generic [ref=f1e185]:
+        - generic [ref=f1e193]: What is the total revenue by region?
+        - generic [ref=f1e209]:
+          - generic [ref=f1e210]: To find the total revenue by region, I'll run a SQL query to aggregate the revenue while addressing the missing values in the dataset. This will help ensure the analysis is accurate and reliable. Let's get started!
+          - generic [ref=f1e211]:
+            - paragraph [ref=f1e212]: SQL query (proposed)
+            - generic [ref=f1e213]: SELECT region, SUM(revenue) AS total_revenue FROM dataset WHERE region IS NOT NULL AND revenue IS NOT NULL GROUP BY region;
+            - paragraph [ref=f1e214]: This query calculates the total revenue for each region by summing the revenue values, while ensuring that only non-null values for both region and revenue are considered. The results are grouped by region to provide the total revenue per region.
+            - generic [ref=f1e222]:
+              - paragraph [ref=f1e223]: 4 rows · 122.69 ms
+              - table [ref=f1e225]:
+                - rowgroup [ref=f1e226]:
+                  - row [ref=f1e227]:
+                    - columnheader "region" [ref=f1e228]
+                    - columnheader "total_revenue" [ref=f1e229]
+                - rowgroup [ref=f1e230]:
+                  - row [ref=f1e231]:
+                    - cell "North" [ref=f1e232]
+                    - cell "351.25" [ref=f1e233]
+                  - row [ref=f1e234]:
+                    - cell "East" [ref=f1e235]
+                    - cell "420.75" [ref=f1e236]
+                  - row [ref=f1e237]:
+                    - cell "South" [ref=f1e238]
+                    - cell "410" [ref=f1e239]
+                  - row [ref=f1e240]:
+                    - cell "West" [ref=f1e241]
+                    - cell "175" [ref=f1e242]
+              - img [ref=f1e245]:
+                - generic [ref=f1e250]:
+                  - generic [ref=f1e251]: North
+                  - generic [ref=f1e253]: East
+                  - generic [ref=f1e255]: South
+                  - generic [ref=f1e257]: West
+              - paragraph [ref=f1e259]: • The East region generated the highest total revenue at $420.75, indicating strong market performance.
+              - paragraph [ref=f1e260]: • The North region has the lowest total revenue at $351.25, suggesting potential areas for growth or improvement.
+              - paragraph [ref=f1e261]: • The South region's total revenue of $410.00 is competitive, closely following the East region.
+              - paragraph [ref=f1e262]: • Overall, the revenue distribution across regions shows a relatively balanced performance, but the East stands out significantly.
+          - generic [ref=f1e216]:
+            - paragraph [ref=f1e217]: Cleaning suggestions
+            - list [ref=f1e218]:
+              - listitem [ref=f1e219]: "handle_missing_values: Filling missing revenue values with the mean will help maintain the overall revenue distribution."
+              - listitem [ref=f1e220]: "handle_missing_values: Filling the missing region value with the mode will help retain the most common region in the dataset."
+              - listitem [ref=f1e221]: "remove_duplicates: Removing duplicate rows will ensure data integrity and accuracy in analysis."
+      - generic [ref=f1e187]:
+        - textbox "e.g. Why did revenue drop in Q3?" [ref=f1e188]
+        - button "Send" [disabled]
+  - status [ref=f1e97]:
+    - generic [ref=f1e102]:
+      - text: Static route
+      - button "Hide static indicator" [ref=f1e103] [cursor=pointer]
+  - alert [ref=f1e107]
+  - generic [ref=f1e263]: North

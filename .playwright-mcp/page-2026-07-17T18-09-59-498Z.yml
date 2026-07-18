@@ -1,0 +1,31 @@
+- generic [ref=e1]:
+  - status [ref=e26]:
+    - generic [ref=e31]:
+      - text: Static route
+      - button "Hide static indicator" [ref=e32] [cursor=pointer]
+  - alert [ref=e36]
+  - main [ref=e38]:
+    - generic [ref=e39]:
+      - generic [ref=e40]:
+        - heading "Projects" [level=1] [ref=e41]
+        - paragraph [ref=e42]: Your data analysis workspaces.
+      - button "Sign out" [ref=e43] [cursor=pointer]
+    - generic [ref=e47]:
+      - generic [ref=e48]:
+        - generic [ref=e49]:
+          - generic [ref=e50]: New project
+          - generic [ref=e51]: Create a workspace to upload datasets.
+        - generic [ref=e53]:
+          - generic [ref=e54]:
+            - generic [ref=e55]: Name
+            - textbox "Name" [ref=e56]:
+              - /placeholder: Q3 Sales Analysis
+          - generic [ref=e57]:
+            - generic [ref=e58]: Description
+            - textbox "Description" [ref=e59]:
+              - /placeholder: Optional
+          - button "Create project" [disabled]
+      - generic [ref=e70]:
+        - generic [ref=e71]: Polish Verify Project
+        - link "Open workspace →" [active] [ref=e74] [cursor=pointer]:
+          - /url: /projects/46

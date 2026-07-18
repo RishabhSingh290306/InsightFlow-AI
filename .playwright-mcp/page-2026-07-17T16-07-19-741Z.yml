@@ -1,0 +1,22 @@
+- main [ref=e2]:
+  - generic [ref=e3]:
+    - heading "InsightFlow AI" [level=1] [ref=e4]
+    - paragraph [ref=e5]: An AI-powered Data Analyst Operating System. Upload a dataset and let AI handle understanding, cleaning, EDA, SQL, visualization, and reporting — while you stay in control.
+    - generic [ref=e6]:
+      - link "Get started" [ref=e7] [cursor=pointer]:
+        - /url: /register
+      - link "Sign in" [ref=e8] [cursor=pointer]:
+        - /url: /login
+    - generic [ref=e10]:
+      - paragraph [ref=e11]: Backend status
+      - paragraph [ref=e12]: Checking…
+  - generic [ref=e13]:
+    - generic [ref=e15]:
+      - generic [ref=e20]: AI Dataset Understanding
+      - generic [ref=e21]: Auto-detect column types, quality issues, and targets.
+    - generic [ref=e24]:
+      - generic [ref=e27]: Human-in-the-Loop Cleaning
+      - generic [ref=e28]: Approve, reject, or tweak each AI cleaning proposal.
+    - generic [ref=e31]:
+      - generic [ref=e34]: EDA & Visualizations
+      - generic [ref=e35]: Summaries, distributions, and chart recommendations.

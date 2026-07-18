@@ -1,0 +1,44 @@
+- generic [active] [ref=e1]:
+  - status [ref=e26]:
+    - generic [ref=e31]:
+      - text: Static route
+      - button "Hide static indicator" [ref=e32] [cursor=pointer]
+  - alert [ref=e36]
+  - main [ref=e607]:
+    - generic [ref=e608]:
+      - generic [ref=e609]:
+        - link "Projects" [ref=e610] [cursor=pointer]:
+          - /url: /projects
+        - generic [ref=e613]:
+          - button "Generating…" [disabled]
+          - button "Generating…" [disabled]
+          - button "Chat" [ref=e624] [cursor=pointer]
+          - button "Sign out" [ref=e627] [cursor=pointer]
+      - generic [ref=e631]:
+        - heading "Polish Verify Project" [level=1] [ref=e632]
+        - paragraph [ref=e633]: Upload datasets (CSV or Excel) and let AI profile them.
+    - generic [ref=e634]:
+      - generic [ref=e635]:
+        - generic [ref=e636]:
+          - generic [ref=e637]: Upload dataset
+          - generic [ref=e638]: CSV or Excel (.xlsx / .xls).
+        - generic [ref=e640]:
+          - button "Choose File" [ref=e641]
+          - button "Upload" [disabled]
+      - generic [ref=e644]:
+        - generic [ref=e645]:
+          - generic [ref=e646]:
+            - generic [ref=e647]:
+              - generic [ref=e648]: sample.csv
+              - generic [ref=e649]: v1
+              - generic [ref=e650]: understood
+            - generic [ref=e651]: CSV · 414 B · 11 rows × 6 cols
+          - button "Delete dataset" [ref=e653] [cursor=pointer]
+        - generic [ref=e657]:
+          - button "Re-analyze" [ref=e658] [cursor=pointer]
+          - button "View analysis" [ref=e661] [cursor=pointer]
+          - button "History" [ref=e664] [cursor=pointer]
+          - button "Actions" [ref=e670] [cursor=pointer]
+    - generic [ref=e673]:
+      - heading "Notebooks" [level=2] [ref=e677]
+      - paragraph [ref=e678]: No notebooks yet — use the Chat button above or on a dataset to start one.

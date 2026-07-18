@@ -1,0 +1,184 @@
+- generic [active] [ref=e1]:
+  - status [ref=e26]:
+    - generic [ref=e31]:
+      - text: Static route
+      - button "Hide static indicator" [ref=e32] [cursor=pointer]
+  - alert [ref=e36]
+  - main [ref=e75]:
+    - generic [ref=e76]:
+      - generic [ref=e77]:
+        - link "Projects" [ref=e78] [cursor=pointer]:
+          - /url: /projects
+        - generic [ref=e81]:
+          - button "Report" [ref=e82] [cursor=pointer]
+          - button "Dashboard" [ref=e86] [cursor=pointer]
+          - button "Chat" [ref=e92] [cursor=pointer]
+          - button "Sign out" [ref=e95] [cursor=pointer]
+      - generic [ref=e99]:
+        - heading "Polish Verify Project" [level=1] [ref=e100]
+        - paragraph [ref=e101]: Upload datasets (CSV or Excel) and let AI profile them.
+    - generic [ref=e102]:
+      - generic [ref=e103]:
+        - generic [ref=e104]:
+          - generic [ref=e105]: Upload dataset
+          - generic [ref=e106]: CSV or Excel (.xlsx / .xls).
+        - generic [ref=e108]:
+          - button "Choose File" [ref=e109]
+          - button "Upload" [disabled]
+      - generic [ref=e168]:
+        - generic [ref=e169]:
+          - generic [ref=e170]:
+            - generic [ref=e171]:
+              - generic [ref=e172]:
+                - generic [ref=e173]: sample.csv
+                - generic [ref=e174]: v1
+                - generic [ref=e175]: understood
+              - generic [ref=e176]: CSV · 414 B · 11 rows × 6 cols
+            - button "Delete dataset" [ref=e178] [cursor=pointer]
+          - generic [ref=e182]:
+            - button "Re-analyze" [ref=e183] [cursor=pointer]
+            - button "Hide" [ref=e186] [cursor=pointer]
+            - button "History" [ref=e189] [cursor=pointer]
+            - button "Actions" [ref=e195] [cursor=pointer]
+        - generic [ref=e198]:
+          - generic [ref=e199]:
+            - heading "Profile" [level=3] [ref=e200]
+            - generic [ref=e201]:
+              - generic [ref=e202]: 11 rows
+              - generic [ref=e203]: ·
+              - generic [ref=e204]: 6 columns
+              - generic [ref=e205]: ·
+              - generic [ref=e206]: 4.55% null
+              - generic [ref=e207]: ·
+              - generic [ref=e208]: 1 duplicates
+              - generic [ref=e209]: ·
+              - generic [ref=e210]: "target: region"
+            - list [ref=e211]:
+              - listitem [ref=e212]:
+                - generic [ref=e215]: "'region' has 1 missing values (9.1%)."
+              - listitem [ref=e216]:
+                - generic [ref=e219]: "'revenue' has 2 missing values (18.2%)."
+              - listitem [ref=e220]:
+                - generic [ref=e223]: 1 duplicate rows detected.
+            - table [ref=e225]:
+              - rowgroup [ref=e226]:
+                - row [ref=e227]:
+                  - columnheader "order_idnumeric" [ref=e228]
+                  - columnheader "regioncategorical" [ref=e229]
+                  - columnheader "productcategorical" [ref=e230]
+                  - columnheader "revenuenumeric" [ref=e231]
+                  - columnheader "quantitynumeric" [ref=e232]
+                  - columnheader "order_datecategorical" [ref=e233]
+              - rowgroup [ref=e234]:
+                - row [ref=e235]:
+                  - cell "1" [ref=e236]
+                  - cell "North" [ref=e237]
+                  - cell "Widget" [ref=e238]
+                  - cell "100.5" [ref=e239]
+                  - cell "2" [ref=e240]
+                  - cell "2024-01-01" [ref=e241]
+                - row [ref=e242]:
+                  - cell "2" [ref=e243]
+                  - cell "South" [ref=e244]
+                  - cell "Gadget" [ref=e245]
+                  - cell "200" [ref=e246]
+                  - cell "1" [ref=e247]
+                  - cell "2024-01-02" [ref=e248]
+                - row [ref=e249]:
+                  - cell "3" [ref=e250]
+                  - cell "North" [ref=e251]
+                  - cell "Widget" [ref=e252]
+                  - cell "150.25" [ref=e253]
+                  - cell "3" [ref=e254]
+                  - cell "2024-01-03" [ref=e255]
+                - row [ref=e256]:
+                  - cell "4" [ref=e257]
+                  - cell "∅" [ref=e258]
+                  - cell "Gadget" [ref=e259]
+                  - cell "99.99" [ref=e260]
+                  - cell "1" [ref=e261]
+                  - cell "2024-01-04" [ref=e262]
+                - row [ref=e263]:
+                  - cell "5" [ref=e264]
+                  - cell "South" [ref=e265]
+                  - cell "Widget" [ref=e266]
+                  - cell "∅" [ref=e267]
+                  - cell "2" [ref=e268]
+                  - cell "2024-01-05" [ref=e269]
+                - row [ref=e270]:
+                  - cell "1" [ref=e271]
+                  - cell "North" [ref=e272]
+                  - cell "Widget" [ref=e273]
+                  - cell "100.5" [ref=e274]
+                  - cell "2" [ref=e275]
+                  - cell "2024-01-01" [ref=e276]
+                - row [ref=e277]:
+                  - cell "6" [ref=e278]
+                  - cell "East" [ref=e279]
+                  - cell "Gizmo" [ref=e280]
+                  - cell "300" [ref=e281]
+                  - cell "5" [ref=e282]
+                  - cell "2024-01-06" [ref=e283]
+                - row [ref=e284]:
+                  - cell "7" [ref=e285]
+                  - cell "West" [ref=e286]
+                  - cell "Gadget" [ref=e287]
+                  - cell "175" [ref=e288]
+                  - cell "2" [ref=e289]
+                  - cell "2024-01-07" [ref=e290]
+                - row [ref=e291]:
+                  - cell "8" [ref=e292]
+                  - cell "East" [ref=e293]
+                  - cell "Widget" [ref=e294]
+                  - cell "120.75" [ref=e295]
+                  - cell "4" [ref=e296]
+                  - cell "2024-01-08" [ref=e297]
+                - row [ref=e298]:
+                  - cell "9" [ref=e299]
+                  - cell "West" [ref=e300]
+                  - cell "Gizmo" [ref=e301]
+                  - cell "∅" [ref=e302]
+                  - cell "3" [ref=e303]
+                  - cell "2024-01-09" [ref=e304]
+            - paragraph [ref=e305]: Showing first 10 rows.
+          - generic [ref=e306]:
+            - heading "AI Insights" [level=3] [ref=e307]
+            - paragraph [ref=e308]: This dataset contains sales order information including order IDs, regions, products sold, revenue generated, quantities sold, and order dates.
+            - generic [ref=e309]:
+              - generic [ref=e310]: "Domain: Retail or E-commerce"
+              - generic [ref=e311]: ·
+              - generic [ref=e312]: "Use case: Analyzing sales performance by region and product over time."
+              - generic [ref=e313]: ·
+              - generic [ref=e314]: "Target: region"
+              - generic [ref=e315]: ·
+              - generic [ref=e316]: "Confidence: 75%"
+            - generic [ref=e317]:
+              - heading "Data quality" [level=4] [ref=e318]
+              - list [ref=e319]:
+                - listitem [ref=e320]: • The dataset has some missing values in the 'region' and 'revenue' columns, and one duplicate row.
+            - generic [ref=e321]:
+              - heading "Cleaning recommendations" [level=4] [ref=e322]
+              - list [ref=e323]:
+                - listitem [ref=e324]: • Impute or remove rows with missing 'region' and 'revenue' values.
+                - listitem [ref=e325]: • Remove duplicate rows to ensure data integrity.
+            - generic [ref=e326]:
+              - heading "Suggested visualizations" [level=4] [ref=e327]
+              - list [ref=e328]:
+                - listitem [ref=e329]: • Bar chart of revenue by region.
+                - listitem [ref=e330]: • Line chart showing revenue trends over time.
+                - listitem [ref=e331]: • Pie chart of product distribution.
+            - generic [ref=e332]:
+              - heading "Suggested business questions" [level=4] [ref=e333]
+              - list [ref=e334]:
+                - listitem [ref=e335]: • Which region generates the highest revenue?
+                - listitem [ref=e336]: • What is the trend of sales over the recorded dates?
+                - listitem [ref=e337]: • How do different products perform in terms of quantity sold?
+            - generic [ref=e338]:
+              - heading "Initial observations" [level=4] [ref=e339]
+              - list [ref=e340]:
+                - listitem [ref=e341]: • There are missing values in key columns which may affect analysis.
+                - listitem [ref=e342]: • The dataset is small with only 11 rows, which may limit the insights.
+                - listitem [ref=e343]: • Revenue varies significantly across different orders.
+    - generic [ref=e118]:
+      - heading "Notebooks" [level=2] [ref=e122]
+      - paragraph [ref=e123]: No notebooks yet — use the Chat button above or on a dataset to start one.

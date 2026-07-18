@@ -1,0 +1,26 @@
+- generic [ref=e1]:
+  - status [ref=e26]:
+    - generic [ref=e31]:
+      - text: Static route
+      - button "Hide static indicator" [ref=e32] [cursor=pointer]
+  - alert [ref=e36]
+  - main [ref=e994]:
+    - generic [ref=e995]:
+      - link "Project" [ref=e996] [cursor=pointer]:
+        - /url: /projects/46
+      - generic [ref=e999]:
+        - button "Copy share link" [ref=e1000] [cursor=pointer]
+        - button "Delete" [ref=e1001] [cursor=pointer]
+    - generic [ref=e1005]:
+      - textbox "Notebook title" [ref=e1006]: What is the total revenue by region?
+      - button "Rename" [disabled]
+    - generic [ref=e1007]:
+      - generic [ref=e1008]: What is the total revenue by region?
+      - generic [ref=e1010]: To find the total revenue by region, I'll run a SQL query on the dataset "sample.csv" that includes the revenue and region information. This will allow us to aggregate the revenue for each region. I'll get started on that now!
+    - dialog [ref=e1012]:
+      - generic [ref=e1013]:
+        - heading "Delete this notebook?" [level=2] [ref=e1014]
+        - paragraph [ref=e1015]: This permanently removes the conversation and its artifacts. This cannot be undone.
+        - generic [ref=e1016]:
+          - button "Cancel" [active] [ref=e1017] [cursor=pointer]
+          - button "Delete notebook" [ref=e1018] [cursor=pointer]
