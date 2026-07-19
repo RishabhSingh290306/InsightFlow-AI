@@ -673,3 +673,62 @@ that mirrored the workspace class. Applied them so the app is "truly done":
 Added `frontend/components/ui/skeleton.tsx` (shadcn-style). **Verification:** `tsc --noEmit`,
 `next lint`, and `next build` all clean; live dev server confirmed serving on :3001. Committed on
 `feature/ai-chat-notebook` (no push).
+
+## 2026-07-19 — Production deployment (Vercel + Railway) + AI provider switch + frontend hardening
+
+Shipped the app to production as a **split deploy**: Next.js frontend on Vercel, FastAPI backend on
+Railway, with Vercel proxying `/api/*` and `/health` server-side to the Railway URL (no browser CORS).
+
+### Deployment Decision: Vercel (frontend) + Railway (backend)
+
+**Decision:** Host the frontend and backend on separate platforms instead of one Docker Compose stack.
+
+**Rationale:**
+- Vercel gives instant global CDN + preview deploys for the Next.js frontend (App Router, zero-config).
+- Railway runs the long-lived FastAPI service with a stable public URL and managed Postgres/Supabase.
+- The frontend never calls Railway directly from the browser — `next.config.mjs` rewrites `/api/:path*`
+  and `/health` to `INTERNAL_API_URL` (set from `frontend/.env.production`), so the backend URL is
+  server-side only and there is no CORS surface.
+
+**Configuration that mattered:**
+- Vercel **Root Directory = `frontend`** and Framework Preset = Next.js (a `vercel.json` with a
+  `services` block triggered an Edge-runtime rejection; we removed it and rely on dashboard settings).
+- **Deployment Protection (Vercel Authentication) disabled** — it was gating every route (302 to
+  `vercel.com/sso-api`), so `/api/v1/health` returned auth instead of JSON.
+- Next.js bumped to **15.2.x** (Vercel blocks the CVE-2025-29927 vulnerable 15.0.3).
+
+### Bug: "AI unavailable" — `LLM_PROVIDER` defaulted to OpenRouter
+
+**Symptom:** Every AI feature reported "AI unavailable" even though `GEMINI_API_KEY` was set in
+Railway.
+
+**Root cause:** `LLM_PROVIDER` was **empty**, so `app/services/llm.py` `_provider()` fell back to the
+default `"openrouter"` and called OpenRouter — silently failing (no OpenRouter credits / key issue) and
+falling back to deterministic results. The Gemini key was present but never read.
+
+**Fix:** Set `LLM_PROVIDER=gemini` in Railway variables. `complete_json`/`complete_stream` now dispatch
+to the Google `generativelanguage` path. Verified live: `POST /v1beta/models/gemini-flash-latest:
+generateContent` returned `200 OK`.
+
+**Lesson:** provider dispatch keys off an *explicit* `LLM_PROVIDER`; an empty value is *not* "use the
+configured key" — it's "use the default provider." Always set it explicitly.
+
+### Bug: upload returned "file: Field required"
+
+**Root cause:** the shared `request` helper forced `Content-Type: application/json` even when the body
+was `FormData`, so the browser never set the multipart boundary and FastAPI couldn't parse the upload.
+
+**Fix:** skip the JSON content-type when `rest.body instanceof FormData` (the browser sets the
+boundary). `datasetsApi.upload` already appends `file` to `FormData` correctly.
+
+### Bug: project page content cut off (horizontal scroll blocked)
+
+**Root cause:** `overflow-x: clip` on `body` (added earlier to guard decorative hero blobs) clips
+*everything* past the viewport with no scroll, slicing off wider content on the project workspace page.
+
+**Fix:** removed the body-level clip. The hero blobs are already wrapped in their own `overflow-hidden`
+container (`hero-background.tsx`), so they stay contained; the `viewport` meta (`width=device-width`)
+still prevents phone zoom-distortion. Horizontal scroll is now available where content needs it.
+
+**Verification:** production health `https://<vercel>/health` →
+`{"status":"ok","service":"InsightFlow AI","environment":"production","database":true}` (HTTP 200).

@@ -18,6 +18,7 @@
 | EDA + Visualizations / SQL / Cleaning | ✅ Done | Charts (EDA), Question→SQL (DuckDB sandbox), cleaning registry + apply (Sprints 2–3) |
 | Dashboard Recommendations | ✅ Done | Widget catalog, dataset/project scope, persisted dashboards + editor (Sprint 4) |
 | AI Chat & Notebook | ✅ Done | SSE streaming chat over existing engines; `notebooks` table + share; dataset/project scope; charts/cleaning/dashboard/report artifacts with HITL; cross-dataset routing; notebook list/rename/delete (Sprints 5) |
+| Production deployment (Vercel + Railway) | ✅ Done | Frontend on Vercel, FastAPI backend on Railway, Gemini AI via `LLM_PROVIDER=gemini` |
 
 ## Current Sprint
 
@@ -69,6 +70,17 @@ Design: `docs/superpowers/specs/2026-07-17-ai-chat-notebook-design.md`
 - [x] Implement basic authentication — email/password JWT (Google OAuth scaffolded, pending backend decision)
 - [x] Create database schema migrations (Alembic — `create_all` replaced by versioned migrations run on startup)
 
+## Deployment & Launch
+
+**Status: ✅ Live** — frontend on Vercel, FastAPI backend on Railway, AI via Gemini.
+
+- [x] **Split deployment:** Vercel (Next.js) + Railway (FastAPI); Vercel proxies `/api/*` + `/health` to Railway server-side (no CORS)
+- [x] **AI provider:** switched to Gemini (`LLM_PROVIDER=gemini`); verified live `200 OK`
+- [x] **Upload fix:** FormData no longer forced to `application/json` ("file: Field required" resolved)
+- [x] **Mobile fix:** `viewport` export removed phone distortion
+- [x] **Scroll fix:** removed body `overflow-x: clip`; project-page content no longer cut off
+- [x] **Security:** Vercel Deployment Protection disabled so API routes return JSON, not SSO redirects
+
 ## Next Tasks
 
 ### Immediate (Next 2-3 days)
@@ -95,7 +107,7 @@ Design: `docs/superpowers/specs/2026-07-17-ai-chat-notebook-design.md`
 
 ## Known Issues
 
-- OpenRouter API cost management not yet implemented
+- AI cost management not yet implemented (active provider: Gemini via `LLM_PROVIDER`)
 
 ## Future Improvements
 
@@ -136,3 +148,4 @@ for detailed rationale on:
 | Dashboard Recommendations | 2026-09-10 | ✅ Complete (M1+M2+M3) |
 | AI Chat & Notebook | 2026-09-17 | ✅ Complete (M1+M2+M3) |
 | Portfolio Polish | 2026-07-17 | ✅ Complete (availability + focused-workspace redesign + full-sweep a11y P0→P3) |
+| Production Deployment (Vercel + Railway) | 2026-07-19 | ✅ Complete |

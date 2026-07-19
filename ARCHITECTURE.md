@@ -14,7 +14,7 @@ docs/      Specs and design documents
 ```
 
 - **Backend:** FastAPI + SQLModel + Alembic; pandas for data work; httpx client
-  for OpenRouter.
+  for the configured AI provider (Gemini / OpenRouter via `LLM_PROVIDER`).
 - **Frontend:** Next.js 15, React 18, TypeScript, Tailwind v3, shadcn-style
   primitives.
 - **API contract:** everything under `/api/v1`; the frontend rewrites `/api/*`
@@ -38,7 +38,7 @@ docs/      Specs and design documents
 |---|---|---|---|
 | Database | `app/core/database.py` + `app/db/` Repository | PostgreSQL | Supabase |
 | File storage | `app/core/storage.py` `StorageAdapter` | Local disk (`DATA_DIR`) | Supabase/S3 |
-| AI provider | `app/services/llm.py` | OpenRouter | any OpenAI-compatible |
+| AI provider | `app/services/llm.py` (`LLM_PROVIDER`) | Gemini | OpenRouter / any OpenAI-compatible |
 
 ## 4. Data-producing workflows (two-stage AI pattern)
 
@@ -92,8 +92,17 @@ See `docs/superpowers/specs/2026-07-16-cleaning-workflow-design.md`.
 - Modular monolith over microservices.
 - FastAPI over Node/Express (data-science ecosystem, async, Pydantic).
 - Next.js 15 App Router over plain React.
-- OpenRouter as a provider-agnostic AI layer.
+- Provider-agnostic AI layer (`llm.py`), dispatched by `LLM_PROVIDER` — currently Gemini.
 - Alembic migrations (run on startup) over `create_all`.
 - Repository + storage-adapter abstractions as the only infra swap points.
 - Unified dataset lineage (Option A: version-as-`Dataset`-row) over a separate
   version table.
+
+## 8. Deployment (Vercel + Railway)
+
+Shipped as a **split deploy**: the Next.js frontend runs on Vercel and the FastAPI backend runs on
+Railway. The Vercel `next.config.mjs` rewrites `/api/:path*` and `/health` to `INTERNAL_API_URL`
+(the Railway URL, injected from `frontend/.env.production`) **server-side**, so the browser never
+calls Railway directly and there is no CORS surface. `LLM_PROVIDER` selects the AI backend
+(`gemini` active; `openrouter` also supported). Vercel's Deployment Protection is disabled so API
+routes return JSON rather than SSO redirects.
