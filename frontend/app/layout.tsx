@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Fira_Code, Fira_Sans } from "next/font/google";
 
 import "./globals.css";
@@ -20,6 +20,14 @@ const firaCode = Fira_Code({
 export const metadata: Metadata = {
   title: "InsightFlow AI",
   description: "A modern data analysis workspace.",
+};
+
+// Ensure phones render at their real width instead of a zoomed-out desktop
+// canvas. Without this, mobile browsers can lay out at ~980px and look
+// "distorted".
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

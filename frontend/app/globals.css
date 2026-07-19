@@ -131,6 +131,10 @@
     @apply bg-background text-foreground font-sans antialiased;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     text-rendering: optimizeLegibility;
+    /* Guard against horizontal overflow from decorative hero blobs on narrow
+       screens. `clip` (not `hidden`) avoids creating a scroll container, so
+       sticky headers above keep working. */
+    overflow-x: clip;
   }
 
   /* Consistent, visible focus ring for keyboard users (a11y). */
