@@ -17,7 +17,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ActionMenu, MenuItem } from "@/components/action-menu";
-import { DatasetStatusBadge } from "@/components/workspace/views";
+import {
+  DatasetStatusBadge,
+  ProfileView,
+  UnderstandingView,
+} from "@/components/workspace/views";
 import type { DatasetCardProps } from "@/components/workspace/types";
 
 function formatSize(bytes: number): string {

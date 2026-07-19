@@ -13,6 +13,7 @@ import time
 
 from fastapi import Request
 from fastapi.responses import JSONResponse
+from starlette.middleware.base import BaseHTTPMiddleware
 
 
 class RateLimiter:
@@ -59,16 +60,32 @@ def _client_ip(request: Request) -> str:
     return request.client.host if request.client else "unknown"
 
 
-def rate_limit_middleware_factory(limiters: dict[str, RateLimiter], prefix: str = ""):
-    """Build a FastAPI middleware that rate-limits by path prefix + client IP."""
+class RateLimitMiddleware(BaseHTTPMiddleware):
+    """FastAPI middleware that rate-limits by path prefix + client IP.
 
-    async def middleware(request: Request, call_next):
+    Registered via ``app.add_middleware(RateLimitMiddleware, limiters=..., prefix=...)``
+    — Starlette instantiates it as ``RateLimitMiddleware(app=app, **kwargs)``, so it
+    must be a ``BaseHTTPMiddleware`` subclass (a plain ``(request, call_next)``
+    function would raise ``TypeError: ... unexpected keyword argument 'app'``).
+    """
+
+    def __init__(
+        self,
+        app,
+        limiters: dict[str, RateLimiter],
+        prefix: str = "",
+    ) -> None:
+        super().__init__(app)
+        self._limiters = limiters
+        self._prefix = prefix
+
+    async def dispatch(self, request: Request, call_next):
         # OPTIONS preflight must always pass through (CORS).
         if request.method == "OPTIONS":
             return await call_next(request)
         path = request.url.path
-        for route_prefix, limiter in limiters.items():
-            full = f"{prefix}{route_prefix}"
+        for route_prefix, limiter in self._limiters.items():
+            full = f"{self._prefix}{route_prefix}"
             if path.startswith(full):
                 ip = _client_ip(request)
                 key = f"{route_prefix}:{ip}"
@@ -80,5 +97,3 @@ def rate_limit_middleware_factory(limiters: dict[str, RateLimiter], prefix: str 
                     )
                 break
         return await call_next(request)
-
-    return middleware

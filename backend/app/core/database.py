@@ -18,6 +18,7 @@ code needs to change.
 from __future__ import annotations
 
 from collections.abc import Generator
+from configparser import Interpolation
 from pathlib import Path
 
 from sqlmodel import Session, create_engine
@@ -38,6 +39,22 @@ engine = create_engine(
 BACKEND_DIR = Path(__file__).resolve().parent.parent.parent
 
 
+class _NoInterpolation(Interpolation):
+    """Pass-through interpolation for Alembic's ConfigParser.
+
+    Alembic (via ConfigParser) performs `%`-interpolation on option values. A
+    DATABASE_URL whose password is URL-encoded (e.g. `%40` for `@`) is then
+    misread as a variable reference and raises ``ValueError``. This no-op makes
+    values pass through verbatim so credentials are never mangled.
+    """
+
+    def before_get(self, parser, section, option, value, defaults):
+        return value
+
+    def before_set(self, parser, section, option, value):
+        return value
+
+
 def run_migrations() -> None:
     """Apply all Alembic migrations (idempotent — safe to call on every boot).
 
@@ -49,6 +66,9 @@ def run_migrations() -> None:
     from alembic.config import Config
 
     cfg = Config(str(BACKEND_DIR / "alembic.ini"))
+    # See _NoInterpolation: stop Alembic from treating `%40` in the DB password
+    # as an interpolation variable.
+    cfg.file_config._interpolation = _NoInterpolation()
     cfg.set_main_option("script_location", str(BACKEND_DIR / "alembic"))
     command.upgrade(cfg, "head")
 

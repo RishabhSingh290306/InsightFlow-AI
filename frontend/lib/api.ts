@@ -128,7 +128,7 @@ async function request<T>(path: string, init: RequestOptions = {}): Promise<T> {
 
   const { signal, timedOut, cleanup } = linkSignals(
     timeoutMs ?? DEFAULT_TIMEOUT_MS,
-    rest.signal,
+    rest.signal ?? undefined,
   );
 
   try {

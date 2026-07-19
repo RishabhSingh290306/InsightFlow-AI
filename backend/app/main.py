@@ -17,7 +17,7 @@ from app.core.database import engine, run_migrations
 from app.core.log import configure_logging, get_logger
 from app.core.ratelimit import (
     RateLimiter,
-    rate_limit_middleware_factory,
+    RateLimitMiddleware,
 )
 
 logger = get_logger("app.main")
@@ -89,7 +89,7 @@ _RATE_LIMITERS = {
     "/datasets/projects": RateLimiter(limit=20, window_s=60),
 }
 app.add_middleware(
-    rate_limit_middleware_factory(_RATE_LIMITERS, prefix=settings.API_V1_PREFIX)
+    RateLimitMiddleware, limiters=_RATE_LIMITERS, prefix=settings.API_V1_PREFIX
 )
 
 
