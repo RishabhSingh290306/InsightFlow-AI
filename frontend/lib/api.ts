@@ -123,7 +123,12 @@ async function request<T>(path: string, init: RequestOptions = {}): Promise<T> {
   const { suppressUnauthorized, timeoutMs, ...rest } = init;
   const token = getToken();
   const headers = new Headers(rest.headers);
-  if (!headers.has("Content-Type")) headers.set("Content-Type", "application/json");
+  // Don't force JSON content-type when sending FormData: the browser must set
+  // the multipart boundary itself, or FastAPI can't parse the uploaded file and
+  // returns "file: Field required".
+  if (!headers.has("Content-Type") && !(rest.body instanceof FormData)) {
+    headers.set("Content-Type", "application/json");
+  }
   if (token) headers.set("Authorization", `Bearer ${token}`);
 
   const { signal, timedOut, cleanup } = linkSignals(
